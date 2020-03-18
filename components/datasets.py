@@ -3,7 +3,10 @@ from torch.utils.data import Dataset
 
 from utils.file import loadJson
 
-
+#########################################
+# 基于已序列化的文件数据的数据集。会根据长度字典
+# 将数据还原为原始长度来节省内存。
+#########################################
 class SeqFileDataset(Dataset):
 
     def __init__(self, data_path, seq_path, N):
@@ -34,11 +37,6 @@ class SeqFileDataset(Dataset):
 
     def __len__(self):
         return len(self.Data)
-
-
-
-
-
 
 if __name__ == '__main__':
     d = SeqFileDataset('D:/peimages/JSONs/virushare_20/data/train/data.npy',

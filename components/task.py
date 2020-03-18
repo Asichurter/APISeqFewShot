@@ -6,6 +6,10 @@ import random as rd
 from components.samplers import EpisodeSamlper
 from utils.magic import magicSeed, magicList
 
+#########################################
+# 使用pad_sequence来将序列补齐从而批次化。会同
+# 时返回长度信息以便于将pad_sequence还原。
+#########################################
 def batchSequences(data):
     seqs = [x[0] for x in data]
     labels = t.LongTensor([x[1] for x in data])
@@ -16,6 +20,16 @@ def batchSequences(data):
 
     return seqs, labels, seq_len
 
+
+#########################################
+# 基于Episode训练的任务类，包含采样标签空间，
+# 采样实验样本，使用dataloader批次化序列样
+# 本并且将任务的标签标准化。
+#
+# 调用episode进行任务采样和数据构建。
+# 在采样时会自动缓存labels，输入模型的输出
+# 调用accuracy计算得到正确率
+#########################################
 class EpisodeTask:
     def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
         self.UseCuda = cuda
@@ -111,6 +125,9 @@ class EpisodeTask:
             labels = labels.cuda()
 
         return supports, queries, labels
+
+    def labels(self):
+        return self.LabelsCache
 
     def accuracy(self, out):
         k, qk, n, N = self.readParams()

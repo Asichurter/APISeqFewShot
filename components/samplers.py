@@ -3,6 +3,12 @@ import random as rd
 
 from utils.magic import magicSeed
 
+#########################################
+# Episode训练的采样器。会根据选定的类空间和每
+# 个类对应的种子，对每个类进行采样。注意，同类的
+# support和query的种子必须相同以便于两者不会出
+# 现重叠的样本。
+#########################################
 class EpisodeSamlper(Sampler):
     def __init__(self, k, qk, N, class_seeds, mode, label_space, shuffle=False):
         '''
