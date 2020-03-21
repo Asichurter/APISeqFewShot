@@ -1,5 +1,7 @@
 import torch as t
 from torch.utils.data import Dataset
+import numpy as np
+import random as rd
 
 from utils.file import loadJson
 
@@ -37,6 +39,38 @@ class SeqFileDataset(Dataset):
 
     def __len__(self):
         return len(self.Data)
+
+
+class ImageFileDataset(Dataset):
+    # 直接指向support set或者query set路径下
+    def __init__(self, base, N, rd_crop_size=None, rotate=True, squre=True):
+        self.Data = np.load(base, allow_pickle=True)
+        self.Label = []
+        self.CropSize = rd_crop_size
+        self.Rotate = rotate
+        self.Width = self.Data.shape[2] if squre else None
+        self.ClassNum = len(self.Data) // N
+
+        for i in range(self.ClassNum):
+            self.Label += [i]*N
+        assert len(self.Label)==len(self.Data), "数据和标签长度不一致!(%d,%d)"%(len(self.Label),len(self.Data))
+
+    def __getitem__(self, index):
+        w = self.Width
+        crop = self.CropSize
+        img = t.FloatTensor(self.Data[index])
+        if crop is not None:
+            assert self.Width is not None and self.Data.shape[2]==self.Data.shape[3], "crop不能作用在非正方形图像上!"
+            bound_width = w-crop
+            x_rd,y_rd = rd.randint(0,bound_width),rd.randint(0,bound_width)
+            img = img[:, x_rd:x_rd+crop, y_rd:y_rd+crop]
+        # 依照论文代码中的实现，为了增加泛化能力，使用随机旋转
+        if self.Rotate:
+            rotation = rd.choice([0,1,2,3])
+            img = t.rot90(img, k=rotation, dims=(1,2))
+        label = self.Label[index]
+
+        return img,label
 
 if __name__ == '__main__':
     d = SeqFileDataset('D:/peimages/JSONs/virushare_20/data/train/data.npy',

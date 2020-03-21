@@ -41,6 +41,9 @@ class EpisodeSamlper(Sampler):
                 rd.seed(magicSeed())
                 self.instances[cla] = rd.sample(test_instances, qk)
 
+        else:
+            raise ValueError('不支持的类型: %s'%mode)
+
     def __iter__(self):
         batch = []
         for c,instances in self.instances.items():

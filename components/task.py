@@ -2,24 +2,11 @@ import torch as t
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 from torch.utils.data import DataLoader
 import random as rd
+import time
 
 from components.samplers import EpisodeSamlper
-from utils.magic import magicSeed, magicList
-
-#########################################
-# 使用pad_sequence来将序列补齐从而批次化。会同
-# 时返回长度信息以便于将pad_sequence还原。
-#########################################
-def batchSequences(data):
-    seqs = [x[0] for x in data]
-    labels = t.LongTensor([x[1] for x in data])
-
-    seqs.sort(key=lambda x: len(x), reverse=True)  # 按长度降序排列
-    seq_len = [len(q) for q in seqs]
-    seqs = pad_sequence(seqs, batch_first=True)
-
-    return seqs, labels, seq_len
-
+from utils.magic import magicSeed, randomList
+from utils.training import batchSequences
 
 #########################################
 # 基于Episode训练的任务类，包含采样标签空间，
@@ -62,8 +49,11 @@ class EpisodeTask:
         task_seed = magicSeed()
         k, qk, n, N = self.readParams()
 
-        rd.seed(task_seed)
-        seed_for_each_class = rd.sample(magicList(), len(label_space))
+        # rd.seed(task_seed)
+        # seed_for_each_class = rd.sample(magicList(), len(label_space))
+        seed_for_each_class = randomList(num=len(label_space),
+                                         seed=task_seed,
+                                         allow_duplicate=True)  # rd.sample(magicList(), len(label_space))
 
         support_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
                                          mode='support', label_space=label_space, shuffle=False)
@@ -81,7 +71,7 @@ class EpisodeTask:
         supports, support_labels, support_lens = support_loader.__iter__().next()
         queries, query_labels, query_lens = query_loader.__iter__().next()
 
-        # 将序列长度信息存储便于pack
+        # 将序列长度信息存储便于unpack
         self.SupSeqLenCache = support_lens
         self.QueSeqLenCache = query_lens
 
@@ -107,24 +97,8 @@ class EpisodeTask:
             que_labels = (que_labels == sup_labels).view(-1, n)
             return que_labels.float()
 
-    def episode(self, pack=True):
-        label_space = self.getLabelSpace()
-        support_sampler, query_sampler = self.getTaskSampler(label_space)
-        supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
-
-        if pack:
-            supports = pack_padded_sequence(supports, self.SupSeqLenCache, batch_first=True)
-            queries = pack_padded_sequence(queries, self.QueSeqLenCache, batch_first=True)
-
-        labels = self.taskLabelNormalize(support_labels, query_labels)
-        self.LabelsCache = labels
-
-        if self.UseCuda:
-            supports = supports.cuda()
-            queries = queries.cuda()
-            labels = labels.cuda()
-
-        return supports, queries, labels
+    def episode(self):
+        raise NotImplementedError
 
     def labels(self):
         return self.LabelsCache
@@ -143,3 +117,118 @@ class EpisodeTask:
         acc = (labels==out).sum().item() / labels.size(0)
 
         return acc
+
+class ProtoEpisodeTask(EpisodeTask):
+    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
+        super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand)
+
+    def episode(self):
+        k, qk, n, N = self.readParams()
+
+        label_space = self.getLabelSpace()
+        support_sampler, query_sampler = self.getTaskSampler(label_space)
+        supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
+
+        # 已修正：因为支持集和查询集的序列长度因为pack而长度不一致，需要分开
+        sup_seq_len = supports.size(1)
+        que_seq_len = queries.size(1)
+
+        labels = self.taskLabelNormalize(support_labels, query_labels)
+        self.LabelsCache = labels
+
+        if self.UseCuda:
+            supports = supports.cuda()
+            queries = queries.cuda()
+            labels = labels.cuda()
+
+        # 重整数据结构，便于模型读取任务参数
+        supports = supports.view(n, k, sup_seq_len)
+        queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+        return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
+
+class ImageProtoEpisodeTask(EpisodeTask):
+    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
+        super(ImageProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand)
+
+    def getEpisodeData(self, support_sampler, query_sampler):
+        k, qk, n, N = self.readParams()
+
+        support_loader = DataLoader(self.Dataset, batch_size=k * n, sampler=support_sampler)
+        query_loader = DataLoader(self.Dataset, batch_size=qk * n, sampler=query_sampler)
+
+        supports, support_labels = support_loader.__iter__().next()
+        queries, query_labels = query_loader.__iter__().next()
+
+        return supports, support_labels, queries, query_labels
+
+    def episode(self):
+        k, qk, n, N = self.readParams()
+
+        label_space = self.getLabelSpace()
+        support_sampler, query_sampler = self.getTaskSampler(label_space)
+        supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
+
+        # 已修正：因为支持集和查询集的序列长度因为pack而长度不一致，需要分开
+        image_width = supports.size(2)
+        image_height = supports.size(3)
+
+        labels = self.taskLabelNormalize(support_labels, query_labels)
+        self.LabelsCache = labels
+
+        if self.UseCuda:
+            supports = supports.cuda()
+            queries = queries.cuda()
+            labels = labels.cuda()
+
+        # 重整数据结构，便于模型读取任务参数
+        supports = supports.view(n, k, 1, image_width, image_height)
+        queries = queries.view(n*qk, 1, image_width, image_height)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+        return (supports, queries), labels
+
+def sampleLabelSpace(dataset, n):
+    rd.seed(magicSeed())
+    classes_list = [i for i in range(dataset.ClassNum)]
+    sampled_classes = rd.sample(classes_list, n)
+
+    return sampled_classes
+
+def getTaskSampler(label_space, k, qk, N):
+    task_seed = magicSeed()
+
+    seed_for_each_class = randomList(num=len(label_space), seed=task_seed, allow_duplicate=True)#rd.sample(magicList(), len(label_space))
+
+    support_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
+                                     mode='support', label_space=label_space, shuffle=False)
+    query_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
+                                   mode='query', label_space=label_space, shuffle=True)
+
+    return support_sampler, query_sampler
+
+def get_RN_sampler(classes, train_num, test_num, num_per_class, seed=None):
+    if seed is None:
+        seed = time.time()%1000000
+
+    assert train_num+test_num <= num_per_class, "单类中样本总数:%d少于训练数量加测试数量:%d！"%(num_per_class, train_num+test_num)
+
+    # 先利用随机种子生成类中的随机种子
+    rd.seed(seed)
+    instance_seeds = rd.sample([i for i in range(100000)], len(classes))
+
+    return EpisodeSamlper(train_num, test_num, num_per_class, instance_seeds, 'support', classes,  False),\
+           EpisodeSamlper(train_num, test_num, num_per_class, instance_seeds, 'query', classes,  True)
+
+# class A:
+#     def __init__(self, x, y):
+#         self.x = x,y
+#
+#     def print_x(self):
+#         print(self.x)
+#
+# class AA(A):
+#     def __init__(self, x, y):
+#         super(AA, self).__init__(x, y)
+#
+# obj = AA(1,'a')
+# obj.print_x()
