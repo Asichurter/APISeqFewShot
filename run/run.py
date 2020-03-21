@@ -12,7 +12,6 @@ from models.ProtoNet import ProtoNet, ImageProtoNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
-# from utils.display import
 
 data_folder = 'virushare_20'#'virushare_20_image'
 
@@ -53,7 +52,7 @@ LRDecayGamma = 0.1
 RecordGradient = False
 GradientUpdateCycle = 1000
 TrainingVerbose = False
-
+UseVisdom = True
 
 TrainingEpoch = 50000
 
@@ -108,12 +107,13 @@ if RecordGradient:
     ylabels.append('gradient norm')
     legends.append(['Encoder Gradient'])
 
-plot = VisdomPlot(env_title='train monitoring',
-                  types=types,
-                  titles=titles,
-                  xlabels=xlabels,
-                  ylabels=ylabels,
-                  legends=legends)
+if UseVisdom:
+    plot = VisdomPlot(env_title='train monitoring',
+                      types=types,
+                      titles=titles,
+                      xlabels=xlabels,
+                      ylabels=ylabels,
+                      legends=legends)
 
 word_matrix = t.Tensor(np.load(train_path_manager.WordEmbedMatrix(), allow_pickle=True))
 
@@ -185,7 +185,8 @@ for epoch in range(TrainingEpoch):
         for weight_list in model.Encoder.Encoder.all_weights:
             for w in weight_list:
                 grad += t.norm(w.grad.detach()).item()
-        plot.update('gradient', epoch, [[grad]], update={'flag': True,
+        if UseVisdom:
+            plot.update('gradient', epoch, [[grad]], update={'flag': True,
                                                      'val': None if epoch%GradientUpdateCycle==0 else 'append'})
 
     if TrainingVerbose:
@@ -228,8 +229,9 @@ for epoch in range(TrainingEpoch):
                               model)
 
         train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
-        plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
-        plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
+        if UseVisdom:
+            plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
+            plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
 
 
 
