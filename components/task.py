@@ -91,10 +91,10 @@ class EpisodeTask:
         # 如果进行扩展的话，每个查询样本的标签都会是n维的one-hot（用于交叉熵）
         # 不扩展是个1维的下标值（用于MSE）
         if not self.Expand:
-            que_labels = t.argmax((sup_labels == que_labels).view(-1, n), dim=1)
+            que_labels = t.argmax((sup_labels == que_labels).view(-1, n).int(), dim=1)
             return que_labels.long()
         else:
-            que_labels = (que_labels == sup_labels).view(-1, n)
+            que_labels = (que_labels == sup_labels).view(-1, n).int()
             return que_labels.float()
 
     def episode(self):

@@ -1,8 +1,10 @@
 import torch as t
 import numpy as np
+from pprint import pprint
 
 import sys
-sys.path.append('D:/Projects/APISeqFewShot/')
+sys.path.append('D:/Projects/APISeqFewShot/')       # 添加当前项目路径到包搜索路径中
+sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
 from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask
 from utils.manager import PathManager, TrainStatManager
@@ -41,8 +43,8 @@ optimizer_type = 'adam'
 default_lr = 1e-2
 lrs = {'Embedding.weight': 1e-3}
 
-EmbedSize = 64
-HiddenSize = 128
+EmbedSize = 32
+HiddenSize = 64
 BiLstmLayer = 2
 SelfAttDim = 64
 ValCycle = 100
@@ -152,86 +154,91 @@ grad = 0.
 
 printState('start training')
 stat.startTimer()
-for epoch in range(TrainingEpoch):
-    # print('Epoch', epoch)
-    if TrainingVerbose:
-        printState('Epoch %d'%epoch)
 
-    model.train()
-    model.zero_grad()
+with t.autograd.set_detect_anomaly(False):
+    for epoch in range(TrainingEpoch):
+        # print('Epoch', epoch)
+        if TrainingVerbose:
+            printState('Epoch %d'%epoch)
 
-    if TrainingVerbose:
-        print('forming episode...')
-    model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
-    # support, query, labels = train_task.episode()
+        model.train()
+        model.zero_grad()
 
-    if TrainingVerbose:
-        print('forwarding...')
-    # predicts = model(support, query)
-    predicts = model(*model_input)
+        if TrainingVerbose:
+            print('forming episode...')
+        model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
+        # support, query, labels = train_task.episode()
 
-    loss_val = loss(predicts, labels)
+        if TrainingVerbose:
+            print('forwarding...')
 
-    if TrainingVerbose:
-        print('backward...')
-    loss_val.backward()
+        # print(model_input[0].size(), model_input[1].size())
 
-    if TrainingVerbose:
-        print('recording grad...')
+        predicts = model(*model_input)
 
-    if RecordGradient:
-        grad = 0.
-        # 监视Encoder的梯度
-        for weight_list in model.Encoder.Encoder.all_weights:
-            for w in weight_list:
-                grad += t.norm(w.grad.detach()).item()
-        if UseVisdom:
-            plot.update('gradient', epoch, [[grad]], update={'flag': True,
-                                                     'val': None if epoch%GradientUpdateCycle==0 else 'append'})
+        loss_val = loss(predicts, labels)
 
-    if TrainingVerbose:
-        print('optimizing...')
-    optimizer.step()
-    scheduler.step()
+        if TrainingVerbose:
+            print('backward...')
+        loss_val.backward()
 
-    predicts = predicts.cpu()
+        if TrainingVerbose:
+            print('recording grad...')
 
-    loss_val_item = loss_val.detach().item()
+        if RecordGradient:
+            grad = 0.
+            # 监视Encoder的梯度
+            for weight_list in model.Encoder.Encoder.all_weights:
+                for w in weight_list:
+                    grad += t.norm(w.grad.detach()).item()
+            if UseVisdom:
+                plot.update('gradient', epoch, [[grad]], update={'flag': True,
+                                                         'val': None if epoch%GradientUpdateCycle==0 else 'append'})
 
-    if TrainingVerbose:
-        print('recording...')
-    acc_val = train_task.accuracy(predicts)
-    stat.recordTraining(acc_val, loss_val_item)
+        if TrainingVerbose:
+            print('optimizing...')
+        optimizer.step()
+        scheduler.step()
 
-    if epoch % ValCycle == 0:
-        printState('Test in Epoch %d'%epoch)
-        model.eval()
-        validate_acc = 0.
-        validate_loss = 0.
+        predicts = predicts.cpu()
 
-        for i in range(ValEpisode):
-            model_input, labels = val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
-            # support, query, labels = val_task.episode()
+        loss_val_item = loss_val.detach().item()
 
-            predicts = model(*model_input)
+        if TrainingVerbose:
+            print('recording...')
+        acc_val = train_task.accuracy(predicts)
+        stat.recordTraining(acc_val, loss_val_item)
 
-            loss_val = loss(predicts, labels)
+        if epoch % ValCycle == 0:
+            printState('Test in Epoch %d'%epoch)
+            model.eval()
+            validate_acc = 0.
+            validate_loss = 0.
 
-            predicts = predicts.cpu()
-            validate_loss += loss_val.detach().item()
-            validate_acc += val_task.accuracy(predicts)
+            for i in range(ValEpisode):
+                model_input, labels = val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
+                # support, query, labels = val_task.episode()
 
-        avg_validate_acc = validate_acc / ValEpisode
-        avg_validate_loss = validate_loss / ValEpisode
+                # print(model_input[0].size(), model_input[1].size())
+                predicts = model(*model_input)
 
-        stat.recordValidating(avg_validate_acc,
-                              avg_validate_loss,
-                              model)
+                loss_val = loss(predicts, labels)
 
-        train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
-        if UseVisdom:
-            plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
-            plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
+                predicts = predicts.cpu()
+                validate_loss += loss_val.detach().item()
+                validate_acc += val_task.accuracy(predicts)
+
+            avg_validate_acc = validate_acc / ValEpisode
+            avg_validate_loss = validate_loss / ValEpisode
+
+            stat.recordValidating(avg_validate_acc,
+                                  avg_validate_loss,
+                                  model)
+
+            train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
+            if UseVisdom:
+                plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
+                plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
 
 
 

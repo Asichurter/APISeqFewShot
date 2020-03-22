@@ -119,7 +119,7 @@ def convertApiSeq2DataSeq(api_seqs, word2idx, max_size):
 
 
 if __name__ == '__main__':
-    manager = PathManager(dataset='virushare_20', d_type='validate')
+    manager = PathManager(dataset='virushare_20', d_type='test')
     makeDataFile(json_path= manager.Folder(),
                  w2idx_path=manager.WordIndexMap(),
                  seq_length_save_path=manager.FileSeqLen(),

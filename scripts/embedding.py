@@ -39,12 +39,14 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
 
     printBulletin('Saving...')
     if save_matrix_path:
-        np.save(save_matrix_path, model.wv.vectors)
+        pad_matrix = np.zeros((1, model.wv.vectors.shape[1]))
+        matrix = np.concatenate((pad_matrix, model.wv.vectors), axis=0)
+        np.save(save_matrix_path, matrix)
 
     if save_word2index_path:
         word2index = {}
         for i, w in enumerate(model.wv.index2word):
-            word2index[w] = i
+            word2index[w] = i+1         # 由于idx=0要留给padding，因此所有的下标都加1
         dumpJson(word2index, save_word2index_path)
 
     printBulletin('Done')
@@ -53,9 +55,9 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20')
 
-    print(manager.FileData())
+    # print(manager.FileData())
 
-    # seqs = aggregateApiSequences(manager.FolderPath)
-    # trainW2Vmodel(seqs,
-    #               save_matrix_path='D:/peimages/JSONs/virushare_20/data/matrix.npy',
-    #               save_word2index_path='D:/peimages/JSONs/virushare_20/data/wordMap.json')
+    seqs = aggregateApiSequences(manager.FolderPath)
+    trainW2Vmodel(seqs,
+                  save_matrix_path='D:/peimages/JSONs/virushare_20/data/matrix.npy',
+                  save_word2index_path='D:/peimages/JSONs/virushare_20/data/wordMap.json')

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from components.modules import BiLstmEncoder
+from components.modules import BiLstmEncoder, BiLstmCellEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -20,7 +20,9 @@ class ProtoNet(nn.Module):
         super(ProtoNet, self).__init__()
 
         # 可训练的嵌入层
-        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        # self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        # TODO: 修改Embedding的词数量(实际词+1)
+        self.Embedding = nn.Embedding(23, embedding_dim=embed_size, padding_idx=0)
 
         # 基于双向LSTM+自注意力的解码层
         self.Encoder = BiLstmEncoder(embed_size,
@@ -28,6 +30,12 @@ class ProtoNet(nn.Module):
                                      layer_num=layer_num,
                                      self_attention=self_attention,
                                      self_att_dim=self_att_dim)
+        # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
+        #                                  hidden_size=hidden,
+        #                                  num_layers=layer_num,
+        #                                  bidirectional=True,
+        #                                  self_att_dim=self_att_dim)
+
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
@@ -39,7 +47,7 @@ class ProtoNet(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        # pack以便输入到LSTM中
+        # # pack以便输入到LSTM中
         support = pack_padded_sequence(support, sup_len, batch_first=True)
         query = pack_padded_sequence(query, que_len, batch_first=True)
 
