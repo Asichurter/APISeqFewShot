@@ -15,5 +15,4 @@ def dumpIterable(iterable, title, path):
     for item in iterable:
         iter_dict[title].append(item)
 
-    with open(path, 'w') as f:
-        json.dump(iter_dict, f)
+    dumpJson(iter_dict, path)

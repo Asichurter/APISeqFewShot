@@ -33,7 +33,7 @@ weight_decay = 1e-4
 loss_func = 'nll'
 expand = False if loss_func=='nll' else True
 
-loss = t.nn.NLLLoss().cuda() \
+loss = t.nn.CrossEntropyLoss().cuda() \
     if loss_func=='nll' else \
     t.nn.MSELoss().cuda()
 

@@ -73,7 +73,8 @@ class ProtoNet(nn.Module):
 
         similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
 
-        return F.log_softmax(similarity, dim=1)
+        return t.softmax(similarity, dim=1)
+        # return F.log_softmax(similarity, dim=1)
 
 
 

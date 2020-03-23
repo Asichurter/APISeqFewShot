@@ -19,11 +19,11 @@ class SelfAttention(nn.Module):
         if isinstance(x, t.nn.utils.rnn.PackedSequence):
             x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
 
-            # max_idx = lens[0]
-            # batch_size = len(lens)
-            # idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
-            # len_mask = lens.unsqueeze(1)
-            # mask = idx_matrix.ge(len_mask).cuda()
+            max_idx = lens[0]
+            batch_size = len(lens)
+            idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+            len_mask = lens.unsqueeze(1)
+            mask = idx_matrix.ge(len_mask).cuda()
 
         assert len(x.size()) == 3, '自注意力输入必须满足(batch, seq, feature)形式！'
         feature_dim = x.size(2)
@@ -31,7 +31,7 @@ class SelfAttention(nn.Module):
         # weight shape: [batch, seq, 1]
         att_weight = self.AttExt(t.tanh(self.AttInter(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
 
-        # att_weight.masked_fill_(mask, -1*float('inf'))
+        att_weight.masked_fill_(mask, -1*float('inf'))
 
         # 自注意力概率分布系数，对序列隐藏态h进行加权求和
         att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))

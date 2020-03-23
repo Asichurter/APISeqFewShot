@@ -14,12 +14,13 @@ import numpy as np
 
 from utils.error import Reporter
 from utils.file import loadJson, dumpJson, dumpIterable
-from utils.display import printBulletin
+from utils.display import printBulletin, printState
 from utils.manager import PathManager
 
 #####################################################
 # 本函数用于将Cuckoo报告中的api序列提取出来并存储到json文件中
 # 本函数对新式报告和旧式报告都兼容
+# 注意：本操作是in-place的
 #####################################################
 def extractApiFromJson(path):
 
@@ -85,11 +86,11 @@ def extractApiFromJson(path):
 # 件夹的结构，后者需要指定参数 class_dir。
 #####################################################
 def apiStat(path,
-            least_length = 10,
-            dump_report_path=None,
-            dump_apiset_path=None,
-            ratio_stairs = [],
-            class_dir=False):
+            least_length = 10,          # 最小序列长度
+            dump_report_path=None,      # 保存错误和警告报告信息的路径，JSON格式
+            dump_apiset_path=None,      # 所有API的集合，JSON格式
+            ratio_stairs = [],          # 统计序列长度百分比的阶梯
+            class_dir=False):           # 一个文件夹内是单类的所有样本还是单个样本
 
     reporter = Reporter()
 
@@ -149,7 +150,7 @@ def apiStat(path,
         ratio = (lengths < length_stair).sum() / len(lengths)
         printBulletin('Length within %d: %f' % (length_stair, ratio))
 
-    plt.hist(lengths, bins=1000, normed=True, range=(0,10000))
+    plt.hist(lengths, bins=1000, normed=True, range=(0,50000))
     plt.show()
 
     if dump_report_path is not None:
@@ -157,6 +158,45 @@ def apiStat(path,
 
     if dump_apiset_path is not None:
         dumpIterable(api_set, 'api_set', dump_apiset_path)
+
+def statApiFrequency(json_path,
+                     is_class_dir=False,
+                     threshold=None):
+
+    api_frequency = {}
+    total = 0
+
+    for dir_ in tqdm(os.listdir(json_path)):
+        dir_path = json_path + dir_ + '/'
+
+        if is_class_dir:
+            items = os.listdir(dir_path)
+        else:
+            items = [dir_+'.json']
+
+        for item in items:
+            apis = loadJson(dir_path + item)['apis']
+
+            for api in apis:
+                if api not in api_frequency:
+                    api_frequency[api] = 0
+                api_frequency[api] += 1
+                total += 1
+
+    printState('API频率统计')
+    api_frequency = sorted(api_frequency.items(), key=lambda x: x[1], reverse=True)
+
+    below_threshold = []
+
+    for i,(api, f) in enumerate(api_frequency):
+        print('#%d'%i, api, f/total)
+        if threshold is not None and f/total < threshold:
+            below_threshold.append(api)
+
+    if threshold is not None:
+        printState('低于%f的API(%d个)'%(threshold, len(below_threshold)))
+        print(below_threshold)
+
 
 
 #####################################################
@@ -192,7 +232,9 @@ def mappingApiNormalize(json_path, mapping):
 #
 # 移除冗余操作是在源文件上覆盖的，注意备份
 #####################################################
-def removeApiRedundance(json_path, selected_apis=None):
+def removeApiRedundance(json_path,
+                        selected_apis=None):
+
     reporter = Reporter()
 
     for item in tqdm(os.listdir(json_path)):
@@ -208,7 +250,7 @@ def removeApiRedundance(json_path, selected_apis=None):
 
             for api_token in report['apis']:
                 # 只关注选出的那些api
-                if selected_apis is not None and \
+                if selected_apis is None or \
                     api_token in selected_apis:
                     if api_token != redun_api_token:     # 每当遇到新的api时，刷新当前遇到的api，同时重置flag
                         redun_api_token = api_token
@@ -232,6 +274,35 @@ def removeApiRedundance(json_path, selected_apis=None):
 
     reporter.report()
 
+def filterApiSequence(json_path,
+                      filterd_apis):
+
+    reporter = Reporter()
+
+    for item in tqdm(os.listdir(json_path)):
+        item_path = json_path + item + '/%s.json'%item
+
+        try:
+            report = loadJson(item_path)
+
+            new_api_seq = []
+
+            for api_token in report['apis']:
+                # 只保留不在过滤列表中的API
+                if api_token not in filterd_apis:
+                    new_api_seq.append(api_token)
+
+            # 使用新api序列覆盖原api序列
+            report['apis'] = new_api_seq
+            dumpJson(report, item_path)
+
+            reporter.logSuccess()
+
+        except Exception as e:
+            reporter.logError(item, str(e))
+
+    reporter.report()
+
 
 #####################################################
 # 本函数用于统计每个类持有的样本数量，会参考已经生成的
@@ -239,7 +310,11 @@ def removeApiRedundance(json_path, selected_apis=None):
 # 无视这些文件进行统计。可以指定阶梯来统计满足大于等于某个值的
 # 样本个数，同时将满足条件的类存储为json文件形式。
 #####################################################
-def statSatifiedClasses(pe_path, json_path, report_path, stat_stairs=[10, 15, 20], count_dump_path=None):
+def statSatifiedClasses(pe_path,
+                        json_path,
+                        report_path,
+                        stat_stairs=[10, 15, 20],
+                        count_dump_path=None):
     # 将样本名称映射为类
     cls_mapping = {}
     cls_cnt = {}
@@ -301,17 +376,26 @@ def collectJsonByClass(pe_path, json_path, dst_path, selected_classes):
 
 
 if __name__ == '__main__':
-    manager = PathManager(dataset='virushare_20', d_type='train')
+    manager = PathManager(dataset='virushare_20', d_type='all')
 
     '''
-    调用顺序：extract -> mapping -> remove_redundance -> apiStat -> stat_classes -> collect
+    调用顺序：extract -> mapping -> removeRedundance -> apiStat -> stat_classes -> collect
     '''
+
+    # extractApiFromJson()
 
     # extractApiFromJson(path)
 
-    # apiStat(path,
-    #          dump_report_path='D:/peimages/PEs/virushare_20/json_w_e_report.json',
-    #          dump_apiset_path='D:/peimages/PEs/virushare_20/api_set.json')
+    apiStat('D:/peimages/PEs/virushare_20/jsons/',
+             dump_report_path='D:/peimages/PEs/virushare_20/json_w_e_report.json',
+             dump_apiset_path='D:/peimages/PEs/virushare_20/api_set.json',
+            ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
+            class_dir=False)
+
+    # removeApiRedundance('D:/peimages/PEs/virushare_20/jsons/',
+    #                     selected_apis=None)
+
+
 
     # mappingApiNormalize(path,
     #                       mapping={
@@ -405,6 +489,6 @@ if __name__ == '__main__':
     #                                         "vtflooder", "wabot", "windef", "wonka", "xorer", "xtrat",
     #                                         "zvuzona", "zzinfor"])
 
-    apiStat(path=manager.Folder(),
-            ratio_stairs=[100, 200, 500, 600, 1000, 2000],
-            class_dir=True)
+    # apiStat(path=manager.Folder(),
+    #         ratio_stairs=[100, 200, 500, 600, 1000, 2000],
+    #         class_dir=True)

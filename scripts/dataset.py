@@ -56,7 +56,6 @@ def splitDatas(src, dest, ratio, mode='x', is_dir=False):
 ##########################################################
 def makeDataFile(json_path,
                  w2idx_path,
-                 # matrix_path,
                  seq_length_save_path,
                  data_save_path,
                  num_per_class,
@@ -66,7 +65,6 @@ def makeDataFile(json_path,
 
     printState('Loading config data...')
     word2index = loadJson(w2idx_path)
-    # embed_matrix = np.load(matrix_path, allow_pickle=True)
 
     printState('Read main data...')
     for cls_idx, cls_dir in tqdm(enumerate(os.listdir(json_path))):
