@@ -77,11 +77,12 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
 
 
 if __name__ == '__main__':
-    manager = PathManager(dataset='virushare_20')
+    manager = PathManager(dataset='virushare_20', d_type='all')
 
     # print(manager.FileData())
 
-    seqs = aggregateApiSequences(manager.FolderPath)
+    seqs = aggregateApiSequences(manager.Folder())
     trainW2Vmodel(seqs,
                   save_matrix_path='D:/peimages/JSONs/virushare_20/data/matrix.npy',
-                  save_word2index_path='D:/peimages/JSONs/virushare_20/data/wordMap.json')
+                  save_word2index_path='D:/peimages/JSONs/virushare_20/data/wordMap.json',
+                  size=16)

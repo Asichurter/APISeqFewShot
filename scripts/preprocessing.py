@@ -150,7 +150,7 @@ def apiStat(path,
         ratio = (lengths < length_stair).sum() / len(lengths)
         printBulletin('Length within %d: %f' % (length_stair, ratio))
 
-    plt.hist(lengths, bins=1000, normed=True, range=(0,50000))
+    plt.hist(lengths, bins=1000, normed=True, range=(0,10000))
     plt.show()
 
     if dump_report_path is not None:
@@ -184,14 +184,20 @@ def statApiFrequency(json_path,
                 total += 1
 
     printState('API频率统计')
+    # 按照频率降序排列
     api_frequency = sorted(api_frequency.items(), key=lambda x: x[1], reverse=True)
 
     below_threshold = []
 
     for i,(api, f) in enumerate(api_frequency):
         print('#%d'%i, api, f/total)
-        if threshold is not None and f/total < threshold:
-            below_threshold.append(api)
+        if threshold is not None:
+            # threshold小于1时，定义为频率阈值
+            if 1 > threshold > f/total:
+                below_threshold.append(api)
+            # threshold大于1时，定义为排名阈值
+            elif i >= threshold >= 1:
+                below_threshold.append(api)
 
     if threshold is not None:
         printState('低于%f的API(%d个)'%(threshold, len(below_threshold)))
@@ -250,6 +256,7 @@ def removeApiRedundance(json_path,
 
             for api_token in report['apis']:
                 # 只关注选出的那些api
+                # 如果给定的选中API为None代表不进行选择
                 if selected_apis is None or \
                     api_token in selected_apis:
                     if api_token != redun_api_token:     # 每当遇到新的api时，刷新当前遇到的api，同时重置flag
@@ -386,11 +393,11 @@ if __name__ == '__main__':
 
     # extractApiFromJson(path)
 
-    apiStat('D:/peimages/PEs/virushare_20/jsons/',
-             dump_report_path='D:/peimages/PEs/virushare_20/json_w_e_report.json',
-             dump_apiset_path='D:/peimages/PEs/virushare_20/api_set.json',
-            ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
-            class_dir=False)
+    # apiStat('D:/peimages/PEs/virushare_20/jsons/',
+    #          dump_report_path='D:/peimages/PEs/virushare_20/json_w_e_report.json',
+    #          dump_apiset_path='D:/peimages/PEs/virushare_20/api_set.json',
+    #         ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
+    #         class_dir=False)
 
     # removeApiRedundance('D:/peimages/PEs/virushare_20/jsons/',
     #                     selected_apis=None)
@@ -470,24 +477,137 @@ if __name__ == '__main__':
     #                       stat_stairs=[20, 15, 10, 5],
     #                       count_dump_path='D:/peimages/PEs/virushare_20/stair_cls_cnt.json')
 
-    # collectJsonByClass(pe_path='D:/peimages/PEs/virushare_20/all/',
-    #                       json_path='D:/peimages/PEs/virushare_20/jsons/',
-    #                       dst_path='D:/peimages/JSONs/virushare_20/train/',
-    #                       selected_classes=["1clickdownload", "4shared", "acda", "airinstaller",
-    #                                         "autoit", "bettersurf", "blacole", "bundlore", "c99shell",
-    #                                         "cpllnk", "darkkomet", "decdec", "directdownloader", "dlhelper",
-    #                                         "domaiq", "downloadadmin", "downloadassistant", "downloadsponsor",
-    #                                         "egroupdial", "faceliker", "fakeie", "fbjack", "fearso", "fsysna",
-    #                                         "gator", "gepys", "getnow", "hicrazyk", "hidelink", "ibryte",
-    #                                         "icloader", "iframeinject", "iframeref", "includer", "inor",
-    #                                         "installerex", "installmonetizer", "instally", "ipamor", "jyfi",
-    #                                         "lineage", "linkular", "lipler", "loadmoney", "loring", "lunam",
-    #                                         "midia", "msposer", "mydoom", "nimda", "outbrowse", "pirminay",
-    #                                         "psyme", "qhost", "redir", "refresh", "scarsi", "scrinject",
-    #                                         "shipup", "soft32downloader", "softcnapp", "softonic", "somoto",
-    #                                         "startp", "staser", "toggle", "trymedia", "vilsel", "vittalia",
-    #                                         "vtflooder", "wabot", "windef", "wonka", "xorer", "xtrat",
-    #                                         "zvuzona", "zzinfor"])
+    collectJsonByClass(pe_path='D:/peimages/PEs/virushare_20/all/',
+                          json_path='D:/peimages/PEs/virushare_20/jsons/',
+                          dst_path='D:/peimages/JSONs/virushare_20/train/',
+                          selected_classes=["1clickdownload",
+                                            "4shared",
+                                            "acda",
+                                            "adclicer",
+                                            "airinstaller",
+                                            "antavmu",
+                                            "autoit",
+                                            "badur",
+                                            "banload",
+                                            "bettersurf",
+                                            "black",
+                                            "blacole",
+                                            "browsefox",
+                                            "bundlore",
+                                            "buterat",
+                                            "c99shell",
+                                            "cidox",
+                                            "conficker",
+                                            "cpllnk",
+                                            "darbyen",
+                                            "darkkomet",
+                                            "dealply",
+                                            "decdec",
+                                            "delbar",
+                                            "directdownloader",
+                                            "dlhelper",
+                                            "domaiq",
+                                            "downloadadmin",
+                                            "downloadassistant",
+                                            "downloadsponsor",
+                                            "egroupdial",
+                                            "extenbro",
+                                            "faceliker",
+                                            "fakeie",
+                                            "fbjack",
+                                            "fearso",
+                                            "firseria",
+                                            "fosniw",
+                                            "fsysna",
+                                            "fujacks",
+                                            "gamevance",
+                                            "gator",
+                                            "gepys",
+                                            "getnow",
+                                            "goredir",
+                                            "hicrazyk",
+                                            "hidelink",
+                                            "hijacker",
+                                            "hiloti",
+                                            "ibryte",
+                                            "icloader",
+                                            "iframeinject",
+                                            "iframeref",
+                                            "includer",
+                                            "inor",
+                                            "installerex",
+                                            "installmonetizer",
+                                            "instally",
+                                            "ipamor",
+                                            "ircbot",
+                                            "jeefo",
+                                            "jyfi",
+                                            "kido",
+                                            "kovter",
+                                            "kykymber",
+                                            "lineage",
+                                            "linkular",
+                                            "lipler",
+                                            "llac",
+                                            "loadmoney",
+                                            "loring",
+                                            "lunam",
+                                            "mepaow",
+                                            "microfake",
+                                            "midia",
+                                            "mikey",
+                                            "msposer",
+                                            "mydoom",
+                                            "nimda",
+                                            "nitol",
+                                            "outbrowse",
+                                            "patchload",
+                                            "pirminay",
+                                            "psyme",
+                                            "pullupdate",
+                                            "pykspa",
+                                            "qhost",
+                                            "qqpass",
+                                            "reconyc",
+                                            "redir",
+                                            "refresh",
+                                            "refroso",
+                                            "scarsi",
+                                            "scrinject",
+                                            "sefnit",
+                                            "shipup",
+                                            "simbot",
+                                            "soft32downloader",
+                                            "softcnapp",
+                                            "softonic",
+                                            "softpulse",
+                                            "somoto",
+                                            "startp",
+                                            "staser",
+                                            "sytro",
+                                            "toggle",
+                                            "trymedia",
+                                            "unruy",
+                                            "urausy",
+                                            "urelas",
+                                            "vilsel",
+                                            "vittalia",
+                                            "vtflooder",
+                                            "wabot",
+                                            "wajam",
+                                            "webprefix",
+                                            "windef",
+                                            "wonka",
+                                            "xorer",
+                                            "xtrat",
+                                            "yoddos",
+                                            "zapchast",
+                                            "zbot",
+                                            "zegost",
+                                            "zeroaccess",
+                                            "zvuzona",
+                                            "zzinfor"
+                                        ])
 
     # apiStat(path=manager.Folder(),
     #         ratio_stairs=[100, 200, 500, 600, 1000, 2000],

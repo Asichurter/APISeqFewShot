@@ -20,9 +20,9 @@ class ProtoNet(nn.Module):
         super(ProtoNet, self).__init__()
 
         # 可训练的嵌入层
-        # self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         # TODO: 修改Embedding的词数量(实际词+1)
-        self.Embedding = nn.Embedding(23, embedding_dim=embed_size, padding_idx=0)
+        # self.Embedding = nn.Embedding(23, embedding_dim=embed_size, padding_idx=0)
 
         # 基于双向LSTM+自注意力的解码层
         self.Encoder = BiLstmEncoder(embed_size,
@@ -55,8 +55,8 @@ class ProtoNet(nn.Module):
         support = self.Encoder(support)
         query = self.Encoder(query)
 
-        # support, s_len = pad_packed_sequence(support, batch_first=True)
-        # query, q_len = pad_packed_sequence(query, batch_first=True)
+        support, s_len = pad_packed_sequence(support, batch_first=True)
+        query, q_len = pad_packed_sequence(query, batch_first=True)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))
@@ -73,8 +73,8 @@ class ProtoNet(nn.Module):
 
         similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
 
-        return t.softmax(similarity, dim=1)
-        # return F.log_softmax(similarity, dim=1)
+        # return t.softmax(similarity, dim=1)
+        return F.log_softmax(similarity, dim=1)
 
 
 

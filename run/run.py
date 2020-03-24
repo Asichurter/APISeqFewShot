@@ -33,17 +33,17 @@ weight_decay = 1e-4
 loss_func = 'nll'
 expand = False if loss_func=='nll' else True
 
-loss = t.nn.CrossEntropyLoss().cuda() \
+loss = t.nn.NLLLoss().cuda() \
     if loss_func=='nll' else \
     t.nn.MSELoss().cuda()
 
 optimizer_type = 'adam'
 
 # 学习率
-default_lr = 1e-2
+default_lr = 1e-3
 lrs = {'Embedding.weight': 1e-3}
 
-EmbedSize = 32
+EmbedSize = 16
 HiddenSize = 64
 BiLstmLayer = 2
 SelfAttDim = 64

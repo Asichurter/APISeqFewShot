@@ -115,6 +115,23 @@ def convertApiSeq2DataSeq(api_seqs, word2idx, max_size):
 
     return data_seq
 
+##########################################################
+# 本函数用于创建数据集的文件夹结构
+##########################################################
+def makeDatasetDirStruct(base_path):
+    os.mkdir(base_path + 'all/')
+    os.mkdir(base_path + 'train/')
+    os.mkdir(base_path + 'validate/')
+    os.mkdir(base_path + 'test/')
+    os.mkdir(base_path + 'models/')
+
+    os.mkdir(base_path + 'data/')
+    os.mkdir(base_path + 'data/train/')
+    os.mkdir(base_path + 'data/validate/')
+    os.mkdir(base_path + 'data/test/')
+
+    printState('Done')
+
 
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='test')
@@ -123,10 +140,10 @@ if __name__ == '__main__':
                  seq_length_save_path=manager.FileSeqLen(),
                  data_save_path=manager.FileData(),
                  num_per_class=20,
-                 max_seq_len=600)
+                 max_seq_len=2000)
     # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
     #            dest='D:/peimages/JSONs/virushare_20/test/',
-    #            ratio=15,
+    #            ratio=30,
     #            mode='x',
     #            is_dir=True)
 
