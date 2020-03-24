@@ -221,8 +221,7 @@ class TrainingConfigManager:
 
     def systemParams(self):
         system = uname().system
-        return self.Cfg['platform'][system]["projectPath"],\
-               self.Cfg['platform'][system]["datasetBasePath"]
+        return self.Cfg['platform'][system]["datasetBasePath"]
 
 
 

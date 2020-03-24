@@ -1,14 +1,22 @@
+import os
 import sys
-from utils.manager import TrainingConfigManager
 
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
 
-cfg = TrainingConfigManager('runConfig.json')
-projectPath, \
-datasetBasePath = cfg.systemParams()
+pwd = os.getcwd()       # 要正常运行，运行路径必须与本文件相同
+pwd = repr(pwd).replace('\\\\', '/')[1:-1]      # 替换双斜杠
+projectPath = pwd.split('/')
+projectPath = '/'.join(projectPath[:-1])        # 获取项目路径父路径
 sys.path.append(projectPath)       # 添加当前项目路径到包搜索路径中
+
+# 先添加路径再获取
+from utils.manager import TrainingConfigManager
+
+cfg = TrainingConfigManager('runConfig.json')
+datasetBasePath = cfg.systemParams()
+
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
 import torch as t
@@ -21,7 +29,6 @@ from models.ProtoNet import ProtoNet, ImageProtoNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
-
 
 
 ################################################

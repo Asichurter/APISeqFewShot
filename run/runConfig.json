@@ -59,12 +59,10 @@
   "platform" : {
 
     "Windows": {
-      "projectPath": "D:/Projects/APISeqFewShot/",
       "datasetBasePath" : "D:/peimages/JSONs/"
     },
 
     "Linux": {
-      "projectPath": "/home/wangpeng/workdplace/APISeqFewShot/",
       "datasetBasePath" : "/home/wangpeng/workplace/data/API/"
     }
   }
