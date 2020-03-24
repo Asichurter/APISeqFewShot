@@ -1,6 +1,9 @@
 import numpy as np
 from time import time
 import torch as t
+from platform import uname
+
+from utils.file import loadJson
 
 ##########################################################
 # 项目数据集路径管理器。
@@ -30,7 +33,11 @@ class PathManager:
     # 文件数据对应的长度表路径
     FileSeqLenPathTemp = '%s/data/%s/seqLength.json'
 
-    def __init__(self, dataset, model_name=None, d_type='all', ):
+    def __init__(self, dataset, model_name=None, d_type='all',
+                 parent_path='D:/peimages/JSONs/'):
+
+        self.ParentPath = parent_path
+
         # 不允许在指定all时访问数据分割路径
         BanedListWhenAll = ['FileDataPath', 'FileSeqLenPath']
 
@@ -148,6 +155,75 @@ class TrainStatManager:
         recent_val_loss = self.ValHist['loss'][-1]
 
         return average_train_acc, average_train_loss, recent_val_acc, recent_val_loss
+
+
+class TrainingConfigManager:
+
+    def __init__(self, cfg_path):
+        self.Cfg = loadJson(cfg_path)
+
+    def taskParams(self):
+        dataset = self.Cfg['dataset']
+        N = self.Cfg['Ns'][dataset]
+
+        return self.Cfg['k'],\
+               self.Cfg['n'],\
+               self.Cfg['qk'], \
+               N
+
+    def model(self):
+        return '{model}_v{version}.0'.format(
+            model=self.Cfg['modelName'],
+            version=self.Cfg['version']
+        )
+
+    def dataset(self):
+        return self.Cfg['dataset']
+
+    def modelParams(self):
+        return self.Cfg['embedSize'], \
+               self.Cfg['hiddenSize'], \
+               self.Cfg['biLstmLayer'], \
+               self.Cfg['selfAttDim'], \
+               self.Cfg['usePretrained'], \
+               self.Cfg['wordCount']
+
+    def valParams(self):
+        return self.Cfg['valCycle'], \
+               self.Cfg['valEpisode']
+
+    def trainingParams(self):
+        return self.Cfg['lrDecayIters'], \
+               self.Cfg['lrDecayGamma'], \
+               self.Cfg['optimizer'], \
+               self.Cfg['weightDecay'], \
+               self.Cfg['lossFunction'], \
+               self.Cfg['defaultLr'], \
+               self.Cfg['lrs']
+
+    def gradRecParams(self):
+        return self.Cfg['recordGradient'], \
+               self.Cfg['gradientUpdateCycle']
+
+    def verboseParams(self):
+        return self.Cfg['trainingVerbose'], \
+               self.Cfg['useVisdom']
+
+    def plotParams(self):
+        return self.Cfg['plot']['types'], \
+               self.Cfg['plot']['titles'], \
+               self.Cfg['plot']['xlabels'], \
+               self.Cfg['plot']['ylabels'], \
+               self.Cfg['plot']['legends']
+
+    def epoch(self):
+        return self.Cfg['trainingEpoch']
+
+    def systemParams(self):
+        system = uname().system
+        return self.Cfg['platform'][system]["projectPath"],\
+               self.Cfg['platform'][system]["datasetBasePath"]
+
 
 
 

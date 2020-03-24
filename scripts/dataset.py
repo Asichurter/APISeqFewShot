@@ -134,13 +134,7 @@ def makeDatasetDirStruct(base_path):
 
 
 if __name__ == '__main__':
-    manager = PathManager(dataset='virushare_20', d_type='test')
-    makeDataFile(json_path= manager.Folder(),
-                 w2idx_path=manager.WordIndexMap(),
-                 seq_length_save_path=manager.FileSeqLen(),
-                 data_save_path=manager.FileData(),
-                 num_per_class=20,
-                 max_seq_len=2000)
+    pass
     # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
     #            dest='D:/peimages/JSONs/virushare_20/test/',
     #            ratio=30,

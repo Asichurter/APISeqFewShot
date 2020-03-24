@@ -1,11 +1,18 @@
-import torch as t
-import numpy as np
-from pprint import pprint
-
 import sys
-sys.path.append('D:/Projects/APISeqFewShot/')       # 添加当前项目路径到包搜索路径中
+from utils.manager import TrainingConfigManager
+
+################################################
+#----------------------设置系统基本信息------------------
+################################################
+
+cfg = TrainingConfigManager('runConfig.json')
+projectPath, \
+datasetBasePath = cfg.systemParams()
+sys.path.append(projectPath)       # 添加当前项目路径到包搜索路径中
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
+import torch as t
+import numpy as np
 from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask
 from utils.manager import PathManager, TrainStatManager
 from utils.plot import VisdomPlot
@@ -15,55 +22,70 @@ from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
 
-data_folder = 'virushare_20'#'virushare_20_image'
 
-Ns = {'cluster':20, 'test':20, 'virushare_20':20, 'drebin_10':10, 'miniImageNet':600, 'virushare_20_image':20}
 
-# 每个类多少个样本，即k-shot
-k = 5
-# 训练时多少个类参与，即n-way
-n = 5
-# 测试时每个类多少个样本
-qk = 15
-# 一个类总共多少个样本
-N = Ns[data_folder]
+################################################
+#----------------------读取参数------------------
+################################################
 
-weight_decay = 1e-4
+data_folder = cfg.dataset()#'virushare_20_image'
 
-loss_func = 'nll'
+k,n,qk,N = cfg.taskParams()
+
+LRDecayIters,\
+LRDecayGamma,\
+optimizer_type,\
+weight_decay, \
+loss_func,\
+default_lr,\
+lrs = cfg.trainingParams()
+
+EmbedSize,\
+HiddenSize,\
+BiLstmLayer,\
+SelfAttDim, \
+usePretrained,\
+wordCnt = cfg.modelParams()
+
+model_name = cfg.model()
+
+ValCycle,\
+ValEpisode = cfg.valParams()
+
+RecordGradient,\
+GradientUpdateCycle = cfg.gradRecParams()
+
+TrainingVerbose,\
+UseVisdom = cfg.verboseParams()
+
+types,\
+titles,\
+xlabels,\
+ylabels,\
+legends = cfg.plotParams()
+
+TrainingEpoch = cfg.epoch()
+
+
+################################################
+#----------------------定义数据------------------
+################################################
+
 expand = False if loss_func=='nll' else True
 
 loss = t.nn.NLLLoss().cuda() \
     if loss_func=='nll' else \
     t.nn.MSELoss().cuda()
 
-optimizer_type = 'adam'
-
-# 学习率
-default_lr = 1e-3
-lrs = {'Embedding.weight': 1e-3}
-
-EmbedSize = 16
-HiddenSize = 64
-BiLstmLayer = 2
-SelfAttDim = 64
-ValCycle = 100
-ValEpisode = 50
-LRDecayIters = 15000
-LRDecayGamma = 0.1
-RecordGradient = False
-GradientUpdateCycle = 1000
-TrainingVerbose = False
-UseVisdom = True
-
-TrainingEpoch = 50000
-
-version = 1
-model_name = 'ProtoNet_v%d.0' % version
-
 printState('init managers...')
-train_path_manager = PathManager(dataset=data_folder, d_type='train', model_name=model_name)
-val_path_manager = PathManager(dataset=data_folder, d_type='validate', model_name=model_name)
+train_path_manager = PathManager(dataset=data_folder,
+                                 d_type='train',
+                                 model_name=model_name,
+                                 parent_path=datasetBasePath)
+val_path_manager = PathManager(dataset=data_folder,
+                               d_type='validate',
+                               model_name=model_name,
+                               parent_path=datasetBasePath)
 
 train_dataset = SeqFileDataset(train_path_manager.FileData(),
                                train_path_manager.FileSeqLen(),
@@ -95,13 +117,6 @@ stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,
                         criteria='loss')
 
-types=['line', 'line']
-titles=['accuracy', 'loss']
-xlabels=['iterations', 'iterations']
-ylabels=['accuracy', 'loss']
-legends=[['train acc', 'val acc'],
-         ['train loss', 'val loss']]
-
 if RecordGradient:
     types.append('line')
     titles.append('gradient')
@@ -117,7 +132,16 @@ if UseVisdom:
                       ylabels=ylabels,
                       legends=legends)
 
-word_matrix = t.Tensor(np.load(train_path_manager.WordEmbedMatrix(), allow_pickle=True))
+if usePretrained:
+    word_matrix = t.Tensor(np.load(train_path_manager.WordEmbedMatrix(), allow_pickle=True))
+else:
+    word_matrix = None
+
+
+
+################################################
+#----------------------模型定义和初始化------------------
+################################################
 
 printState('init model...')
 model = ProtoNet(pretrained_matrix=word_matrix,
@@ -125,7 +149,8 @@ model = ProtoNet(pretrained_matrix=word_matrix,
                  hidden=HiddenSize,
                  layer_num=BiLstmLayer,
                  self_attention=SelfAttDim is not None,
-                 self_att_dim=SelfAttDim)
+                 self_att_dim=SelfAttDim,
+                 word_cnt=wordCnt)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -150,6 +175,13 @@ if optimizer_type == 'adam':
 scheduler = t.optim.lr_scheduler.StepLR(optimizer,
                                         step_size=LRDecayIters,
                                         gamma=LRDecayGamma)
+
+
+################################################
+#----------------------训练------------------
+################################################
+
+
 grad = 0.
 
 printState('start training')
@@ -208,6 +240,11 @@ with t.autograd.set_detect_anomaly(False):
             print('recording...')
         acc_val = train_task.accuracy(predicts)
         stat.recordTraining(acc_val, loss_val_item)
+
+
+        ################################################
+        # ----------------------验证------------------
+        ################################################
 
         if epoch % ValCycle == 0:
             printState('Test in Epoch %d'%epoch)

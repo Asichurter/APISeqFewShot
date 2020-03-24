@@ -9,20 +9,21 @@ from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
                             protoDisAdapter
-
 class ProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
                  hidden=128,
                  layer_num=1,
                  self_attention=True,
-                 self_att_dim=64):
+                 self_att_dim=64,
+                 word_cnt=None):
         super(ProtoNet, self).__init__()
 
         # 可训练的嵌入层
-        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
-        # TODO: 修改Embedding的词数量(实际词+1)
-        # self.Embedding = nn.Embedding(23, embedding_dim=embed_size, padding_idx=0)
+        if pretrained_matrix is not None:
+            self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        else:
+            self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
         # 基于双向LSTM+自注意力的解码层
         self.Encoder = BiLstmEncoder(embed_size,
@@ -55,8 +56,8 @@ class ProtoNet(nn.Module):
         support = self.Encoder(support)
         query = self.Encoder(query)
 
-        support, s_len = pad_packed_sequence(support, batch_first=True)
-        query, q_len = pad_packed_sequence(query, batch_first=True)
+        # support, s_len = pad_packed_sequence(support, batch_first=True)
+        # query, q_len = pad_packed_sequence(query, batch_first=True)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))
