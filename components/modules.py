@@ -49,11 +49,13 @@ class BiLstmEncoder(nn.Module):
                  layer_num=1,
                  dropout=0.1,
                  self_attention=True,
-                 self_att_dim=64):
+                 self_att_dim=64,
+                 useBN=False):
 
         super(BiLstmEncoder, self).__init__()
 
         self.SelfAtt = self_attention
+        self.UseBN = useBN
 
         self.Encoder = nn.GRU(input_size=input_size,
                                hidden_size=hidden_size,
@@ -61,6 +63,13 @@ class BiLstmEncoder(nn.Module):
                                batch_first=True,
                                dropout=dropout,
                                bidirectional=True)
+
+        if useBN:
+            # 第一个批标准化建立在时间序列组成的2D矩阵上，扩增了一个维度为1的通道
+            # 同时因为序列长度不一定，不能直接在序列长度上进行1D标准化
+            self.BN1 = nn.BatchNorm2d(1)
+            # 第二个批标准化建立在自注意力之后的1D向量上
+            self.BN2 = nn.BatchNorm1d(2*hidden_size)
 
         if self_attention:
             self.Attention = SelfAttention(2*hidden_size, self_att_dim, pack=True)
@@ -71,11 +80,20 @@ class BiLstmEncoder(nn.Module):
         # x shape: [batch, seq, feature]
         # out shape: [batch, seq, 2*hidden]
         out, h = self.Encoder(x)
+        if self.UseBN:
+            out, lens = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
+            # 增加一个通道维度以便进行2D标准化
+            out = out.unsqueeze(1)
+            out = self.BN1(out).squeeze()
+            out = nn.utils.rnn.pack_padded_sequence(out, lens, batch_first=True)
         # out, (h, c) = self.Encoder(x)
 
         # return shape: [batch, feature]
         if self.Attention is not None:
-            return self.Attention(out)
+            out = self.Attention(out)
+            if self.UseBN:
+                out = self.BN2(out)
+            return out
         else:
             # 没有自注意力时，返回最后一个隐藏态
             num_directions = 2 if self.Encoder.bidirectional else 1
@@ -185,28 +203,113 @@ class BiLstmCellEncoder(nn.Module):
         x = self.SelfAttention(x)
         return x
 
-class CNNBlock(nn.Module):
-    def __init__(self, in_chanel, out_channel, kernel_size, stride, padding, pool_size=None, bn=True):
-        self.CNN = nn.Conv2d(in_channels=in_chanel,
-                             out_channels=out_channel,
-                             kernel_size=kernel_size,
-                             stride=stride,
-                             padding=padding,
-                             bias=False)
-        self.BN = nn.BatchNorm2d(out_channel) if bn else None
-        self.Pool = nn.AdaptiveMaxPool2d(())
+##########################################################
+# 带有残差连接的
+##########################################################
+class ResInception(nn.Module):
 
-class AttentionalCNN(nn.Module):
+    def __init__(self, in_channel,
+                 out_channel,
+                 depth=3,
+                 reduced_channels=None):
+        '''
+            注意：out_channel是指每一条路径的输出通道数量，实际的
+            总通道输出数量是4×out_channel，因为有4条路径：
+            1. 残差连接\n
+            2. 1×1卷积\n
+            3. 3×3卷积\n
+            4. 5×5卷积
+        '''
 
-    def __init__(self, window_size=3, channels=[1,32,1]):
-        super(AttentionalCNN, self).__init__()
+        # TODO：1×1卷积的降维实现
+        super(ResInception, self).__init__()
 
-        layers = [nn.Conv2d(in_channels=channels[i],
-                            out_channels=channels[i+1],
-                            kernel_size=kernel_size,
-                            stride=1,
-                            padding= kernel_size//2,
-                            bias=False) for i in range(len(channels)-1)]
+        self.Shortcut = nn.Sequential(
+            nn.Conv3d(in_channels=in_channel,
+                                  out_channels=out_channel,
+                                  kernel_size=(1,1,1),
+                                  stride=1,
+                                  padding=0,
+                                  bias=False),
+            nn.BatchNorm3d(out_channel)
+        )
+
+        self.Conv1x1 = nn.Sequential(
+            nn.Conv3d(in_channels=in_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth,1,1),
+                      stride=1,
+                      padding=(depth//2,0,0),
+                      bias=False),
+            nn.BatchNorm3d(out_channel)
+        )
+
+        self.Conv3x3 = nn.Sequential(
+            nn.Conv3d(in_channels=in_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth, 1, 1),
+                      stride=1,
+                      padding=(depth // 2, 0, 0),
+                      bias=False),
+            nn.BatchNorm3d(out_channel),
+            nn.Conv3d(in_channels=out_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth,3,3),
+                      stride=1,
+                      padding=(depth//2,1,1),
+                      bias=False),
+            nn.BatchNorm3d(out_channel)
+        )
+
+        self.Conv5x5 = nn.Sequential(
+            nn.Conv3d(in_channels=in_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth, 1, 1),
+                      stride=1,
+                      padding=(depth // 2, 0, 0),
+                      bias=False),
+            nn.BatchNorm3d(out_channel),
+            nn.Conv3d(in_channels=out_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth,5,5),
+                      stride=1,
+                      padding=(depth//2,2,2),
+                      bias=False),
+            nn.BatchNorm3d(out_channel)
+        )
+
+        self.Pool = nn.Sequential(
+            nn.MaxPool3d(kernel_size=(1,3,3),
+                         stride=1,
+                         padding=(0,1,1)),
+            nn.Conv3d(in_channels=in_channel,
+                      out_channels=out_channel,
+                      kernel_size=(depth,1,1),
+                      stride=1,
+                      padding=(depth//2,0,0),
+                      bias=False),
+            nn.BatchNorm3d(out_channel)
+        )
+
+
+    def forward(self, x):
+        # x shape: [batch, in_channel=1, seq, height, width]
+        x_1 = self.Conv1x1(x)
+        x_3 = self.Conv3x3(x)
+        x_5 = self.Conv5x5(x)
+        x = self.Shortcut(x)
+
+        # 按channel维度连接所有特征
+        return t.cat((x, x_1, x_3, x_5), dim=1)
+
+if __name__ == '__main__':
+    model = ResInception(1,1)
+    a = 0
+
+
+
+
+
 
 
 

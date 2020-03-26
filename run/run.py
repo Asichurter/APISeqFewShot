@@ -1,15 +1,12 @@
 import os
 import sys
+from config import appendProjectPath
 
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
 
-pwd = os.getcwd()       # 要正常运行，运行路径必须与本文件相同
-pwd = repr(pwd).replace('\\\\', '/')[1:-1]      # 替换双斜杠
-projectPath = pwd.split('/')
-projectPath = '/'.join(projectPath[:-1])        # 获取项目路径父路径
-sys.path.append(projectPath)       # 添加当前项目路径到包搜索路径中
+appendProjectPath()
 
 # 先添加路径再获取
 from utils.manager import TrainingConfigManager
@@ -21,11 +18,12 @@ sys.setrecursionlimit(5000)                         # 增加栈空间防止意�
 
 import torch as t
 import numpy as np
-from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask
+
+from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask, MatrixProtoEpisodeTask
 from utils.manager import PathManager, TrainStatManager
 from utils.plot import VisdomPlot
 from components.datasets import SeqFileDataset, ImageFileDataset
-from models.ProtoNet import ProtoNet, ImageProtoNet
+from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
@@ -103,22 +101,14 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 # train_dataset = ImageFileDataset(train_path_manager.FileData(), N, rd_crop_size=224)
 # val_dataset = ImageFileDataset(val_path_manager.FileData(), N, rd_crop_size=224)
 
-train_task = ProtoEpisodeTask(k ,qk, n, N,
+train_task = MatrixProtoEpisodeTask(k ,qk, n, N,
                         dataset=train_dataset,
                         cuda=True,
                         label_expand=expand)
-val_task = ProtoEpisodeTask(k ,qk, n, N,
+val_task = MatrixProtoEpisodeTask(k ,qk, n, N,
                         dataset=val_dataset,
                         cuda=True,
                         label_expand=expand)
-# train_task = ImageProtoEpisodeTask(k ,qk, n, N,
-#                         dataset=train_dataset,
-#                         cuda=True,
-#                         label_expand=expand)
-# val_task = ImageProtoEpisodeTask(k ,qk, n, N,
-#                         dataset=val_dataset,
-#                         cuda=True,
-#                         label_expand=expand)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,
@@ -151,13 +141,15 @@ else:
 ################################################
 
 printState('init model...')
-model = ProtoNet(pretrained_matrix=word_matrix,
-                 embed_size=EmbedSize,
-                 hidden=HiddenSize,
-                 layer_num=BiLstmLayer,
-                 self_attention=SelfAttDim is not None,
-                 self_att_dim=SelfAttDim,
-                 word_cnt=wordCnt)
+model = IncepProtoNet(channels=[1, 32, 1],
+                      depth=3)
+# model = ProtoNet(pretrained_matrix=word_matrix,
+#                  embed_size=EmbedSize,
+#                  hidden=HiddenSize,
+#                  layer_num=BiLstmLayer,
+#                  self_attention=SelfAttDim is not None,
+#                  self_att_dim=SelfAttDim,
+#                  word_cnt=wordCnt)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()

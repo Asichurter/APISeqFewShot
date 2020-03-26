@@ -10,7 +10,6 @@ from utils.manager import PathManager
 from gensim.models.word2vec import Word2Vec
 
 
-
 ############################################
 # 本函数用于从已经处理好的json文件中收集所有样本的api
 # 序列用于无监督训练嵌入。返回的是序列的列表。

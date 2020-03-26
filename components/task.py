@@ -6,7 +6,7 @@ import time
 
 from components.samplers import EpisodeSamlper
 from utils.magic import magicSeed, randomList
-from utils.training import batchSequences
+from utils.training import getBatchSequenceFunc
 
 #########################################
 # 基于Episode训练的任务类，包含采样标签空间，
@@ -18,10 +18,11 @@ from utils.training import batchSequences
 # 调用accuracy计算得到正确率
 #########################################
 class EpisodeTask:
-    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
+    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False, d_type='long'):
         self.UseCuda = cuda
         self.Dataset = dataset
         self.Expand = label_expand
+        self.DType = d_type
 
         assert k + qk <= N, '支持集和查询集采样总数大于了类中样本总数!'
         self.Params = {'k': k, 'qk': qk, 'n': n, 'N': N}
@@ -65,8 +66,10 @@ class EpisodeTask:
     def getEpisodeData(self, support_sampler, query_sampler):
         k, qk, n, N = self.readParams()
 
-        support_loader = DataLoader(self.Dataset, batch_size=k * n, sampler=support_sampler, collate_fn=batchSequences)
-        query_loader = DataLoader(self.Dataset, batch_size=qk * n, sampler=query_sampler, collate_fn=batchSequences)
+        support_loader = DataLoader(self.Dataset, batch_size=k * n,
+                                    sampler=support_sampler, collate_fn=getBatchSequenceFunc(d_type=self.DType))
+        query_loader = DataLoader(self.Dataset, batch_size=qk * n,
+                                  sampler=query_sampler, collate_fn=getBatchSequenceFunc(d_type=self.DType))
 
         supports, support_labels, support_lens = support_loader.__iter__().next()
         queries, query_labels, query_lens = query_loader.__iter__().next()
@@ -118,6 +121,7 @@ class EpisodeTask:
 
         return acc
 
+
 class ProtoEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
         super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand)
@@ -144,6 +148,38 @@ class ProtoEpisodeTask(EpisodeTask):
         # 重整数据结构，便于模型读取任务参数
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+        return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
+
+
+class MatrixProtoEpisodeTask(EpisodeTask):
+    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
+        super(MatrixProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand, d_type='float')
+
+    def episode(self):
+        k, qk, n, N = self.readParams()
+
+        label_space = self.getLabelSpace()
+        support_sampler, query_sampler = self.getTaskSampler(label_space)
+        supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
+
+        # support/query shape: [batch, seq,]
+        image_width = supports.size(2)
+        image_height = supports.size(3)
+        sup_seq_len = supports.size(1)
+        que_seq_len = queries.size(1)
+
+        labels = self.taskLabelNormalize(support_labels, query_labels)
+        self.LabelsCache = labels
+
+        if self.UseCuda:
+            supports = supports.cuda()
+            queries = queries.cuda()
+            labels = labels.cuda()
+
+        # 重整数据结构，便于模型读取任务参数
+        supports = supports.view(n, k, 1, sup_seq_len, image_width, image_height)
+        queries = queries.view(n*qk, 1, que_seq_len, image_width, image_height)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
         return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
 

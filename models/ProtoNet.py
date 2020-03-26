@@ -1,10 +1,11 @@
 import torch as t
 import torch.nn as nn
 import torch.nn.functional as F
+import logging
 
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from components.modules import BiLstmEncoder, BiLstmCellEncoder
+from components.modules import BiLstmEncoder, BiLstmCellEncoder, ResInception
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -30,7 +31,8 @@ class ProtoNet(nn.Module):
                                      hidden_size=hidden,
                                      layer_num=layer_num,
                                      self_attention=self_attention,
-                                     self_att_dim=self_att_dim)
+                                     self_att_dim=self_att_dim,
+                                     useBN=False)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
@@ -76,6 +78,59 @@ class ProtoNet(nn.Module):
 
         # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
+
+
+class IncepProtoNet(nn.Module):
+
+    def __init__(self, channels, depth=3):
+        super(IncepProtoNet, self).__init__()
+
+        if depth%2 != 1:
+            logging.warning('3D卷积深度为偶数，会导致因为无法padding而序列长度发生变化！')
+
+        layers = [ResInception(in_channel=channels[i] if i==0 else 4*channels[i],
+                               out_channel=channels[i+1],
+                               depth=depth)
+                  for i in range(len(channels)-1)]
+
+        self.Encoder = nn.Sequential(*layers)
+
+        # TODO: 添加多个Inception模块后的Pool
+
+    def forward(self, support, query, sup_len=None, que_len=None):
+        # input shape:
+        # sup=[n, k, 1, sup_seq_len, height, width]
+        # que=[batch, 1, que_seq_len, height, width]
+        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query, is_embedded=True)
+        height, width = query.size(3), query.size(4)
+
+        support = support.view(n*k, 1, sup_seq_len, height, width)
+        query = query.view(qk, 1, que_seq_len, height, width)
+
+        # output shape: [batch, out_channel=1, seq_len, height, width]
+        support = self.Encoder(support).squeeze()
+        query = self.Encoder(query).squeeze()
+
+        # TODO:直接展开序列作为特征
+        support = support.view(n, k, -1).mean(dim=1)
+        query = query.view(qk, -1)
+
+        assert support.size(1)==query.size(1), \
+            '支持集和查询集的嵌入后特征维度不相同！'
+
+        dim = support.size(1)
+
+        # 整型成为可比较的形状: [qk, n, dim]
+        support = repeatProtoToCompShape(support, qk, n)
+        query = repeatQueryToCompShape(query, qk, n)
+
+        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
+
+        # return t.softmax(similarity, dim=1)
+        return F.log_softmax(similarity, dim=1)
+
+
+
 
 
 

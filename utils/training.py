@@ -6,29 +6,44 @@ from torch.nn.utils.rnn import pad_sequence
 # 使用pad_sequence来将序列补齐从而批次化。会同
 # 时返回长度信息以便于将pad_sequence还原。
 #########################################
-def batchSequences(data):
-    seqs = [x[0] for x in data]
-    labels = t.LongTensor([x[1] for x in data])
+def getBatchSequenceFunc(d_type='long'):
 
-    seqs.sort(key=lambda x: len(x), reverse=True)  # 按长度降序排列
-    seq_len = [len(q) for q in seqs]
-    seqs = pad_sequence(seqs, batch_first=True)
+    def batchSequences(data):
+        seqs = [x[0] for x in data]
+        labels = t.LongTensor([x[1] for x in data])
 
-    return seqs.long(), labels, seq_len
+        seqs.sort(key=lambda x: len(x), reverse=True)  # 按长度降序排列
+        seq_len = [len(q) for q in seqs]
+        seqs = pad_sequence(seqs, batch_first=True)
+
+        if d_type=='long':
+            return seqs.long(), labels, seq_len
+        elif d_type=='float':
+            return seqs.float(), labels, seq_len
+        else:
+            raise ValueError('无效的数据类型: %s'%d_type)
+
+    return batchSequences
 
 
-def extractTaskStructFromInput(support, query):
-        assert len(support.size()) == 3, '支持集结构不符合 (class, sample, seq) 结构！'
-        assert len(query.size()) == 2, '查询集结构不符合 (sample, seq) 结构！'
+def extractTaskStructFromInput(support, query, is_embedded=False):
+        support_dim_size = 6 if is_embedded else 3
+        query_dim_size = 5 if is_embedded else 2
+        len_dim_base = 1 if not is_embedded else 2      # 对于矩阵序列的输入，序列长度的维度是2([qk, in_channel=1, seq_len, height, width])
+
+
+        assert len(support.size()) == support_dim_size, '支持集结构 %s 不符合要求！'%(str(support.size()))
+        assert len(query.size()) == query_dim_size, '查询集结构 %s 不符合要求！'%(str(query.size()))
 
         n = support.size(0)
         k = support.size(1)
-        sup_seq_len = support.size(2)
+        sup_seq_len = support.size(len_dim_base+1)
 
         qk = query.size(0)
-        que_seq_len = query.size(1)
+        que_seq_len = query.size(len_dim_base)
 
-        # assert seq_len==q_seq_len, '支持集中序列长度 %d 与查询集序列长度 %d 不一致！'%(seq_len, q_seq_len)
+        assert sup_seq_len==que_seq_len, \
+            '支持集序列长度%d和查询集序列%d长度不同！'%(sup_seq_len,que_seq_len,)
 
         return n, k, qk, sup_seq_len, que_seq_len
 
