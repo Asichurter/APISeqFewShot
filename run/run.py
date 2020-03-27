@@ -23,7 +23,7 @@ from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask, MatrixProto
 from utils.manager import PathManager, TrainStatManager
 from utils.plot import VisdomPlot
 from components.datasets import SeqFileDataset, ImageFileDataset
-from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet
+from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
@@ -104,11 +104,13 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 train_task = MatrixProtoEpisodeTask(k ,qk, n, N,
                         dataset=train_dataset,
                         cuda=True,
-                        label_expand=expand)
+                        label_expand=expand,
+                        unsqueeze=False)
 val_task = MatrixProtoEpisodeTask(k ,qk, n, N,
                         dataset=val_dataset,
                         cuda=True,
-                        label_expand=expand)
+                        label_expand=expand,
+                        unsqueeze=False)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,
@@ -141,8 +143,9 @@ else:
 ################################################
 
 printState('init model...')
-model = IncepProtoNet(channels=[1, 32, 1],
-                      depth=3)
+model = CNNLstmProtoNet()
+# model = IncepProtoNet(channels=[1, 32, 1],
+#                       depth=3)
 # model = ProtoNet(pretrained_matrix=word_matrix,
 #                  embed_size=EmbedSize,
 #                  hidden=HiddenSize,
@@ -158,7 +161,7 @@ statParamNumber(model)
 
 # 模型初始化
 printState('init parameters...')
-model.apply(LstmInit)
+# model.apply(LstmInit)
 
 parameters = []
 for name, par in model.named_parameters():
@@ -168,8 +171,13 @@ for name, par in model.named_parameters():
     else:
         parameters += [{'params': [par], 'lr':default_lr, 'weight_decay': weight_decay}]
 
+from torch.optim.rmsprop import RMSprop
 if optimizer_type == 'adam':
     optimizer = t.optim.Adam(parameters)
+elif optimizer_type == 'rmsprop':
+    optimizer = RMSprop(parameters, momentum=0.9)
+else:
+    raise ValueError
 
 scheduler = t.optim.lr_scheduler.StepLR(optimizer,
                                         step_size=LRDecayIters,

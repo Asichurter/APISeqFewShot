@@ -1,5 +1,8 @@
 import torch as t
 import torch.nn as nn
+import math
+
+from utils.matrix import batchDot
 
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
@@ -11,12 +14,23 @@ class SelfAttention(nn.Module):
         super(SelfAttention, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.AttInter = nn.Linear(input_size, hidden_size, bias=False)
-        self.AttExt = nn.Linear(hidden_size, 1, bias=False)
+
+        ################################################################
+        # self.AttInter = nn.Linear(input_size, hidden_size, bias=False)
+        # self.AttExt = nn.Linear(hidden_size, 1, bias=False)
+        ################################################################
+
+        ################################################################
+        self.Q = nn.Linear(input_size, input_size, bias=False)
+        self.K = nn.Linear(input_size, input_size, bias=False)
+        self.V = nn.Linear(input_size, input_size, bias=False)
+        ################################################################
+
         self.Pack = pack
 
     def forward(self, x):
-        if isinstance(x, t.nn.utils.rnn.PackedSequence):
+        packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
+        if packed:
             x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
 
             max_idx = lens[0]
@@ -29,14 +43,25 @@ class SelfAttention(nn.Module):
         feature_dim = x.size(2)
 
         # weight shape: [batch, seq, 1]
-        att_weight = self.AttExt(t.tanh(self.AttInter(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
+        ################################################################
+        # att_weight = self.AttExt(t.tanh(self.AttInter(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
+        ################################################################
 
-        att_weight.masked_fill_(mask, -1*float('inf'))
+        ################################################################
+        # shape: [batch, seq, dim]
+        x = self.V(x)
+        att_weight = batchDot(self.Q(x), self.K(x), transpose=True) / math.sqrt(x.size(2))
+        ################################################################
+
+        if packed:
+            att_weight.masked_fill_(mask, -1*float('inf'))
 
         # 自注意力概率分布系数，对序列隐藏态h进行加权求和
-        att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
+        att_weight = t.softmax(att_weight, dim=2)
+        # att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
 
-        return (att_weight * x).sum(dim=1)
+        return batchDot(att_weight, x)
+        # return (att_weight * x).sum(dim=1)
 
 
 #########################################
@@ -301,6 +326,70 @@ class ResInception(nn.Module):
 
         # 按channel维度连接所有特征
         return t.cat((x, x_1, x_3, x_5), dim=1)
+
+def CNNBlock(in_feature, out_feature, stride=1, kernel=3, padding=1,
+             relu=True, pool=True):
+    layers = [nn.Conv2d(in_feature, out_feature,
+                  kernel_size=kernel,
+                  padding=padding,
+                  stride=stride,
+                  bias=False),
+            nn.BatchNorm2d(out_feature)]
+
+    if relu:
+        layers.append(nn.ReLU(inplace=True))
+    if pool:
+        layers.append(nn.MaxPool2d(2))
+
+    return nn.Sequential(*layers)
+
+
+
+class CNNEncoder(nn.Module):
+
+    def __init__(self,
+                 channels,          # 各个层（包括输入层）的通道数
+                 strides=None,      # 各个层的步长
+                 flatten=False,
+                 relus=None,
+                 pools=None):    # 是否在输出前将序列长度展开到特征层中
+        super(CNNEncoder, self).__init__()
+
+        self.Flatten = flatten
+        assert channels[0]==1, '2D的CNN输入通道必须为1'
+
+        if strides is None:
+            strides = [1]*(len(channels)-1)
+        if relus is None:
+            relus = [True]*(len(channels)-1)
+        if pools is None:
+            pools = [True]*(len(channels)-1)
+
+        layers = nn.ModuleList([CNNBlock(in_feature=channels[i],
+                           out_feature=channels[i+1],
+                           stride=strides[i],
+                           relu=relus[i],
+                           pool=pools[i])
+                  for i in range(len(channels)-1)])
+        self.Encoder = layers
+
+    def forward(self, x):
+        # 假定输入是矩阵序列，本模块将会把序列长度合并到batch中
+        # input shape: [batch, seq, height, width]
+        assert len(x.size())==4, '%s'%str(x.size())
+        batch, seq_len, height, width = x.size()
+
+        x = x.view(batch*seq_len, 1, height, width)
+        for layer in self.Encoder:
+            x = layer(x)
+
+        if self.Flatten:
+            x = x.view(batch, -1)
+        else:
+            x = x.view(batch, seq_len, -1)
+
+        return x
+
 
 if __name__ == '__main__':
     model = ResInception(1,1)

@@ -37,7 +37,7 @@ manager = PathManager(dataset='virushare_20', d_type='train')
 # seq = t.load(manager.FileData())
 # seq = reshapeSeqToMatrixSeq(seq, mapping, flip=True)
 # t.save(t.Tensor(seq), manager.FileData())
-# makeMatrixData(dataset='virushare_20')
+makeMatrixData(dataset='virushare_20', shape=(40, 10, 10))
 
 # 翻转序列
 ################################################################

@@ -153,8 +153,12 @@ class ProtoEpisodeTask(EpisodeTask):
 
 
 class MatrixProtoEpisodeTask(EpisodeTask):
-    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
+    def __init__(self, k, qk, n, N, dataset,
+                 cuda=True,
+                 label_expand=False,
+                 unsqueeze=True):
         super(MatrixProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand, d_type='float')
+        self.Unsqueeze = unsqueeze
 
     def episode(self):
         k, qk, n, N = self.readParams()
@@ -178,8 +182,12 @@ class MatrixProtoEpisodeTask(EpisodeTask):
             labels = labels.cuda()
 
         # 重整数据结构，便于模型读取任务参数
-        supports = supports.view(n, k, 1, sup_seq_len, image_width, image_height)
-        queries = queries.view(n*qk, 1, que_seq_len, image_width, image_height)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+        supports = supports.view(n, k, sup_seq_len, image_width, image_height)
+        queries = queries.view(n*qk, que_seq_len, image_width, image_height)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+        if self.Unsqueeze:
+            supports = supports.unsqueeze(2)
+            queries = queries.unsqueeze(1)
 
         return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
 
@@ -242,7 +250,7 @@ def getTaskSampler(label_space, k, qk, N):
 
     return support_sampler, query_sampler
 
-def get_RN_sampler(classes, train_num, test_num, num_per_class, seed=None):
+def getRNSampler(classes, train_num, test_num, num_per_class, seed=None):
     if seed is None:
         seed = time.time()%1000000
 

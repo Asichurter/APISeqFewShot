@@ -26,11 +26,16 @@ def getBatchSequenceFunc(d_type='long'):
     return batchSequences
 
 
-def extractTaskStructFromInput(support, query, is_embedded=False):
-        support_dim_size = 6 if is_embedded else 3
-        query_dim_size = 5 if is_embedded else 2
-        len_dim_base = 1 if not is_embedded else 2      # 对于矩阵序列的输入，序列长度的维度是2([qk, in_channel=1, seq_len, height, width])
+def extractTaskStructFromInput(support, query,
+                               unsqueezed=False,
+                               is_matrix=False):
+        # support_dim_size = 6 if is_embedded else 3
+        # query_dim_size = 5 if is_embedded else 2
+        # len_dim_base = 1 if not is_embedded else 2      # 对于矩阵序列的输入，序列长度的维度是2([qk, in_channel=1, seq_len, height, width])
 
+        support_dim_size = 3 + 2*is_matrix + unsqueezed
+        query_dim_size = 2 + 2*is_matrix + unsqueezed
+        len_dim_base = 1 if not unsqueezed else 2
 
         assert len(support.size()) == support_dim_size, '支持集结构 %s 不符合要求！'%(str(support.size()))
         assert len(query.size()) == query_dim_size, '查询集结构 %s 不符合要求！'%(str(query.size()))
@@ -67,7 +72,7 @@ def squEucDistance(v1, v2, neg=False):
     return ((v1-v2)**2).sum(dim=1) * factor
 
 def cosDistance(v1, v2, neg=False, factor=10):
-    assert v1.size()==v2.size() and len(v1.size()==2), \
+    assert v1.size()==v2.size() and len(v1.size())==2, \
         '两组向量形状必须相同，且均为(batch, dim)结构！'
 
     factor = -1*factor if neg else factor

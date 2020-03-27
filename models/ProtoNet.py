@@ -5,7 +5,8 @@ import logging
 
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from components.modules import BiLstmEncoder, BiLstmCellEncoder, ResInception
+from components.modules import BiLstmEncoder, BiLstmCellEncoder, \
+                                ResInception, CNNEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -101,7 +102,9 @@ class IncepProtoNet(nn.Module):
         # input shape:
         # sup=[n, k, 1, sup_seq_len, height, width]
         # que=[batch, 1, que_seq_len, height, width]
-        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query, is_embedded=True)
+        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query,
+                                                                        unsqueezed=True,
+                                                                        is_matrix=True)
         height, width = query.size(3), query.size(4)
 
         support = support.view(n*k, 1, sup_seq_len, height, width)
@@ -124,10 +127,144 @@ class IncepProtoNet(nn.Module):
         support = repeatProtoToCompShape(support, qk, n)
         query = repeatQueryToCompShape(query, qk, n)
 
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
+        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='cos')
 
         # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
+
+
+class CNNLstmProtoNet(nn.Module):
+
+    def __init__(self,
+                 channels=[1,32,64,64],     # 默认3个卷积层
+                 lstm_input_size=64*2*2,    # matrix大小为10×10，两次池化为2×2
+                 strides=None,
+                 hidden_size=64,
+                 layer_num=1,
+                 self_att_dim=32):
+        super(CNNLstmProtoNet, self).__init__()
+
+        self.Embedding = CNNEncoder(channels=channels,
+                                    strides=strides,
+                                    flatten=False,      # 保留序列信息
+                                    pools=[True,True,False]
+                                    )
+
+        self.LstmEncoder = BiLstmEncoder(input_size=lstm_input_size,
+                                         hidden_size=hidden_size,
+                                         layer_num=layer_num,
+                                         self_att_dim=self_att_dim)
+
+    def forward(self, support, query, sup_len=None, que_len=None):
+        # input shape:
+        # sup=[n, k, sup_seq_len, height, width]
+        # que=[qk, que_seq_len, height, width]
+        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query,
+                                                                        unsqueezed=False,
+                                                                        is_matrix=True)
+        height, width = query.size(2), query.size(3)
+
+        support = support.view(n*k, sup_seq_len, height, width)
+
+        # output shape: [batch, seq_len, feature]
+        support = self.Embedding(support)
+        query = self.Embedding(query)
+
+        support = self.LstmEncoder(support)
+        query = self.LstmEncoder(query)
+
+        # TODO:直接展开序列作为特征
+        support = support.view(n, k, -1).mean(dim=1)
+        query = query.view(qk, -1)
+
+        assert support.size(1)==query.size(1), \
+            '支持集和查询集的嵌入后特征维度不相同！'
+
+        dim = support.size(1)
+
+        # 整型成为可比较的形状: [qk, n, dim]
+        support = repeatProtoToCompShape(support, qk, n)
+        query = repeatQueryToCompShape(query, qk, n)
+
+        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='cos')
+
+        # return t.softmax(similarity, dim=1)
+        return F.log_softmax(similarity, dim=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

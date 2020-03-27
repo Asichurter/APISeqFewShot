@@ -7,6 +7,9 @@ from tqdm import tqdm
 from utils.manager import PathManager
 from utils.matrix import matMulReduce
 
+#########################################################
+# 本函数输入词语矩阵，使用降维方法输出1维降维结果
+#########################################################
 def get1DRepreByRuduc(matrix):
     reduce = PCA(n_components=1)
     matrix = reduce.fit_transform(matrix).squeeze()
@@ -24,7 +27,10 @@ def get1DRepreByRuduc(matrix):
 
     return matrix
 
-
+#########################################################
+# 本函数用于将序列型输入转换为矩阵序列输入，并且可以使用flip方法
+# 将序列在矩阵内部的排列进行调整
+#########################################################
 def reshapeSeqToMatrixSeq(seq, mapping, shape=(100, 8, 5), flip=True):
     if isinstance(seq, t.Tensor):
         seq = seq.numpy()
@@ -46,11 +52,14 @@ def reshapeSeqToMatrixSeq(seq, mapping, shape=(100, 8, 5), flip=True):
     return seq
 
 
-def makeMatrixData(dataset):
+def makeMatrixData(dataset, shape=(100, 8, 5)):
     for d_type in tqdm(['train', 'validate', 'test']):
         manager = PathManager(dataset=dataset, d_type=d_type)
         matrix = np.load(manager.WordEmbedMatrix(), allow_pickle=True)
+
         mapping = get1DRepreByRuduc(matrix)
+
         seq = t.load(manager.FileData())
-        seq = reshapeSeqToMatrixSeq(seq, mapping, flip=True)
+        seq = reshapeSeqToMatrixSeq(seq, mapping, shape=shape, flip=True)
+
         t.save(t.Tensor(seq), manager.FileData())
