@@ -1,11 +1,13 @@
 import numpy as np
 import torch as t
+import torch.nn.functional as F
 
 from scripts.dataset import makeDataFile
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat
 from models.ProtoNet import IncepProtoNet
+from utils.matrix import batchDot
 
 # 制作基于下标的数据集
 ################################################################
@@ -31,13 +33,13 @@ from models.ProtoNet import IncepProtoNet
 
 # 转化数据集
 ################################################################
-manager = PathManager(dataset='virushare_20', d_type='train')
+# manager = PathManager(dataset='virushare_20', d_type='train')
 # matrix = np.load(manager.WordEmbedMatrix(), allow_pickle=True)
 # mapping = get1DRepreByRuduc(matrix)
 # seq = t.load(manager.FileData())
 # seq = reshapeSeqToMatrixSeq(seq, mapping, flip=True)
 # t.save(t.Tensor(seq), manager.FileData())
-makeMatrixData(dataset='virushare_20', shape=(40, 10, 10))
+# makeMatrixData(dataset='virushare_20', shape=(40, 10, 10))
 
 # 翻转序列
 ################################################################
@@ -52,4 +54,34 @@ makeMatrixData(dataset='virushare_20', shape=(40, 10, 10))
 # s = t.randn((5, 5, 100, 8, 5))
 # q = t.randn((75, 100, 8, 5))
 # out = m(s, q)
+################################################################
+
+# 测试自注意力
+################################################################
+x = t.Tensor([
+    [
+        [1,2,3],
+        [3,4,5]
+    ],
+    [
+        [5, 6, 7],
+        [7, 8, 9]
+    ]
+])
+
+Q = t.nn.Linear(3,3, bias=False)
+K = t.nn.Linear(3,3, bias=False)
+V = t.nn.Linear(3,3, bias=False)
+
+t.nn.init.constant_(Q.weight, 1)
+t.nn.init.constant_(K.weight, 1)
+t.nn.init.constant_(V.weight, 1)
+
+k = K(x)
+q = Q(x)
+v = V(x)
+
+w = batchDot(q, k, transpose=True)
+p = t.softmax(w, dim=2)
+z = batchDot(p, v, transpose=False)
 ################################################################

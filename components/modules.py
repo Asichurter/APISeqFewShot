@@ -49,7 +49,6 @@ class SelfAttention(nn.Module):
 
         ################################################################
         # shape: [batch, seq, dim]
-        x = self.V(x)
         att_weight = batchDot(self.Q(x), self.K(x), transpose=True) / math.sqrt(x.size(2))
         ################################################################
 
@@ -60,7 +59,7 @@ class SelfAttention(nn.Module):
         att_weight = t.softmax(att_weight, dim=2)
         # att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
 
-        return batchDot(att_weight, x)
+        return batchDot(att_weight, self.V(x))
         # return (att_weight * x).sum(dim=1)
 
 
