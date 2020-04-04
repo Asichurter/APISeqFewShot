@@ -26,7 +26,7 @@ class SelfAttention(nn.Module):
         self.V = nn.Linear(input_size, input_size, bias=False)
         ################################################################
 
-        self.Pack = pack
+        # self.Pack = pack
 
     def forward(self, x):
         packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
@@ -53,7 +53,7 @@ class SelfAttention(nn.Module):
         ################################################################
 
         if packed:
-            att_weight.masked_fill_(mask, -1*float('inf'))
+            att_weight.masked_fill_(mask, float('-inf'))
 
         # 自注意力概率分布系数，对序列隐藏态h进行加权求和
         att_weight = t.softmax(att_weight, dim=2)
@@ -61,6 +61,36 @@ class SelfAttention(nn.Module):
 
         return batchDot(att_weight, self.V(x))
         # return (att_weight * x).sum(dim=1)
+
+
+class AttnReduction(nn.Module):
+    def __init__(self, input_dim, hidden_dim=256):
+        super(AttnReduction, self).__init__()
+
+        self.IntAtt = nn.Linear(input_dim, hidden_dim, bias=False)
+        self.ExtAtt = nn.Linear(hidden_dim, 1, bias=False)
+
+    def forward(self, x, lens=None):
+        if isinstance(x, t.nn.utils.rnn.PackedSequence):
+            x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+
+        feature_dim = x.size(2)
+
+        # weight shape: [batch, seq, 1]
+        att_weight = self.ExtAtt(t.tanh(self.IntAtt(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
+
+        if lens is not None:
+            max_idx = max(lens)#lens[0]
+            batch_size = len(lens)
+            idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+            len_mask = lens.unsqueeze(1)
+            mask = idx_matrix.ge(len_mask).cuda()
+            att_weight.masked_fill_(mask, float('-inf'))
+
+        att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
+        return (att_weight * x).sum(dim=1)
+
+
 
 
 #########################################
@@ -96,7 +126,7 @@ class BiLstmEncoder(nn.Module):
             self.BN2 = nn.BatchNorm1d(2*hidden_size)
 
         if self_attention:
-            self.Attention = SelfAttention(2*hidden_size, self_att_dim, pack=True)
+            self.Attention = AttnReduction(2*hidden_size, self_att_dim)
         else:
             self.Attention = None
 
@@ -130,6 +160,61 @@ class BiLstmEncoder(nn.Module):
             # 取最后一个隐藏态的最后一层的所有方向的拼接向量
             return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
 
+
+class TransformerEncoder(nn.Module):
+    def __init__(self, layer_num, embedding_size, feature_size, att_hid=128, head_size=8, dropout=0.1):
+        super(TransformerEncoder, self).__init__()
+        encoder_layer = nn.TransformerEncoderLayer(d_model=feature_size,
+                                                   nhead=head_size)
+
+        self.Encoder = nn.TransformerEncoder(encoder_layer, layer_num)
+
+        self.PositionEncoding = PositionalEncoding(embedding_size, dropout=dropout)
+
+        self.Attention = AttnReduction(input_dim=feature_size, hidden_dim=att_hid)
+
+    def forward(self, x, lens):
+        # shape: [seq, batch, dim]
+        # 由于transformer要序列优先，因此对于batch优先的输入先进行转置
+        x = x.transpose(0,1).contiguous()
+        x = self.Encoder(self.PositionEncoding(x))          # TODO:根据lens长度信息构建mask输入到transformer中
+        x = x.transpose(0,1).contiguous()
+
+        x = self.Attention(x, lens=lens)
+        return x
+
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, d_model, dropout=0.1, max_len=4000):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(p=dropout)
+        self.d_model = d_model
+
+        pe = t.zeros(max_len, d_model)
+        position = t.arange(0, max_len, dtype=t.float).unsqueeze(1)
+        div_term = t.exp(t.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = t.sin(position * div_term)
+        pe[:, 1::2] = t.cos(position * div_term)
+        pe = pe.unsqueeze(0).transpose(0, 1)
+        self.register_buffer('pe', pe)
+
+    def forward(self, x):
+        # 由于PositionEncoding位于Transformer中，因此seq先于batch
+        # shape: [seq, batch, dim]
+        max_len = x.size(0)
+        d_model = x.size(2)
+        bacth_size = x.size(1)
+
+        pe = t.zeros(max_len, d_model)
+        position = t.arange(0, max_len, dtype=t.float).unsqueeze(1)
+        div_term = t.exp(t.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+        pe[:, 0::2] = t.sin(position * div_term)
+        pe[:, 1::2] = t.cos(position * div_term)
+        pe = pe.repeat((bacth_size,1,1)).transpose(0, 1).cuda()
+
+        x = x + pe
+
+        return self.dropout(x)
 
 class BiLstmCellLayer(nn.Module):
     def __init__(self,

@@ -6,7 +6,7 @@ import logging
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import BiLstmEncoder, BiLstmCellEncoder, \
-                                ResInception, CNNEncoder
+                                ResInception, CNNEncoder, TransformerEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -27,13 +27,16 @@ class ProtoNet(nn.Module):
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
-        # 基于双向LSTM+自注意力的解码层
-        self.Encoder = BiLstmEncoder(embed_size,
-                                     hidden_size=hidden,
-                                     layer_num=layer_num,
-                                     self_attention=self_attention,
-                                     self_att_dim=self_att_dim,
-                                     useBN=False)
+        self.Encoder = TransformerEncoder(layer_num=layer_num,
+                                          embedding_size=embed_size,
+                                          feature_size=hidden,
+                                          att_hid=self_att_dim)
+        # self.Encoder = BiLstmEncoder(embed_size,
+        #                              hidden_size=hidden,
+        #                              layer_num=layer_num,
+        #                              self_attention=self_attention,
+        #                              self_att_dim=self_att_dim,
+        #                              useBN=False)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
@@ -51,13 +54,13 @@ class ProtoNet(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        # # pack以便输入到LSTM中
-        support = pack_padded_sequence(support, sup_len, batch_first=True)
-        query = pack_padded_sequence(query, que_len, batch_first=True)
+        # # # pack以便输入到LSTM中
+        # support = pack_padded_sequence(support, sup_len, batch_first=True)
+        # query = pack_padded_sequence(query, que_len, batch_first=True)
 
         # shape: [batch, dim]
-        support = self.Encoder(support)
-        query = self.Encoder(query)
+        support = self.Encoder(support, sup_seq_len)
+        query = self.Encoder(query, que_seq_len)
 
         # support, s_len = pad_packed_sequence(support, batch_first=True)
         # query, q_len = pad_packed_sequence(query, batch_first=True)
@@ -132,10 +135,13 @@ class IncepProtoNet(nn.Module):
         # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
 
-
+##########################################################
+# 先使用3D卷积来提取每个时间步中的矩阵特征，再将时间步提取到的特征输入
+# 到LSTM中，使用注意力机制从序列中归纳表示
+##########################################################
 class CNNLstmProtoNet(nn.Module):
 
-    def __init__(self,
+    def  __init__(self,
                  channels=[1,32,64,64],     # 默认3个卷积层
                  lstm_input_size=64*2*2,    # matrix大小为10×10，两次池化为2×2
                  strides=None,

@@ -101,16 +101,21 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 # train_dataset = ImageFileDataset(train_path_manager.FileData(), N, rd_crop_size=224)
 # val_dataset = ImageFileDataset(val_path_manager.FileData(), N, rd_crop_size=224)
 
-train_task = MatrixProtoEpisodeTask(k ,qk, n, N,
-                        dataset=train_dataset,
-                        cuda=True,
-                        label_expand=expand,
-                        unsqueeze=False)
-val_task = MatrixProtoEpisodeTask(k ,qk, n, N,
-                        dataset=val_dataset,
-                        cuda=True,
-                        label_expand=expand,
-                        unsqueeze=False)
+# train_task = MatrixProtoEpisodeTask(k ,qk, n, N,
+#                         dataset=train_dataset,
+#                         cuda=True,
+#                         label_expand=expand,
+#                         unsqueeze=False)
+# val_task = MatrixProtoEpisodeTask(k ,qk, n, N,
+#                         dataset=val_dataset,
+#                         cuda=True,
+#                         label_expand=expand,
+#                         unsqueeze=False)
+
+train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
+                              cuda=True, label_expand=False)
+val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
+                              cuda=True, label_expand=False)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,
@@ -143,16 +148,16 @@ else:
 ################################################
 
 printState('init model...')
-model = CNNLstmProtoNet()
+# model = CNNLstmProtoNet()
 # model = IncepProtoNet(channels=[1, 32, 1],
 #                       depth=3)
-# model = ProtoNet(pretrained_matrix=word_matrix,
-#                  embed_size=EmbedSize,
-#                  hidden=HiddenSize,
-#                  layer_num=BiLstmLayer,
-#                  self_attention=SelfAttDim is not None,
-#                  self_att_dim=SelfAttDim,
-#                  word_cnt=wordCnt)
+model = ProtoNet(pretrained_matrix=word_matrix,
+                 embed_size=EmbedSize,
+                 hidden=HiddenSize,
+                 layer_num=BiLstmLayer,
+                 self_attention=SelfAttDim is not None,
+                 self_att_dim=SelfAttDim,
+                 word_cnt=wordCnt)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -173,7 +178,7 @@ for name, par in model.named_parameters():
 
 from torch.optim.rmsprop import RMSprop
 if optimizer_type == 'adam':
-    optimizer = t.optim.Adam(parameters)
+    optimizer = t.optim.AdamW(parameters)
 elif optimizer_type == 'rmsprop':
     optimizer = RMSprop(parameters, momentum=0.9)
 else:

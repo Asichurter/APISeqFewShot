@@ -2,12 +2,13 @@ import numpy as np
 import torch as t
 import torch.nn.functional as F
 
-from scripts.dataset import makeDataFile
+from scripts.dataset import makeDataFile, makeDatasetDirStruct
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat
 from models.ProtoNet import IncepProtoNet
 from utils.matrix import batchDot
+from scripts.embedding import *
 
 # 制作基于下标的数据集
 ################################################################
@@ -22,6 +23,15 @@ from utils.matrix import batchDot
 #                  max_seq_len=4000)
 ################################################################
 
+# 统计序列长度分布
+################################################################
+# manager = PathManager(dataset='virushare_20', d_type='all')
+# seqs = aggregateApiSequences(manager.Folder())
+# trainW2Vmodel(seqs,
+#               save_matrix_path=manager.WordEmbedMatrix(),
+#               save_word2index_path=manager.WordIndexMap(),
+#               size=16)
+################################################################
 
 # 统计序列长度分布
 ################################################################
@@ -58,30 +68,32 @@ from utils.matrix import batchDot
 
 # 测试自注意力
 ################################################################
-x = t.Tensor([
-    [
-        [1,2,3],
-        [3,4,5]
-    ],
-    [
-        [5, 6, 7],
-        [7, 8, 9]
-    ]
-])
-
-Q = t.nn.Linear(3,3, bias=False)
-K = t.nn.Linear(3,3, bias=False)
-V = t.nn.Linear(3,3, bias=False)
-
-t.nn.init.constant_(Q.weight, 1)
-t.nn.init.constant_(K.weight, 1)
-t.nn.init.constant_(V.weight, 1)
-
-k = K(x)
-q = Q(x)
-v = V(x)
-
-w = batchDot(q, k, transpose=True)
-p = t.softmax(w, dim=2)
-z = batchDot(p, v, transpose=False)
+# x = t.Tensor([
+#     [
+#         [1,2,3],
+#         [3,4,5]
+#     ],
+#     [
+#         [5, 6, 7],
+#         [7, 8, 9]
+#     ]
+# ])
+#
+# Q = t.nn.Linear(3,3, bias=False)
+# K = t.nn.Linear(3,3, bias=False)
+# V = t.nn.Linear(3,3, bias=False)
+#
+# t.nn.init.constant_(Q.weight, 1)
+# t.nn.init.constant_(K.weight, 1)
+# t.nn.init.constant_(V.weight, 1)
+#
+# k = K(x)
+# q = Q(x)
+# v = V(x)
+#
+# w = batchDot(q, k, transpose=True)
+# p = t.softmax(w, dim=2)
+# z = batchDot(p, v, transpose=False)
 ################################################################
+
+# makeDatasetDirStruct(base_path='D:/peimages/JSONs/virushare_20/')

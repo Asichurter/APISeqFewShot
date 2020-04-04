@@ -9,9 +9,9 @@
   "modelName" : "ProtoNet",
 
   "embedSize" : 16,
-  "hiddenSize" : 64,
-  "biLstmLayer" : 2,
-  "selfAttDim" : 64,
+  "hiddenSize" : 128,
+  "biLstmLayer" : 6,
+  "selfAttDim" : 128,
   "usePretrained" : true,
   "wordCount" : null,
 

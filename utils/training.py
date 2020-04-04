@@ -47,8 +47,8 @@ def extractTaskStructFromInput(support, query,
         qk = query.size(0)
         que_seq_len = query.size(len_dim_base)
 
-        assert sup_seq_len==que_seq_len, \
-            '支持集序列长度%d和查询集序列%d长度不同！'%(sup_seq_len,que_seq_len,)
+        # assert sup_seq_len==que_seq_len, \
+        #     '支持集序列长度%d和查询集序列%d长度不同！'%(sup_seq_len,que_seq_len,)
 
         return n, k, qk, sup_seq_len, que_seq_len
 

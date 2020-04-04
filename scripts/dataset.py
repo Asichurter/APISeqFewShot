@@ -119,6 +119,9 @@ def convertApiSeq2DataSeq(api_seqs, word2idx, max_size):
 # 本函数用于创建数据集的文件夹结构
 ##########################################################
 def makeDatasetDirStruct(base_path):
+    if not os.path.exists(base_path):
+        os.mkdir(base_path)
+
     os.mkdir(base_path + 'all/')
     os.mkdir(base_path + 'train/')
     os.mkdir(base_path + 'validate/')
