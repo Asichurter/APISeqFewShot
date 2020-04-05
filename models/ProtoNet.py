@@ -59,8 +59,8 @@ class ProtoNet(nn.Module):
         # query = pack_padded_sequence(query, que_len, batch_first=True)
 
         # shape: [batch, dim]
-        support = self.Encoder(support, sup_seq_len)
-        query = self.Encoder(query, que_seq_len)
+        support = self.Encoder(support, sup_len)
+        query = self.Encoder(query, que_len)
 
         # support, s_len = pad_packed_sequence(support, batch_first=True)
         # query, q_len = pad_packed_sequence(query, batch_first=True)

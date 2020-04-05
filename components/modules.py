@@ -164,8 +164,11 @@ class BiLstmEncoder(nn.Module):
 class TransformerEncoder(nn.Module):
     def __init__(self, layer_num, embedding_size, feature_size, att_hid=128, head_size=8, dropout=0.1):
         super(TransformerEncoder, self).__init__()
+        self.ForwardTrans = nn.Linear(embedding_size, feature_size)
         encoder_layer = nn.TransformerEncoderLayer(d_model=feature_size,
-                                                   nhead=head_size)
+                                                   nhead=head_size,
+                                                   dropout=dropout,
+                                                   dim_feedforward=256)
 
         self.Encoder = nn.TransformerEncoder(encoder_layer, layer_num)
 
@@ -174,10 +177,16 @@ class TransformerEncoder(nn.Module):
         self.Attention = AttnReduction(input_dim=feature_size, hidden_dim=att_hid)
 
     def forward(self, x, lens):
+        x = self.ForwardTrans(x)
+
         # shape: [seq, batch, dim]
         # 由于transformer要序列优先，因此对于batch优先的输入先进行转置
         x = x.transpose(0,1).contiguous()
-        x = self.Encoder(self.PositionEncoding(x))          # TODO:根据lens长度信息构建mask输入到transformer中
+        max_len = int(lens[0])
+        mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
+        x = self.PositionEncoding(x)
+        x = self.Encoder(src=x,
+                         src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
         x = x.transpose(0,1).contiguous()
 
         x = self.Attention(x, lens=lens)
