@@ -3,6 +3,7 @@ import torch.nn as nn
 import math
 
 from utils.matrix import batchDot
+from utils.training import getMaskFromLens, unpackAndMean
 
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
@@ -33,11 +34,12 @@ class SelfAttention(nn.Module):
         if packed:
             x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
 
-            max_idx = lens[0]
-            batch_size = len(lens)
-            idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
-            len_mask = lens.unsqueeze(1)
-            mask = idx_matrix.ge(len_mask).cuda()
+            mask = getMaskFromLens(lens)
+            # max_idx = lens[0]
+            # batch_size = len(lens)
+            # idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+            # len_mask = lens.unsqueeze(1)
+            # mask = idx_matrix.ge(len_mask).cuda()
 
         assert len(x.size()) == 3, '自注意力输入必须满足(batch, seq, feature)形式！'
         feature_dim = x.size(2)
@@ -80,11 +82,14 @@ class AttnReduction(nn.Module):
         att_weight = self.ExtAtt(t.tanh(self.IntAtt(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
 
         if lens is not None:
-            max_idx = max(lens)#lens[0]
-            batch_size = len(lens)
-            idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
-            len_mask = lens.unsqueeze(1)
-            mask = idx_matrix.ge(len_mask).cuda()
+            if not isinstance(lens, t.Tensor):
+                lens = t.Tensor(lens)
+            # max_idx = max(lens)#lens[0]
+            # batch_size = len(lens)
+            # idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+            # len_mask = lens.unsqueeze(1)
+            # mask = idx_matrix.ge(len_mask).cuda()
+            mask = getMaskFromLens(lens)
             att_weight.masked_fill_(mask, float('-inf'))
 
         att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
@@ -130,7 +135,7 @@ class BiLstmEncoder(nn.Module):
         else:
             self.Attention = None
 
-    def forward(self, x):
+    def forward(self, x, lens=None):
         # x shape: [batch, seq, feature]
         # out shape: [batch, seq, 2*hidden]
         out, h = self.Encoder(x)
@@ -144,7 +149,8 @@ class BiLstmEncoder(nn.Module):
 
         # return shape: [batch, feature]
         if self.Attention is not None:
-            out = self.Attention(out)
+            out = unpackAndMean(out)
+            # out = self.Attention(out)             # TODO: 使用简单的平均值代替注意力
             if self.UseBN:
                 out = self.BN2(out)
             return out

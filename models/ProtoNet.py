@@ -16,7 +16,7 @@ class ProtoNet(nn.Module):
                  embed_size,
                  hidden=128,
                  layer_num=1,
-                 self_attention=True,
+                 self_attention=False,
                  self_att_dim=64,
                  word_cnt=None):
         super(ProtoNet, self).__init__()
@@ -27,16 +27,18 @@ class ProtoNet(nn.Module):
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
-        self.Encoder = TransformerEncoder(layer_num=layer_num,
-                                          embedding_size=embed_size,
-                                          feature_size=hidden,
-                                          att_hid=self_att_dim)
-        # self.Encoder = BiLstmEncoder(embed_size,
-        #                              hidden_size=hidden,
-        #                              layer_num=layer_num,
-        #                              self_attention=self_attention,
-        #                              self_att_dim=self_att_dim,
-        #                              useBN=False)
+        self.EmbedNorm = nn.LayerNorm(16)
+
+        # self.Encoder = TransformerEncoder(layer_num=layer_num,
+        #                                   embedding_size=embed_size,
+        #                                   feature_size=hidden,
+        #                                   att_hid=self_att_dim)
+        self.Encoder = BiLstmEncoder(embed_size,
+                                     hidden_size=hidden,
+                                     layer_num=layer_num,
+                                     self_attention=self_attention,
+                                     self_att_dim=self_att_dim,
+                                     useBN=False)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
@@ -54,9 +56,12 @@ class ProtoNet(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
+        support = self.EmbedNorm(support)
+        query = self.EmbedNorm(query)
+
         # # # pack以便输入到LSTM中
-        # support = pack_padded_sequence(support, sup_len, batch_first=True)
-        # query = pack_padded_sequence(query, que_len, batch_first=True)
+        support = pack_padded_sequence(support, sup_len, batch_first=True)
+        query = pack_padded_sequence(query, que_len, batch_first=True)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)

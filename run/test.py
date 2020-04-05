@@ -12,15 +12,15 @@ from scripts.embedding import *
 
 # 制作基于下标的数据集
 ################################################################
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare_20', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  num_per_class=20,
-#                  max_seq_len=4000)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='virushare_20', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 num_per_class=20,
+                 max_seq_len=500)
 ################################################################
 
 # 统计序列长度分布

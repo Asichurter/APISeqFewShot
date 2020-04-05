@@ -3,15 +3,15 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 15,
+  "qk" : 5,
 
   "version" : 1,
   "modelName" : "ProtoNet",
 
   "embedSize" : 16,
   "hiddenSize" : 128,
-  "biLstmLayer" : 6,
-  "selfAttDim" : 128,
+  "biLstmLayer" : 2,
+  "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 

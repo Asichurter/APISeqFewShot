@@ -25,7 +25,12 @@ def getBatchSequenceFunc(d_type='long'):
 
     return batchSequences
 
-
+################################################
+# 从输入数据中获取任务元参数，如k，n，qk等
+# arg:
+# unsqueezed: 是否因为通道维度而增加了一个维度
+# is_matrix: 是否是矩阵序列型输入
+################################################
 def extractTaskStructFromInput(support, query,
                                unsqueezed=False,
                                is_matrix=False):
@@ -90,4 +95,36 @@ def protoDisAdapter(support, query, qk, n, dim, dis_type='euc'):
         sim = cosDistance(support, query, neg=False)
 
     return sim.view(qk, n)
+
+
+################################################
+# 根据提供的长度信息，返回一个长度以后的PAD位置的mask
+# 掩码。PAD位置会被置位True，其余位置被置于False
+################################################
+def getMaskFromLens(lens):
+    max_idx = lens[0]
+    batch_size = len(lens)
+    idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+    len_mask = lens.unsqueeze(1)
+    mask = idx_matrix.ge(len_mask).cuda()
+
+    return mask
+
+
+################################################
+# 输入一个PackedSequence，将其unpack，并根据lens信息
+# 将PAD位置遮盖，并将有效位置取平均
+################################################
+def unpackAndMean(x):
+    x, lens = t.nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+    dim = x.size(2)
+    bool_mask = getMaskFromLens(lens).unsqueeze(2).repeat(1,1,dim)
+    # 使用0将padding部分的向量利用相乘掩码掉
+    val_mask = t.ones_like(x).cuda().masked_fill_(bool_mask, value=0)
+    lens_div_term = lens.unsqueeze(1).repeat(1,dim).cuda()
+    # 最后让原向量与掩码值向量相乘抹去padding部分，相加后除以有效长度
+    # 获得有效长度部分的平均值
+    x = (x*val_mask).sum(dim=1) / lens_div_term
+    return x
+
 
