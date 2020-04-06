@@ -20,7 +20,7 @@ for d_type in ['train', 'validate', 'test']:
                  seq_length_save_path=manager.FileSeqLen(),
                  data_save_path=manager.FileData(),
                  num_per_class=20,
-                 max_seq_len=500)
+                 max_seq_len=1000)
 ################################################################
 
 # 统计序列长度分布

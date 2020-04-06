@@ -63,7 +63,7 @@
     },
 
     "Linux": {
-      "datasetBasePath" : "/home/wangpeng/workplace/data/API/"
+      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
     }
   }
 }

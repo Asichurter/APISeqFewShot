@@ -33,8 +33,9 @@ class PathManager:
     # 文件数据对应的长度表路径
     FileSeqLenPathTemp = '%s/data/%s/seqLength.json'
 
-    def __init__(self, dataset, model_name=None, d_type='all',
-                 parent_path='D:/peimages/JSONs/'):
+    def __init__(self, dataset, model_name=None, d_type='all'):
+        manager = TrainingConfigManager(cfg_path='../run/runConfig.json')
+        parent_path = manager.systemParams()
 
         self.ParentPath = parent_path
 
