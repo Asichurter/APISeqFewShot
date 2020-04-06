@@ -1,0 +1,69 @@
+{
+  "dataset" :  "virushare_20",
+
+  "k" : 5,
+  "n" : 5,
+  "qk" : 5,
+
+  "version" : 1,
+  "modelName" : "ProtoNet",
+
+  "embedSize" : 16,
+  "hiddenSize" : 128,
+  "biLstmLayer" : 2,
+  "selfAttDim" : null,
+  "usePretrained" : true,
+  "wordCount" : null,
+
+  "valCycle" : 100,
+  "valEpisode" : 50,
+
+  "lrDecayIters" : 15000,
+  "lrDecayGamma" : 0.1,
+  "optimizer": "adam",
+  "weightDecay" : 1e-4,
+  "lossFunction": "nll",
+  "defaultLr" : 1e-3,
+  "lrs" : {
+    "Embedding.weight" : 1e-3
+  },
+
+  "recordGradient" : false,
+  "gradientUpdateCycle" : 1000,
+
+  "trainingVerbose" : false,
+  "useVisdom" : true,
+
+  "trainingEpoch" : 50000,
+
+  "Ns" : {
+          "cluster":20,
+          "test":20,
+          "virushare_20":20,
+          "drebin_10":10,
+          "miniImageNet":600,
+          "virushare_20_image":20
+          },
+
+  "plot" : {
+    "types" : ["line", "line"],
+    "titles": ["accuracy", "loss"],
+    "xlabels" : ["iterations", "iterations"],
+    "ylabels" : ["accuracy", "loss"],
+    "legends" : [
+                ["train acc", "val acc"],
+                ["train loss", "val loss"]
+    ]
+  },
+
+  "platform" : {
+
+    "Windows": {
+      "datasetBasePath" : "D:/peimages/JSONs/"
+    },
+
+    "Linux": {
+      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+    }
+  }
+}
