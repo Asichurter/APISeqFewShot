@@ -85,12 +85,10 @@ loss = t.nn.NLLLoss().cuda() \
 printState('init managers...')
 train_path_manager = PathManager(dataset=data_folder,
                                  d_type='train',
-                                 model_name=model_name,
-                                 parent_path=datasetBasePath)
+                                 model_name=model_name)
 val_path_manager = PathManager(dataset=data_folder,
                                d_type='validate',
-                               model_name=model_name,
-                               parent_path=datasetBasePath)
+                               model_name=model_name)
 
 train_dataset = SeqFileDataset(train_path_manager.FileData(),
                                train_path_manager.FileSeqLen(),
