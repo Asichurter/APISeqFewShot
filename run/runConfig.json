@@ -8,7 +8,7 @@
   "version" : 1,
   "modelName" : "ProtoNet",
 
-  "embedSize" : 16,
+  "embedSize" : 64,
   "hiddenSize" : 128,
   "biLstmLayer" : 6,
   "selfAttDim" : null,
@@ -20,7 +20,7 @@
 
   "lrDecayIters" : 15000,
   "lrDecayGamma" : 0.1,
-  "optimizer": "adam",
+  "optimizer": "adagrad",
   "weightDecay" : 1e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,

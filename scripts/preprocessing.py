@@ -209,25 +209,28 @@ def statApiFrequency(json_path,
 # 本函数用于将一些非标准的别名或者同一调用的多种类型映射为标准
 # 的api名称
 #####################################################
-def mappingApiNormalize(json_path, mapping):
+def mappingApiNormalize(json_path, mapping, is_class_dir=False):
     reporter = Reporter()
 
-    for item in tqdm(os.listdir(json_path)):
-        item_path = json_path + item + '/%s.json'%item
+    for folder in tqdm(os.listdir(json_path)):
 
-        try:
-            report = loadJson(item_path)
+        items = os.listdir(json_path + folder + '/') if is_class_dir else [folder+'.json']
 
-            for i in range(len(report['apis'])):
-                if report['apis'][i] in mapping:
-                    report['apis'][i] = mapping[report['apis'][i]]
+        for item in items:
+            item_path = json_path + folder + '/' + item
+            try:
+                report = loadJson(item_path)
 
-            dumpJson(report, item_path)
+                for i in range(len(report['apis'])):
+                    if report['apis'][i] in mapping:
+                        report['apis'][i] = mapping[report['apis'][i]]
 
-            reporter.logSuccess()
+                dumpJson(report, item_path)
 
-        except Exception as e:
-            reporter.logError(item, str(e))
+                reporter.logSuccess()
+
+            except Exception as e:
+                reporter.logError(item, str(e))
 
     reporter.report()
 
@@ -350,7 +353,7 @@ def statSatifiedClasses(pe_path,
         printBulletin('More than %d items (%d in total)' % (stair, len(stair_cls_cnt[stair])))
 
     if count_dump_path is not None:
-        dumpJson(stair_cls_cnt, count_dump_path)
+        dumpJson(stair_cls_cnt, count_dump_path, indent=None)
 
 
 #####################################################
@@ -386,7 +389,8 @@ if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='all')
 
     '''
-    调用顺序：extract -> mapping -> removeRedundance -> apiStat -> stat_classes -> collect
+    调用顺序：extract -> mapping -> removeRedundance -> (ngram) -> apiStat 
+            -> stat_classes -> collect
     '''
 
     # extractApiFromJson()

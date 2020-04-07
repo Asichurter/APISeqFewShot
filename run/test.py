@@ -2,13 +2,15 @@ import numpy as np
 import torch as t
 import torch.nn.functional as F
 
-from scripts.dataset import makeDataFile, makeDatasetDirStruct
+from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
-from scripts.preprocessing import apiStat
+from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
+                                    collectJsonByClass, mappingApiNormalize
 from models.ProtoNet import IncepProtoNet
 from utils.matrix import batchDot
 from scripts.embedding import *
+from extractors.ngram import statNGram, convertToNGramSeq
 
 # 制作基于下标的数据集
 ################################################################
@@ -25,19 +27,89 @@ for d_type in ['train', 'validate', 'test']:
 
 # 统计序列长度分布
 ################################################################
+# apiStat('/home/asichurter/datasets/JSONs/jsons-3gram/',
+#         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
+#         dump_report_path=None,#'/home/asichurter/datasets/reports/virushare_3gram_api_report.json',
+#         dump_apiset_path=None,#'/home/asichurter/datasets/reports/virushare_3gram_api_set.json',
+#         class_dir=False)
+################################################################
+
+
+
+# 统计满足数量规模的类别
+################################################################
+# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
+#                     json_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+#                     report_path='/home/asichurter/datasets/reports/virushare_3gram_api_report.json',
+#                     stat_stairs=[5,10,15,20],
+#                     count_dump_path='/home/asichurter/datasets/reports/virushare_3gram_scale_report.json')
+################################################################
+
+# 按照已经知道的满足规模的类进行收集
+################################################################
+# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare_20/')
+# collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
+#                    json_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+#                    dst_path='/home/asichurter/datasets/JSONs/virushare_20/all/',
+#                    selected_classes=["ibryte", "zapchast", "xorer", "installmonetizer", "kovter", "lunam", "darkkomet", "urelas", "refroso", "ipamor", "bundlore", "scrinject", "startp", "fakeie", "blacole", "msposer", "soft32downloader", "bettersurf", "dealply", "outbrowse", "psyme", "patchload", "dlhelper", "4shared", "badur", "fearso", "pirminay", "faceliker", "autoit", "kykymber", "cpllnk", "qqpass", "darbyen", "hijacker", "domaiq", "kido", "fujacks", "redir", "jyfi", "scarsi", "webprefix", "llac", "fosniw", "fbjack", "softcnapp", "getnow", "1clickdownload", "gator", "inor", "wonka", "softonic", "nimda", "downloadsponsor", "downloadadmin", "egroupdial", "wabot", "antavmu", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "icloader", "reconyc", "vilsel", "installerex", "downloadassistant", "sytro", "sefnit", "staser", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "firseria", "loadmoney", "mydoom", "acda", "extenbro", "decdec", "black", "loring", "xtrat", "midia", "shipup", "gepys", "zvuzona", "urausy", "lineage", "refresh", "yoddos", "iframeref", "mikey", "goredir", "instally", "toggle", "hidelink", "airinstaller", "hicrazyk", "simbot", "trymedia", "lipler", "ircbot", "hiloti", "qhost", "buterat", "includer", "iframeinject", "directdownloader", "c99shell", "windef", "vittalia"])
+################################################################
+
+
+# 将数据集转化为下标形式来减少内存占用
+################################################################
+# apiSet = loadJson('/home/asichurter/datasets/reports/virushare_3gram_api_set.json')['api_set']
+# mapping = {name:str(i) for i,name in enumerate(apiSet)}
+# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/virushare_20/all/',
+#                     mapping=mapping,
+#                     is_class_dir=True)
+################################################################
+
+
+# 分割数据集
+################################################################
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare_20/all/',
+#            dest='/home/asichurter/datasets/JSONs/virushare_20/train/',
+#            ratio=113,
+#            mode='c',
+#            is_dir=True)
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare_20/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare_20/validate/',
+#            ratio=20,
+#            mode='x',
+#            is_dir=True)
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare_20/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare_20/test/',
+#            ratio=20,
+#            mode='x',
+#            is_dir=True)
+################################################################
+
+
+# 训练W2V模型
+################################################################
 # manager = PathManager(dataset='virushare_20', d_type='all')
 # seqs = aggregateApiSequences(manager.Folder())
 # trainW2Vmodel(seqs,
 #               save_matrix_path=manager.WordEmbedMatrix(),
 #               save_word2index_path=manager.WordIndexMap(),
-#               size=16)
+#               size=64)
 ################################################################
 
-# 统计序列长度分布
+# 统计ngram
 ################################################################
-# apiStat('D:/peimages/PEs/virushare_20/jsons/',
-#         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         class_dir=False)
+# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons-3gram/')
+#
+# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+#                        window=3,
+#                        dict_save_path='/home/asichurter/datasets/JSONs/3gram_dict.json',
+#                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95])
+#
+# num = int(input('NGram >> '))
+#
+# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+#                   window=3,
+#                   ngram_dict=ngram_dict,
+#                   ngram_max_nu93m=num)
 ################################################################
 
 
