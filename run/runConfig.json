@@ -10,7 +10,7 @@
 
   "embedSize" : 16,
   "hiddenSize" : 128,
-  "biLstmLayer" : 2,
+  "biLstmLayer" : 6,
   "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
@@ -32,7 +32,7 @@
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : true,
+  "useVisdom" : false,
 
   "trainingEpoch" : 50000,
 

@@ -166,19 +166,23 @@ statParamNumber(model)
 printState('init parameters...')
 # model.apply(LstmInit)
 
-parameters = []
-for name, par in model.named_parameters():
-    # print(name)
-    if name in lrs:
-        parameters += [{'params': [par], 'lr':lrs[name], 'weight_decay': weight_decay}]
-    else:
-        parameters += [{'params': [par], 'lr':default_lr, 'weight_decay': weight_decay}]
+# parameters = []
+# for name, par in model.named_parameters():
+#     # print(name)
+#     if name in lrs:
+#         parameters += [{'params': [par], 'lr':lrs[name], 'weight_decay': weight_decay}]
+#     else:
+#         parameters += [{'params': [par], 'lr':default_lr, 'weight_decay': weight_decay}]
 
 from torch.optim.rmsprop import RMSprop
 if optimizer_type == 'adam':
-    optimizer = t.optim.AdamW(parameters)
+    optimizer = t.optim.AdamW(model.parameters(), lr=default_lr, weight_decay=weight_decay)
+    # optimizer = t.optim.AdamW(parameters)
+elif optimizer_type == 'adagrad':
+    optimizer = t.optim.Adagrad(model.parameters(), lr=default_lr, weight_decay=weight_decay)
 elif optimizer_type == 'rmsprop':
-    optimizer = RMSprop(parameters, momentum=0.9)
+    optimizer = t.optim.RMSprop(model.parameters(), lr=default_lr, weight_decay=weight_decay)
+    # optimizer = RMSprop(parameters, momentum=0.9)
 else:
     raise ValueError
 

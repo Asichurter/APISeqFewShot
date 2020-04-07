@@ -6,7 +6,8 @@ import logging
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import BiLstmEncoder, BiLstmCellEncoder, \
-                                ResInception, CNNEncoder, TransformerEncoder
+                                ResInception, CNNEncoder, TransformerEncoder, \
+                                CNNEncoder1D
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -27,7 +28,7 @@ class ProtoNet(nn.Module):
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
-        self.EmbedNorm = nn.LayerNorm(16)
+        self.EmbedNorm = nn.LayerNorm(embed_size)
 
         # self.Encoder = TransformerEncoder(layer_num=layer_num,
         #                                   embedding_size=embed_size,
@@ -45,6 +46,7 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
+        self.CNN = CNNEncoder1D(in_dim=hidden*2, out_dim=256)
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
@@ -59,13 +61,19 @@ class ProtoNet(nn.Module):
         support = self.EmbedNorm(support)
         query = self.EmbedNorm(query)
 
-        # # # pack以便输入到LSTM中
+        # # pack以便输入到LSTM中
         support = pack_padded_sequence(support, sup_len, batch_first=True)
         query = pack_padded_sequence(query, que_len, batch_first=True)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
+
+        support, sup_len = pad_packed_sequence(support, batch_first=True)
+        query, que_len = pad_packed_sequence(query, batch_first=True)
+
+        support = self.CNN(support)
+        query = self.CNN(query)
 
         # support, s_len = pad_packed_sequence(support, batch_first=True)
         # query, q_len = pad_packed_sequence(query, batch_first=True)

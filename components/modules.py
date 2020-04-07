@@ -150,21 +150,24 @@ class BiLstmEncoder(nn.Module):
         # return shape: [batch, feature]
         if self.Attention is not None:
             out = unpackAndMean(out)
-            # out = self.Attention(out)             # TODO: 使用简单的平均值代替注意力
+            # out = self.Attention(out)
             if self.UseBN:
                 out = self.BN2(out)
             return out
         else:
-            # 没有自注意力时，返回最后一个隐藏态
-            num_directions = 2 if self.Encoder.bidirectional else 1
-            batch_size = h.size(1)
-            h = h.view(self.Encoder.num_layers,
-                       num_directions,
-                       batch_size,
-                       self.Encoder.hidden_size)
 
+            # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
+            return out
+
+            # 没有自注意力时，返回最后一个隐藏态
+            # num_directions = 2 if self.Encoder.bidirectional else 1
+            # batch_size = h.size(1)
+            # h = h.view(self.Encoder.num_layers,
+            #            num_directions,
+            #            batch_size,
+            #            self.Encoder.hidden_size)
             # 取最后一个隐藏态的最后一层的所有方向的拼接向量
-            return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
+            # return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
 
 
 class TransformerEncoder(nn.Module):
@@ -442,6 +445,42 @@ def CNNBlock(in_feature, out_feature, stride=1, kernel=3, padding=1,
 
     return nn.Sequential(*layers)
 
+
+
+def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
+             relu=True, pool=True, pool_size=2):
+    layers = [nn.Conv1d(in_feature, out_feature,
+                  kernel_size=kernel,
+                  padding=padding,
+                  stride=stride,
+                  bias=False),
+            nn.BatchNorm1d(out_feature)]
+
+    if relu:
+        layers.append(nn.ReLU(inplace=True))
+    if pool:
+        layers.append(nn.AdaptiveMaxPool1d(1))
+
+    return nn.Sequential(*layers)
+
+
+###############################################################
+# 参考HATT-ProtoNet中的Encoding实现，使用CNN在序列维度上进行卷积来
+# 解码从RNN中提取到的特征
+###############################################################
+class CNNEncoder1D(nn.Module):
+    def __init__(self, in_dim, out_dim, kernel_size=3):
+        super(CNNEncoder1D, self).__init__()
+
+        self.Encoder = CNNBlock1D(in_dim, out_dim,
+                                  kernel=kernel_size,
+                                  padding=1)
+
+    def forward(self, x):
+        # input shape: [batch, seq, dim]
+        x = x.transpose(1,2).contiguous()
+        x = self.Encoder(x)
+        return x.squeeze()
 
 
 class CNNEncoder(nn.Module):
