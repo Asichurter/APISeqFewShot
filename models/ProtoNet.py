@@ -7,7 +7,7 @@ from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import BiLstmEncoder, BiLstmCellEncoder, \
                                 ResInception, CNNEncoder, TransformerEncoder, \
-                                CNNEncoder1D
+                                CNNEncoder1D, CNNEncoder2D
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -30,10 +30,27 @@ class ProtoNet(nn.Module):
 
         self.EmbedNorm = nn.LayerNorm(embed_size)
 
+        # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
+        #                             kernel_sizes=[3,3,3,3],
+        #                             paddings=[1,1,1,1],
+        #                             relus=[True,True,True,True],
+        #                             pools=['max','max','max','ada'])
+        # self.Encoder = CNNEncoder1D(dims=[embed_size, 64, 128, 256, 256],
+        #                             kernel_sizes=[3,3,3,3],
+        #                             paddings=[1,1,1,1],
+        #                             relus=[True,True,True,True],
+        #                             pools=['max','max','max','ada'])
+        # self.Encoder = CNNEncoder1D(dims=[embed_size, 256, 256],
+        #                             kernel_sizes=[3,3],
+        #                             paddings=[1,1],
+        #                             relus=[True,True],
+        #                             pools=['max','ada'])
+
         # self.Encoder = TransformerEncoder(layer_num=layer_num,
         #                                   embedding_size=embed_size,
         #                                   feature_size=hidden,
-        #                                   att_hid=self_att_dim)
+        #                                   att_hid=self_att_dim,
+        #                                   reduce=True)
         self.Encoder = BiLstmEncoder(embed_size,
                                      hidden_size=hidden,
                                      layer_num=layer_num,
@@ -46,7 +63,7 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.CNN = CNNEncoder1D(in_dim=hidden*2, out_dim=256)
+        self.CNN = CNNEncoder1D(dims=[hidden*2, 512])
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
@@ -61,7 +78,7 @@ class ProtoNet(nn.Module):
         support = self.EmbedNorm(support)
         query = self.EmbedNorm(query)
 
-        # # pack以便输入到LSTM中
+        # # # pack以便输入到LSTM中
         support = pack_padded_sequence(support, sup_len, batch_first=True)
         query = pack_padded_sequence(query, que_len, batch_first=True)
 

@@ -3,36 +3,36 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
   "version" : 1,
   "modelName" : "ProtoNet",
 
   "embedSize" : 64,
-  "hiddenSize" : 128,
-  "biLstmLayer" : 6,
+  "hiddenSize" : 256,
+  "biLstmLayer" : 2,
   "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 
   "valCycle" : 100,
-  "valEpisode" : 50,
+  "valEpisode" : 100,
 
   "lrDecayIters" : 15000,
   "lrDecayGamma" : 0.1,
-  "optimizer": "adagrad",
+  "optimizer": "adam",
   "weightDecay" : 1e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-3
+    "Embedding.weight" : 1e-4
   },
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : false,
+  "useVisdom" : true,
 
   "trainingEpoch" : 50000,
 

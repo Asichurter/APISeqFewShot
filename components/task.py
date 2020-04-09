@@ -38,16 +38,17 @@ class EpisodeTask:
 
         return k, qk, n, N
 
-    def getLabelSpace(self):
-        rd.seed(magicSeed())
+    def getLabelSpace(self, seed=None):
+        seed = magicSeed() if seed is None else seed
+        rd.seed(seed)
         classes_list = [i for i in range(self.Dataset.ClassNum)]
         sampled_classes = rd.sample(classes_list, self.Params['n'])
 
         # print('label space: ', sampled_classes)
         return sampled_classes
 
-    def getTaskSampler(self, label_space):
-        task_seed = magicSeed()
+    def getTaskSampler(self, label_space, seed=None):
+        task_seed = magicSeed() if seed is None else seed
         k, qk, n, N = self.readParams()
 
         # rd.seed(task_seed)
@@ -126,11 +127,11 @@ class ProtoEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
         super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand)
 
-    def episode(self):
+    def episode(self, task_seed=None, sampling_seed=None):
         k, qk, n, N = self.readParams()
 
-        label_space = self.getLabelSpace()
-        support_sampler, query_sampler = self.getTaskSampler(label_space)
+        label_space = self.getLabelSpace(task_seed)
+        support_sampler, query_sampler = self.getTaskSampler(label_space, sampling_seed)
         supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
 
         # 已修正：因为支持集和查询集的序列长度因为pack而长度不一致，需要分开

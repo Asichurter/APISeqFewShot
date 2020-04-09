@@ -7,7 +7,7 @@ from utils.training import getMaskFromLens, unpackAndMean
 
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
-# 的自注意力对齐结构，返回序列的解码结果。
+# 的自注意力对齐结构结果，返回的还是一个等长的序列。
 # 使用的是两个全连接层，使用tanh激活。
 #########################################
 class SelfAttention(nn.Module):
@@ -149,8 +149,8 @@ class BiLstmEncoder(nn.Module):
 
         # return shape: [batch, feature]
         if self.Attention is not None:
-            out = unpackAndMean(out)
-            # out = self.Attention(out)
+            # out = unpackAndMean(out)
+            out = self.Attention(out)
             if self.UseBN:
                 out = self.BN2(out)
             return out
@@ -171,7 +171,13 @@ class BiLstmEncoder(nn.Module):
 
 
 class TransformerEncoder(nn.Module):
-    def __init__(self, layer_num, embedding_size, feature_size, att_hid=128, head_size=8, dropout=0.1):
+    def __init__(self, layer_num,
+                 embedding_size,
+                 feature_size,
+                 att_hid=128,
+                 head_size=8,
+                 dropout=0.1,
+                 reduce=True):
         super(TransformerEncoder, self).__init__()
         self.ForwardTrans = nn.Linear(embedding_size, feature_size)
         encoder_layer = nn.TransformerEncoderLayer(d_model=feature_size,
@@ -183,7 +189,7 @@ class TransformerEncoder(nn.Module):
 
         self.PositionEncoding = PositionalEncoding(embedding_size, dropout=dropout)
 
-        self.Attention = AttnReduction(input_dim=feature_size, hidden_dim=att_hid)
+        self.Attention = AttnReduction(input_dim=feature_size, hidden_dim=att_hid) if reduce else None
 
     def forward(self, x, lens):
         x = self.ForwardTrans(x)
@@ -198,7 +204,8 @@ class TransformerEncoder(nn.Module):
                          src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
         x = x.transpose(0,1).contiguous()
 
-        x = self.Attention(x, lens=lens)
+        if self.Attention is not None:
+            x = self.Attention(x, lens)
         return x
 
 class PositionalEncoding(nn.Module):
@@ -429,8 +436,8 @@ class ResInception(nn.Module):
         # 按channel维度连接所有特征
         return t.cat((x, x_1, x_3, x_5), dim=1)
 
-def CNNBlock(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool=True):
+def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
+             relu=True, pool='max', flatten=False):
     layers = [nn.Conv2d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
@@ -440,15 +447,21 @@ def CNNBlock(in_feature, out_feature, stride=1, kernel=3, padding=1,
 
     if relu:
         layers.append(nn.ReLU(inplace=True))
-    if pool:
+
+    if pool == 'max':
         layers.append(nn.MaxPool2d(2))
+    elif pool == 'ada':
+        layers.append(nn.AdaptiveMaxPool2d(1))
+
+    if flatten:
+        layers.append(nn.Flatten(start_dim=1))
 
     return nn.Sequential(*layers)
 
 
 
 def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool=True, pool_size=2):
+             relu=True, pool=True):
     layers = [nn.Conv1d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
@@ -458,8 +471,11 @@ def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
 
     if relu:
         layers.append(nn.ReLU(inplace=True))
-    if pool:
+
+    if pool == 'ada':
         layers.append(nn.AdaptiveMaxPool1d(1))
+    elif pool == 'max':
+        layers.append(nn.MaxPool1d(2))
 
     return nn.Sequential(*layers)
 
@@ -469,16 +485,57 @@ def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
 # 解码从RNN中提取到的特征
 ###############################################################
 class CNNEncoder1D(nn.Module):
-    def __init__(self, in_dim, out_dim, kernel_size=3):
+    def __init__(self,
+                 dims,
+                 kernel_sizes=[3],
+                 paddings=[1],
+                 relus=[True],
+                 pools=['ada']):
         super(CNNEncoder1D, self).__init__()
 
-        self.Encoder = CNNBlock1D(in_dim, out_dim,
-                                  kernel=kernel_size,
-                                  padding=1)
+        layers = [CNNBlock1D(dims[i], dims[i+1],
+                             kernel=kernel_sizes[i],
+                             padding=paddings[i],
+                             relu=relus[i],
+                             pool=pools[i])
+                  for i in range(len(dims)-1)]
 
-    def forward(self, x):
+        self.Encoder = nn.Sequential(*layers)
+
+    def forward(self, x, lens=None):
         # input shape: [batch, seq, dim]
         x = x.transpose(1,2).contiguous()
+        x = self.Encoder(x)
+        return x.squeeze()
+
+
+
+###############################################################
+# 参考HATT-ProtoNet中的Encoding实现，使用CNN在序列维度上进行卷积来
+# 解码从RNN中提取到的特征
+###############################################################
+class CNNEncoder2D(nn.Module):
+    def __init__(self,
+                 dims,
+                 kernel_sizes=[3],
+                 paddings=[1],
+                 relus=[True],
+                 pools=['ada']):
+        super(CNNEncoder2D, self).__init__()
+
+        layers = [CNNBlock2D(dims[i], dims[i+1],
+                             kernel=kernel_sizes[i],
+                             padding=paddings[i],
+                             relu=relus[i],
+                             pool=pools[i],
+                             flatten= i==len(dims)-2)
+                  for i in range(len(dims)-1)]
+
+        self.Encoder = nn.Sequential(*layers)
+
+    def forward(self, x, lens=None):
+        # input shape: [batch, seq, dim]
+        x = x.transpose(1,2).contiguous().unsqueeze(1)
         x = self.Encoder(x)
         return x.squeeze()
 
