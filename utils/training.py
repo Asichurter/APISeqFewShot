@@ -128,3 +128,14 @@ def unpackAndMean(x):
     return x
 
 
+def avgOverHiddenStates(hs, lens):
+    # hs shape: [batch, seq, dim]
+    # lens shape: [batch]
+    dim = hs.size(2)
+    lens = lens.unsqueeze(1).repeat(1,dim).cuda()
+    hs = hs.sum(dim=1) / lens
+
+    return hs
+
+
+

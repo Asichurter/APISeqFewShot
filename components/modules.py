@@ -1,5 +1,6 @@
 import torch as t
 import torch.nn as nn
+import torch.nn.functional as F
 import math
 
 from utils.matrix import batchDot
@@ -437,7 +438,7 @@ class ResInception(nn.Module):
         return t.cat((x, x_1, x_3, x_5), dim=1)
 
 def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool='max', flatten=False):
+             relu=True, pool='max', flatten=None):
     layers = [nn.Conv2d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
@@ -454,7 +455,7 @@ def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
         layers.append(nn.AdaptiveMaxPool2d(1))
 
     if flatten:
-        layers.append(nn.Flatten(start_dim=1))
+        layers.append(nn.Flatten(start_dim=flatten))
 
     return nn.Sequential(*layers)
 
@@ -503,9 +504,11 @@ class CNNEncoder1D(nn.Module):
         self.Encoder = nn.Sequential(*layers)
 
     def forward(self, x, lens=None):
-        # input shape: [batch, seq, dim]
+        # input shape: [batch, seq, dim] => [batch, dim(channel), seq]
         x = x.transpose(1,2).contiguous()
         x = self.Encoder(x)
+
+        # shape: [batch, dim, seq]
         return x.squeeze()
 
 
@@ -533,11 +536,44 @@ class CNNEncoder2D(nn.Module):
 
         self.Encoder = nn.Sequential(*layers)
 
-    def forward(self, x, lens=None):
+    def forward(self, x, lens=None, transposed=True):
         # input shape: [batch, seq, dim]
-        x = x.transpose(1,2).contiguous().unsqueeze(1)
+        x = x.unsqueeze(1)
+        if transposed:
+            x = x.transpose(1,2).contiguous()
         x = self.Encoder(x)
         return x.squeeze()
+
+
+class CnnNGramEncoder(nn.Module):
+    def __init__(self,
+                 dims,
+                 kernel_sizes=[3],
+                 paddings=[1],
+                 relus=[True],
+                 pools=['ada']):
+        super(CnnNGramEncoder, self).__init__()
+
+        layers = [CNNBlock2D(dims[i], dims[i+1],
+                             kernel=kernel_sizes[i],
+                             padding=paddings[i],
+                             relu=relus[i],
+                             pool=None)
+                  for i in range(len(dims)-1)]
+
+        self.Encoder = nn.Sequential(*layers)
+
+    def forward(self, x, lens=None):
+        # input shape: [batch, 1, seq, dim]
+        seq_len = x.size(1)
+        x = x.unsqueeze(1)
+        x = self.Encoder(x)
+
+        x = F.adaptive_max_pool2d(x, (seq_len,1))
+
+        # shape: [batch, channel, seq, dim=1] => [batch, seq, channel(dim=1)]
+        return x.squeeze().transpose(1,2).contiguous().flatten(start_dim=2)
+
 
 
 class CNNEncoder(nn.Module):

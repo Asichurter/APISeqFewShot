@@ -19,9 +19,17 @@ CNN进行解码效果好于使用注意力
 
 # 4.9 TODO
 
-- 测试Transformer在本数据集上的fine-tuning（考虑使用原API名称）
+- 测试Transformer在本数据集上的fine-tuning（考虑使用原API名称） ×
 
 # 4.9
 
 - 在seq_len=50的数据集上，LSTM+CNN的表现比100更好，说明存在长序列噪声
-的可能
+的可能。但是短序列的过拟合现象更加明显，val_loss 保持在1.57左右的水平，
+而train_loss已经下降到1.3左右的水平(1.png是CNN在先，2.png是CNN在LSTM后)
+
+- 根据Mutiple Metric论文中指出的：可能任务间存在较大的差异(variation)，
+导致common metric方法不能很好奏效
+
+# 4.10 TODO
+
+- 测试如ConvProtoNet, InductionNet和Hybrid-attention Net等其他模型
