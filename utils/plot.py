@@ -1,5 +1,6 @@
 import visdom
 import numpy as np
+import matplotlib.pyplot as plt
 
 class VisdomPlot:
 
@@ -37,3 +38,31 @@ class VisdomPlot:
             return self.Handle.line
         else:
             raise NotImplementedError('暂未实现的类型:%d'%t)
+
+def plotLine(points_list,
+             label_list,
+             title='',
+             gap=100,
+             color_list=['red'],
+             style_list=['-'],
+             grid=True,
+             xlim=None, ylim=None,
+             save_path=None):
+
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.grid(grid, axis='y', color='black', linestyle='--')
+
+    plt.title(title)
+    for points,color,style,label in zip(points_list, color_list, style_list, label_list):
+        x = [i * gap for i in range(len(points))]
+        plt.plot(x, points, color=color, linestyle=style, label=label)
+    plt.legend()
+
+    if save_path is not None:
+        plt.savefig(save_path)
+
+    plt.show()
+

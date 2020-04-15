@@ -137,5 +137,37 @@ def avgOverHiddenStates(hs, lens):
 
     return hs
 
+##################################################
+# 动态路由算法，使用该算法来获取类原型。
+# arg:
+#       transformer: 转换矩阵
+#       e: 嵌入向量
+#       b: 路由得分
+#       k: k-shot的k
+##################################################
+def dynamicRouting(transformer, e, b, k):
+    dim = e.size(2)
+    # 先利用转换矩阵转换特征
+    # e shape: [n,k,d]
+    e = transformer(e)
+    # d shape: [n,k]->[n,k,d]
+    # b shape: [n,k]
+    d = t.softmax(b, dim=1).unsqueeze(dim=2).repeat((1, 1, dim))
+
+    # c shape: [n,k,d]->[n,d]
+    c = (d * e).sum(dim=1)
+    c_norm = c.norm(dim=1)
+
+    # squashing
+    coef = ((c_norm ** 2) / (c_norm ** 2 + 1) / c_norm).unsqueeze(dim=1).repeat((1, dim))
+    c = c * coef
+
+    # 更新b
+    # [n,d]->[n,k,d]
+    c_expand = c.unsqueeze(dim=1).repeat((1, k, 1))
+    delta_b = (c_expand * e).sum(dim=2)
+
+    return b + delta_b, c
+
 
 

@@ -6,12 +6,12 @@
   "qk" : 15,
 
   "version" : 1,
-  "modelName" : "ProtoNet",
+  "modelName" : "InductionNet",
 
   "embedSize" : 64,
-  "hiddenSize" : 256,
-  "biLstmLayer" : 2,
-  "selfAttDim" : null,
+  "hiddenSize" : 128,
+  "biLstmLayer" : 1,
+  "selfAttDim" : 64,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -22,10 +22,10 @@
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
-  "lossFunction": "nll",
+  "lossFunction": "mse",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-4
+    "Embedding.weight" : 1e-3
   },
 
   "recordGradient" : false,
@@ -65,5 +65,7 @@
     "Linux": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
     }
-  }
+  },
+
+  "description": "减小训练类至20个以测试训练收敛性"
 }

@@ -85,15 +85,15 @@ class ProtoNet(nn.Module):
         # query = self.CNN(query)
 
         # # # pack以便输入到LSTM中
-        support = pack_padded_sequence(support, sup_len, batch_first=True)
-        query = pack_padded_sequence(query, que_len, batch_first=True)
+        # support = pack_padded_sequence(support, sup_len, batch_first=True)
+        # query = pack_padded_sequence(query, que_len, batch_first=True)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
 
-        support, sup_len = pad_packed_sequence(support, batch_first=True)
-        query, que_len = pad_packed_sequence(query, batch_first=True)
+        # support, sup_len = pad_packed_sequence(support, batch_first=True)
+        # query, que_len = pad_packed_sequence(query, batch_first=True)
 
         # support = avgOverHiddenStates(support, sup_len)
         # query = avgOverHiddenStates(query, que_len)

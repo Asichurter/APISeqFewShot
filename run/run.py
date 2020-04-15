@@ -1,5 +1,6 @@
 import os
 import sys
+import shutil
 from config import appendProjectPath
 
 ################################################
@@ -21,12 +22,14 @@ import numpy as np
 
 from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask, MatrixProtoEpisodeTask
 from utils.manager import PathManager, TrainStatManager
-from utils.plot import VisdomPlot
+from utils.plot import VisdomPlot, plotLine
 from components.datasets import SeqFileDataset, ImageFileDataset
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
+from models.InductionNet import InductionNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
+from utils.file import deleteDir
 
 
 ################################################
@@ -52,7 +55,9 @@ SelfAttDim, \
 usePretrained,\
 wordCnt = cfg.modelParams()
 
-model_name = cfg.model()
+model_type, model_name = cfg.model()
+
+version = cfg.version()
 
 ValCycle,\
 ValEpisode = cfg.valParams()
@@ -85,10 +90,12 @@ loss = t.nn.NLLLoss().cuda() \
 printState('init managers...')
 train_path_manager = PathManager(dataset=data_folder,
                                  d_type='train',
-                                 model_name=model_name)
+                                 model_name=model_name,
+                                 version=version)
 val_path_manager = PathManager(dataset=data_folder,
                                d_type='validate',
-                               model_name=model_name)
+                               model_name=model_name,
+                               version=version)
 
 train_dataset = SeqFileDataset(train_path_manager.FileData(),
                                train_path_manager.FileSeqLen(),
@@ -111,9 +118,9 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 #                         unsqueeze=False)
 
 train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
-                              cuda=True, label_expand=False)
+                              cuda=True, expand=expand)
 val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
-                              cuda=True, label_expand=False)
+                              cuda=True, expand=expand)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,
@@ -149,13 +156,23 @@ printState('init model...')
 # model = CNNLstmProtoNet()
 # model = IncepProtoNet(channels=[1, 32, 1],
 #                       depth=3)
-model = ProtoNet(pretrained_matrix=word_matrix,
-                 embed_size=EmbedSize,
-                 hidden=HiddenSize,
-                 layer_num=BiLstmLayer,
-                 self_attention=SelfAttDim is not None,
-                 self_att_dim=SelfAttDim,
-                 word_cnt=wordCnt)
+if model_type == 'ProtoNet':
+    model = ProtoNet(pretrained_matrix=word_matrix,
+                     embed_size=EmbedSize,
+                     hidden=HiddenSize,
+                     layer_num=BiLstmLayer,
+                     self_attention=SelfAttDim is not None,
+                     self_att_dim=SelfAttDim,
+                     word_cnt=wordCnt)
+elif model_type == 'InductionNet':
+    model = InductionNet(pretrained_matrix=word_matrix,
+                         embed_size=EmbedSize,
+                         hidden_size=HiddenSize,
+                         layer_num=BiLstmLayer,
+                         self_att_dim=SelfAttDim,
+                         ntn_hidden=100, routing_iters=3,
+                         word_cnt=wordCnt,
+                         freeze_embedding=False)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -202,6 +219,13 @@ grad = 0.
 
 printState('start training')
 stat.startTimer()
+
+# 若目前的version已经存在，则删除之
+if os.path.exists(train_path_manager.Doc()):
+    deleteDir(train_path_manager.Doc())
+os.mkdir(train_path_manager.Doc())
+# 复制运行配置文件
+shutil.copy('./runConfig.json', train_path_manager.Doc()+'config.json')
 
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TrainingEpoch):
@@ -294,6 +318,21 @@ with t.autograd.set_detect_anomaly(False):
                 plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
                 plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
 
+
+plotLine(stat.getHistAcc(), ('train acc', 'val acc'),
+         title=model_name+' accuracy',
+         gap=ValCycle,
+         color_list=('blue', 'red'),
+         style_list=('-','-'),
+         ylim=[0,1],
+         save_path=train_path_manager.Doc()+'acc.png')
+
+plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
+         title=model_name+' loss',
+         gap=ValCycle,
+         color_list=('blue', 'red'),
+         style_list=('-','-'),
+         save_path=train_path_manager.Doc()+'loss.png')
 
 
 

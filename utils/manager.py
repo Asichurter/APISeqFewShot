@@ -32,9 +32,11 @@ class PathManager:
     FileDataPathTemp = '%s/data/%s/data.npy'
     # 文件数据对应的长度表路径
     FileSeqLenPathTemp = '%s/data/%s/seqLength.json'
+    DocTemp = '%s/doc/%d/'
 
     def __init__(self, dataset, model_name=None, d_type='all',
-                 cfg_path='../run/runConfig.json'):
+                 cfg_path='../run/runConfig.json',
+                 version=1):
         manager = TrainingConfigManager(cfg_path)
         parent_path = manager.systemParams()
 
@@ -54,6 +56,7 @@ class PathManager:
         self.FileSeqLenPath = self.ParentPath + self.FileSeqLenPathTemp % (dataset, d_type)
 
         self.ModelPath = self.ParentPath + self.ModelPathTemp % (dataset, model_name)
+        self.DocPath = self.ParentPath + self.DocTemp % (dataset, version)
 
     def Folder(self):
         return self.FolderPath
@@ -78,6 +81,9 @@ class PathManager:
 
     def Model(self):
         return self.ModelPath
+
+    def Doc(self):
+        return self.DocPath
 
 
 #########################################
@@ -158,6 +164,11 @@ class TrainStatManager:
 
         return average_train_acc, average_train_loss, recent_val_acc, recent_val_loss
 
+    def getHistAcc(self):
+        return self.TrainHist['accuracy'], self.ValHist['accuracy']
+
+    def getHistLoss(self):
+        return self.TrainHist['loss'], self.ValHist['loss']
 
 class TrainingConfigManager:
 
@@ -174,7 +185,8 @@ class TrainingConfigManager:
                N
 
     def model(self):
-        return '{model}_v{version}.0'.format(
+        return self.Cfg['modelName'],\
+        '{model}_v{version}.0'.format(
             model=self.Cfg['modelName'],
             version=self.Cfg['version']
         )
@@ -224,6 +236,9 @@ class TrainingConfigManager:
     def systemParams(self):
         system = uname().system
         return self.Cfg['platform'][system]["datasetBasePath"]
+
+    def version(self):
+        return self.Cfg['version']
 
 
 

@@ -68,9 +68,9 @@ class EpisodeTask:
         k, qk, n, N = self.readParams()
 
         support_loader = DataLoader(self.Dataset, batch_size=k * n,
-                                    sampler=support_sampler, collate_fn=getBatchSequenceFunc(d_type=self.DType))
+                                    sampler=support_sampler, collate_fn=getBatchSequenceFunc())
         query_loader = DataLoader(self.Dataset, batch_size=qk * n,
-                                  sampler=query_sampler, collate_fn=getBatchSequenceFunc(d_type=self.DType))
+                                  sampler=query_sampler, collate_fn=getBatchSequenceFunc())
 
         supports, support_labels, support_lens = support_loader.__iter__().next()
         queries, query_labels, query_lens = query_loader.__iter__().next()
@@ -92,13 +92,13 @@ class EpisodeTask:
         assert sup_labels.size(0) == que_labels.size(0), \
             '扩展后的支持集和查询集标签长度: (%d, %d) 不一致!' % (sup_labels.size(0), que_labels.size(0))
 
-        # 如果进行扩展的话，每个查询样本的标签都会是n维的one-hot（用于交叉熵）
-        # 不扩展是个1维的下标值（用于MSE）
+        # 如果进行扩展的话，每个查询样本的标签都会是n维的one-hot（用于MSE）
+        # 不扩展是个1维的下标值（用于交叉熵）
         if not self.Expand:
             que_labels = t.argmax((sup_labels == que_labels).view(-1, n).int(), dim=1)
             return que_labels.long()
         else:
-            que_labels = (que_labels == sup_labels).view(-1, n).int()
+            que_labels = (que_labels == sup_labels).view(-1, n)
             return que_labels.float()
 
     def episode(self):
@@ -115,7 +115,7 @@ class EpisodeTask:
         if not self.Expand:
             out = t.argmax(out, dim=1)
         else:
-            out = t.argmax(out.view(-1, n))
+            out = t.argmax(out.view(-1, n), dim=1)
             labels = t.argmax(labels, dim=1)
 
         acc = (labels==out).sum().item() / labels.size(0)
@@ -124,8 +124,8 @@ class EpisodeTask:
 
 
 class ProtoEpisodeTask(EpisodeTask):
-    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False):
-        super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, label_expand)
+    def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
+        super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)
 
     def episode(self, task_seed=None, sampling_seed=None):
         k, qk, n, N = self.readParams()

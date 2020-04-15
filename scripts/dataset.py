@@ -132,6 +132,7 @@ def makeDatasetDirStruct(base_path):
     os.mkdir(base_path + 'data/train/')
     os.mkdir(base_path + 'data/validate/')
     os.mkdir(base_path + 'data/test/')
+    os.mkdir(base_path + 'doc/')
 
     printState('Done')
 

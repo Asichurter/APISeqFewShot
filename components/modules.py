@@ -6,6 +6,8 @@ import math
 from utils.matrix import batchDot
 from utils.training import getMaskFromLens, unpackAndMean
 
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
 # 的自注意力对齐结构结果，返回的还是一个等长的序列。
@@ -117,7 +119,7 @@ class BiLstmEncoder(nn.Module):
         self.SelfAtt = self_attention
         self.UseBN = useBN
 
-        self.Encoder = nn.GRU(input_size=input_size,
+        self.Encoder = nn.LSTM(input_size=input_size,       # GRU
                                hidden_size=hidden_size,
                                num_layers=layer_num,
                                batch_first=True,
@@ -137,6 +139,9 @@ class BiLstmEncoder(nn.Module):
             self.Attention = None
 
     def forward(self, x, lens=None):
+        if not isinstance(x, t.nn.utils.rnn.PackedSequence) and lens is not None:
+            x = pack_padded_sequence(x, lens, batch_first=True)
+
         # x shape: [batch, seq, feature]
         # out shape: [batch, seq, 2*hidden]
         out, h = self.Encoder(x)
@@ -158,6 +163,7 @@ class BiLstmEncoder(nn.Module):
         else:
 
             # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
+            out, lens = pad_packed_sequence(out, batch_first=True)
             return out
 
             # 没有自注意力时，返回最后一个隐藏态
@@ -620,6 +626,24 @@ class CNNEncoder(nn.Module):
             x = x.view(batch, seq_len, -1)
 
         return x
+
+#####################################################
+# Neural Tensor Layer, 用于建模向量关系，实质是一个双线性层
+#####################################################
+class NTN(nn.Module):
+    def __init__(self, c, e, k):
+        super(NTN, self).__init__()
+        self.Bilinear = nn.Bilinear(c, e, k, bias=False)
+        self.Scoring = nn.Sequential(
+            nn.ReLU(inplace=True),
+            nn.Linear(k ,1, bias=True),
+        )
+
+    def forward(self, c, e, n):
+        v = self.Bilinear(c, e)
+        s = self.Scoring(v)
+        s = t.sigmoid(s)#t.log_softmax(s.view(-1,n), dim=1)
+        return s
 
 
 if __name__ == '__main__':
