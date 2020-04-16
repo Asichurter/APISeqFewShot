@@ -5,24 +5,24 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 1,
-  "modelName" : "InductionNet",
+  "version" : 4,
+  "modelName" : "ProtoNet",
 
   "embedSize" : 64,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : 64,
+  "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 
   "valCycle" : 100,
   "valEpisode" : 100,
 
-  "lrDecayIters" : 15000,
+  "lrDecayIters" : 50000,
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
-  "lossFunction": "mse",
+  "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
     "Embedding.weight" : 1e-3
@@ -34,7 +34,7 @@
   "trainingVerbose" : false,
   "useVisdom" : true,
 
-  "trainingEpoch" : 50000,
+  "trainingEpoch" : 200000,
 
   "Ns" : {
           "cluster":20,
@@ -67,5 +67,5 @@
     }
   },
 
-  "description": "减小训练类至20个以测试训练收敛性"
+  "description": "减小训练类至10个,并延长训练周期至20万以测试训练收敛性"
 }

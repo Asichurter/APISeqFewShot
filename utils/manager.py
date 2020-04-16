@@ -165,10 +165,16 @@ class TrainStatManager:
         return average_train_acc, average_train_loss, recent_val_acc, recent_val_loss
 
     def getHistAcc(self):
-        return self.TrainHist['accuracy'], self.ValHist['accuracy']
+        t,v = self.TrainHist['accuracy'], self.ValHist['accuracy']
+        t,v = np.array(t), np.array(v)
+        t = np.mean(t.reshape(-1,self.TrainReportIter),axis=1)
+        return t,v
 
     def getHistLoss(self):
-        return self.TrainHist['loss'], self.ValHist['loss']
+        t, v = self.TrainHist['loss'], self.ValHist['loss']
+        t, v = np.array(t), np.array(v)
+        t = np.mean(t.reshape(-1, self.TrainReportIter), axis=1)
+        return t, v
 
 class TrainingConfigManager:
 
