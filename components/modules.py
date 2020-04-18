@@ -3,10 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
+from torch.nn import _VF
+
 from utils.matrix import batchDot
 from utils.training import getMaskFromLens, unpackAndMean
 
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, \
+                                pad_packed_sequence, \
+                                PackedSequence
 
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
@@ -98,6 +102,27 @@ class AttnReduction(nn.Module):
         att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
         return (att_weight * x).sum(dim=1)
 
+    @staticmethod
+    def static_forward(x, params, lens=None):
+        if isinstance(x, t.nn.utils.rnn.PackedSequence):
+            x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
+
+        feature_dim = x.size(2)
+
+        att_weight = F.linear(input=F.tanh(F.linear(input=x,
+                                                    weight=params['Encoder.Attention.IntAtt.weight'])),
+                              weight=params['Encoder.Attention.ExtAtt.weight'])
+
+        if lens is not None:
+            if not isinstance(lens, t.Tensor):
+                lens = t.Tensor(lens)
+            mask = getMaskFromLens(lens)
+            att_weight.masked_fill_(mask, float('-inf'))
+
+        att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
+        return (att_weight * x).sum(dim=1)
+
+
 
 
 
@@ -106,7 +131,7 @@ class AttnReduction(nn.Module):
 # 由双向序列隐藏态自注意力对齐得到的编码向量。
 #########################################
 class BiLstmEncoder(nn.Module):
-    def __init__(self, input_size,
+    def __init__(self, input_size=None,
                  hidden_size=128,
                  layer_num=1,
                  dropout=0.1,
@@ -165,6 +190,67 @@ class BiLstmEncoder(nn.Module):
             # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
             out, lens = pad_packed_sequence(out, batch_first=True)
             return out
+
+    @staticmethod
+    def permute_hidden(hx, permutation):
+        # type: (Tuple[Tensor, Tensor], Optional[Tensor]) -> Tuple[Tensor, Tensor]
+        if permutation is None:
+            return hx
+        return BiLstmEncoder.apply_permutation(hx[0], permutation), \
+               BiLstmEncoder.apply_permutation(hx[1], permutation)
+
+    @staticmethod
+    def apply_permutation(tensor, permutation, dim=1):
+        # type: (Tensor, Tensor, int) -> Tensor
+        return tensor.index_select(dim, permutation)
+
+    def static_forward(self, x, lens, params):
+        packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
+        if not packed and lens is not None:
+            x = pack_padded_sequence(x, lens, batch_first=True)
+
+        x, batch_sizes, sorted_indices, unsorted_indices = x
+        max_batch_size = int(batch_sizes[0])
+
+        num_directions = 2
+        zeros = t.zeros(self.Encoder.num_layers * num_directions,
+                            max_batch_size, self.Encoder.hidden_size,
+                            dtype=x.dtype, device=x.device)
+        hx = (zeros, zeros)
+
+        weights = [params['Encoder.Encoder.weight_ih_l0'],
+                   params['Encoder.Encoder.weight_hh_l0'],
+                   params['Encoder.Encoder.weight_ih_l0_reverse'],
+                   params['Encoder.Encoder.weight_hh_l0_reverse']]
+
+        bias = [params['Encoder.Encoder.bias_ih_l0'],
+                params['Encoder.Encoder.bias_hh_l0'],
+                params['Encoder.Encoder.bias_ih_l0_reverse'],
+                params['Encoder.Encoder.bias_hh_l0_reverse']]
+
+        result = _VF.lstm(x, batch_sizes, hx,
+                          weights,
+                          bias,
+                          self.Encoder.num_layers,
+                          self.Encoder.dropout,
+                          self.Encoder.training,
+                          self.Encoder.bidirectional)
+
+        out, h = result[0], result[1:]
+
+        out = PackedSequence(out, batch_sizes, sorted_indices, unsorted_indices)
+        h = BiLstmEncoder.permute_hidden(h, unsorted_indices)
+
+        if self.Attention is not None:
+            out = AttnReduction.static_forward(out, params)
+            return out
+        else:
+            # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
+            out, lens = pad_packed_sequence(out, batch_first=True)
+            return out
+
+
+
 
             # 没有自注意力时，返回最后一个隐藏态
             # num_directions = 2 if self.Encoder.bidirectional else 1
@@ -468,7 +554,7 @@ def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
 
 
 def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool=True):
+             relu=True, pool='max'):
     layers = [nn.Conv1d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
@@ -647,8 +733,7 @@ class NTN(nn.Module):
 
 
 if __name__ == '__main__':
-    model = ResInception(1,1)
-    a = 0
+    model = BiLstmEncoder(input_size=64)
 
 
 

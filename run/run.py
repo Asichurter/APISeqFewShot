@@ -7,7 +7,7 @@ from config import appendProjectPath
 #----------------------设置系统基本信息------------------
 ################################################
 
-appendProjectPath()
+appendProjectPath(depth=1)
 
 # 先添加路径再获取
 from utils.manager import TrainingConfigManager
@@ -20,16 +20,18 @@ sys.setrecursionlimit(5000)                         # 增加栈空间防止意�
 import torch as t
 import numpy as np
 
-from components.task import ProtoEpisodeTask, ImageProtoEpisodeTask, MatrixProtoEpisodeTask
+from components.task import *
 from utils.manager import PathManager, TrainStatManager
 from utils.plot import VisdomPlot, plotLine
 from components.datasets import SeqFileDataset, ImageFileDataset
-from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
-from models.InductionNet import InductionNet
 from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
 from utils.file import deleteDir
+
+from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
+from models.InductionNet import InductionNet
+from models.MetaSGD import MetaSGD
 
 
 ################################################
@@ -117,9 +119,14 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 #                         label_expand=expand,
 #                         unsqueeze=False)
 
-train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
+# train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
+#                               cuda=True, expand=expand)
+# val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
+#                               cuda=True, expand=expand)
+
+train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
                               cuda=True, expand=expand)
-val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
+val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
                               cuda=True, expand=expand)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
@@ -173,6 +180,18 @@ elif model_type == 'InductionNet':
                          ntn_hidden=100, routing_iters=3,
                          word_cnt=wordCnt,
                          freeze_embedding=False)
+elif model_type == 'MetaSGD':
+    model = MetaSGD(n=n,
+                    loss_fn=loss,
+                    lr=default_lr,
+                    pretrained_matrix=word_matrix,
+                    embed_size=EmbedSize,
+                    hidden_size=HiddenSize,
+                    layer_num=BiLstmLayer,
+                    self_att_dim=SelfAttDim
+                    # word_cnt=wordCnt,
+                    # freeze_embedding=False
+                    )
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()

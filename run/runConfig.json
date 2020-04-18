@@ -5,20 +5,20 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 4,
-  "modelName" : "ProtoNet",
+  "version" : 6,
+  "modelName" : "MetaSGD",
 
   "embedSize" : 64,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : null,
+  "selfAttDim" : 64,
   "usePretrained" : true,
   "wordCount" : null,
 
   "valCycle" : 100,
   "valEpisode" : 100,
 
-  "lrDecayIters" : 50000,
+  "lrDecayIters" : 15000,
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
@@ -34,7 +34,7 @@
   "trainingVerbose" : false,
   "useVisdom" : true,
 
-  "trainingEpoch" : 200000,
+  "trainingEpoch" : 50000,
 
   "Ns" : {
           "cluster":20,
@@ -67,5 +67,8 @@
     }
   },
 
-  "description": "减小训练类至10个,并延长训练周期至20万以测试训练收敛性"
+  "description": [
+    "减小训练类至10个",
+    "使用BiLSTM进行嵌入"
+  ]
 }
