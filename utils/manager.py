@@ -219,7 +219,8 @@ class TrainingConfigManager:
                self.Cfg['weightDecay'], \
                self.Cfg['lossFunction'], \
                self.Cfg['defaultLr'], \
-               self.Cfg['lrs']
+               self.Cfg['lrs'], \
+               self.Cfg['taskBatchSize']
 
     def gradRecParams(self):
         return self.Cfg['recordGradient'], \

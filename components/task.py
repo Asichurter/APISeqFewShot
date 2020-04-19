@@ -152,7 +152,10 @@ class ProtoEpisodeTask(EpisodeTask):
 
         return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
 
-
+#################################################
+# 适用于使用支持集损失和SGD优化器进行adapt的模型的任务，
+# 区别在于会在模型输入时给出支持集的标签以产生任务损失
+#################################################
 class AdaptEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
         super(AdaptEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)

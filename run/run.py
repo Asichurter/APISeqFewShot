@@ -48,7 +48,8 @@ optimizer_type,\
 weight_decay, \
 loss_func,\
 default_lr,\
-lrs = cfg.trainingParams()
+lrs, \
+taskBatchSize = cfg.trainingParams()
 
 EmbedSize,\
 HiddenSize,\
@@ -185,10 +186,10 @@ elif model_type == 'MetaSGD':
                     loss_fn=loss,
                     lr=default_lr,
                     pretrained_matrix=word_matrix,
-                    embed_size=EmbedSize,
-                    hidden_size=HiddenSize,
-                    layer_num=BiLstmLayer,
-                    self_att_dim=SelfAttDim
+                    embed_size=EmbedSize
+                    # hidden_size=HiddenSize,
+                    # layer_num=BiLstmLayer,
+                    # self_att_dim=SelfAttDim
                     # word_cnt=wordCnt,
                     # freeze_embedding=False
                     )
@@ -255,19 +256,26 @@ with t.autograd.set_detect_anomaly(False):
         model.train()
         model.zero_grad()
 
-        if TrainingVerbose:
-            print('forming episode...')
-        model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
-        # support, query, labels = train_task.episode()
+        loss_val = t.zeros((1,)).cuda()
+        acc_val = 0.
 
-        if TrainingVerbose:
-            print('forwarding...')
+        for task_i in range(taskBatchSize):
+            if TrainingVerbose:
+                print('forming episode...')
+            model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
+            # support, query, labels = train_task.episode()
 
-        # print(model_input[0].size(), model_input[1].size())
+            if TrainingVerbose:
+                print('forwarding...')
 
-        predicts = model(*model_input)
+            # print(model_input[0].size(), model_input[1].size())
 
-        loss_val = loss(predicts, labels)
+            predicts = model(*model_input)
+
+            loss_val += loss(predicts, labels)
+
+            predicts = predicts.cpu()
+            acc_val += train_task.accuracy(predicts)
 
         if TrainingVerbose:
             print('backward...')
@@ -283,8 +291,9 @@ with t.autograd.set_detect_anomaly(False):
                 for w in weight_list:
                     grad += t.norm(w.grad.detach()).item()
             if UseVisdom:
-                plot.update('gradient', epoch, [[grad]], update={'flag': True,
-                                                         'val': None if epoch%GradientUpdateCycle==0 else 'append'})
+                plot.update('gradient', epoch, [[grad]],
+                            update={'flag': True,
+                                    'val': None if epoch%GradientUpdateCycle==0 else 'append'})
 
         if TrainingVerbose:
             print('optimizing...')
@@ -292,14 +301,14 @@ with t.autograd.set_detect_anomaly(False):
         optimizer.step()
         scheduler.step()
 
-        predicts = predicts.cpu()
-
         loss_val_item = loss_val.detach().item()
 
         if TrainingVerbose:
             print('recording...')
-        acc_val = train_task.accuracy(predicts)
-        stat.recordTraining(acc_val, loss_val_item)
+
+        # 记录任务batch的平均正确率和损失值
+        stat.recordTraining(acc_val / taskBatchSize,
+                            loss_val_item/ taskBatchSize)
 
 
         ################################################

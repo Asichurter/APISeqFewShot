@@ -5,13 +5,13 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 6,
-  "modelName" : "MetaSGD",
+  "version" : 7,
+  "modelName" : "ProtoNet",
 
   "embedSize" : 64,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : 64,
+  "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -27,6 +27,7 @@
   "lrs" : {
     "Embedding.weight" : 1e-3
   },
+  "taskBatchSize": 4,
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
@@ -69,6 +70,6 @@
 
   "description": [
     "减小训练类至10个",
-    "使用BiLSTM进行嵌入"
+    "使用任务batch=4"
   ]
 }

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.modules import BiLstmEncoder
+from components.modules import BiLstmEncoder, CNNEncoder1D
 from utils.training import extractTaskStructFromInput
 
 def rename(name, token='-'):
@@ -20,31 +20,32 @@ class BaseLearner(nn.Module):
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
                                                       freeze=False,
                                                       padding_idx=0)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = BiLstmEncoder(input_size=embed_size,
-                                     **kwargs)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
+        self.Encoder = CNNEncoder1D(**kwargs)#BiLstmEncoder(input_size=embed_size, **kwargs)
 
-        out_size = kwargs['hidden_size']
-        self.fc = nn.Linear(2*out_size, n)  # 双向lstm，输出维度是隐藏层的两倍
+        # out_size = kwargs['hidden_size']
+        self.fc = nn.Linear(kwargs['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
+                                                    # 对于CNN，输出维度是嵌入维度
 
     def forward(self, x, lens, params=None):
         length = x.size(0)
 
         if params is None:
             x = self.Embedding(x)
-            x = self.EmbedNorm(x)
+            # x = self.EmbedNorm(x)
             x = self.Encoder(x, lens).view(length, -1)
             x = self.fc(x)
         else:
-            x = F.embedding(x,
-                            weight=params['Embedding.weight'],
-                            padding_idx=0)
-            x = F.layer_norm(x,
-                             normalized_shape=(params['Embedding.weight'].size(1),),
-                             weight=params['EmbedNorm.weight'],
-                             bias=params['EmbedNorm.bias'])
+            # x = F.embedding(x,
+            #                 weight=params['Embedding.weight'],
+            #                 padding_idx=0)
+            x = self.Embedding(x)
+            # x = F.layer_norm(x,
+            #                  normalized_shape=(params['Embedding.weight'].size(1),),
+            #                  weight=params['EmbedNorm.weight'],
+            #                  bias=params['EmbedNorm.bias'])
             # 使用适应后的参数来前馈
-            x = self.Encoder.static_forward(x, lens, params)
+            x = self.Encoder(x, lens, params)
             x = x.view(length, -1)
             x = F.linear(
                 x,
@@ -64,6 +65,16 @@ class BaseLearner(nn.Module):
 class MetaSGD(nn.Module):
     def __init__(self, n, loss_fn, lr=1e-3, **kwargs):
         super(MetaSGD, self).__init__()
+
+        #######################################################
+        # For CNN only
+        kwargs['dims'] = [kwargs['embed_size'], 64, 128, 256, 256]
+        kwargs['kernel_sizes'] = [3, 3, 3, 3]
+        kwargs['paddings'] = [1, 1, 1, 1]
+        kwargs['relus'] = [True, True, True, True]
+        kwargs['pools'] = ['max', 'max', 'max', 'ada']
+        #######################################################
+
         self.Learner = BaseLearner(n, **kwargs)   # 基学习器内部含有beta
         self.Alpha = nn.ParameterDict({
             rename(name):nn.Parameter(lr * t.ones_like(val, requires_grad=True))
@@ -89,7 +100,7 @@ class MetaSGD(nn.Module):
             adapted_state_dict[key] = val - self.alpha(key) * grad
 
         # 利用适应后的参数来生成测试集结果
-        return self.Learner(query, que_len, params=adapted_state_dict)
+        return self.Learner(query, que_len, params=adapted_state_dict).contiguous()
 
     def alpha(self, key):
         return self.Alpha[rename(key)]

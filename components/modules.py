@@ -111,7 +111,7 @@ class AttnReduction(nn.Module):
 
         att_weight = F.linear(input=F.tanh(F.linear(input=x,
                                                     weight=params['Encoder.Attention.IntAtt.weight'])),
-                              weight=params['Encoder.Attention.ExtAtt.weight'])
+                              weight=params['Encoder.Attention.ExtAtt.weight']).squeeze()
 
         if lens is not None:
             if not isinstance(lens, t.Tensor):
@@ -204,7 +204,10 @@ class BiLstmEncoder(nn.Module):
         # type: (Tensor, Tensor, int) -> Tensor
         return tensor.index_select(dim, permutation)
 
-    def static_forward(self, x, lens, params):
+    #################################################
+    # 使用给定的参数进行forward
+    #################################################
+    def static_forward(self, x, lens, params):           # PyTorch1.4目前不支持在rnn上多次backward
         packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
         if not packed and lens is not None:
             x = pack_padded_sequence(x, lens, batch_first=True)
@@ -220,17 +223,17 @@ class BiLstmEncoder(nn.Module):
 
         weights = [params['Encoder.Encoder.weight_ih_l0'],
                    params['Encoder.Encoder.weight_hh_l0'],
+                   params['Encoder.Encoder.bias_ih_l0'],
+                   params['Encoder.Encoder.bias_hh_l0'],
                    params['Encoder.Encoder.weight_ih_l0_reverse'],
-                   params['Encoder.Encoder.weight_hh_l0_reverse']]
-
-        bias = [params['Encoder.Encoder.bias_ih_l0'],
-                params['Encoder.Encoder.bias_hh_l0'],
-                params['Encoder.Encoder.bias_ih_l0_reverse'],
-                params['Encoder.Encoder.bias_hh_l0_reverse']]
+                   params['Encoder.Encoder.weight_hh_l0_reverse'],
+                   params['Encoder.Encoder.bias_ih_l0_reverse'],
+                   params['Encoder.Encoder.bias_hh_l0_reverse']
+                   ]
 
         result = _VF.lstm(x, batch_sizes, hx,
                           weights,
-                          bias,
+                          True,     # 是否bias
                           self.Encoder.num_layers,
                           self.Encoder.dropout,
                           self.Encoder.training,
@@ -262,7 +265,10 @@ class BiLstmEncoder(nn.Module):
             # 取最后一个隐藏态的最后一层的所有方向的拼接向量
             # return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
 
-
+#################################################
+# 利用Transformer进行序列嵌入归纳的Encoder，整合了Position
+# Embedding和transformer，得到的序列结果使用自注意力归纳
+#################################################
 class TransformerEncoder(nn.Module):
     def __init__(self, layer_num,
                  embedding_size,
@@ -586,6 +592,14 @@ class CNNEncoder1D(nn.Module):
                  pools=['ada']):
         super(CNNEncoder1D, self).__init__()
 
+        # self.Params = {
+        #     'dims': dims,
+        #     'kernels': kernel_sizes,
+        #     'paddings': paddings,
+        #     'relus' : relus,
+        #     'pools' : pools
+        # }
+
         layers = [CNNBlock1D(dims[i], dims[i+1],
                              kernel=kernel_sizes[i],
                              padding=paddings[i],
@@ -595,15 +609,56 @@ class CNNEncoder1D(nn.Module):
 
         self.Encoder = nn.Sequential(*layers)
 
-    def forward(self, x, lens=None):
+    def forward(self, x, lens=None, params=None):
         # input shape: [batch, seq, dim] => [batch, dim(channel), seq]
         x = x.transpose(1,2).contiguous()
-        x = self.Encoder(x)
+
+        if params is None:
+            x = self.Encoder(x)
+        else:
+            for i, module in enumerate(self.Encoder):
+                for j in range(len(module)):
+                    if module[j]._get_name() == 'Conv1d':
+                        x = F.conv1d(x, weight=params['Encoder.Encoder.%d.%d.weight' % (i, j)],
+                                     stride=module[j].stride,
+                                     padding=module[j].padding)
+                    elif module[j]._get_name() == 'BatchNorm1d':
+                        x = F.batch_norm(x,
+                                         params['Encoder.Encoder.%d.1.running_mean' % i],
+                                         params['Encoder.Encoder.%d.1.running_var' % i],
+                                         momentum=1,
+                                         training=True)
+                    elif module[j]._get_name() == 'ReLU':
+                        x = F.relu(x)
+                    elif module[j]._get_name() == 'MaxPool1d':
+                        x = F.max_pool1d(x, kernel_size=module[j].kernel_size)
+                    elif module[j]._get_name() == 'AdaptiveMaxPool1d':
+                        x = F.adaptive_max_pool1d(x, output_size=1)
 
         # shape: [batch, dim, seq]
         return x.squeeze()
 
-
+    # def static_forward(self, x, lens=None, params=None):
+    #     x = x.transpose(1, 2).contiguous()
+    #     for i,module in enumerate(self.Encoder):
+    #         for j in range(len(module)):
+    #             if module[j]._get_name() == 'Conv1d':
+    #                 x = F.conv1d(x, weight=params['Encoder.Encoder.%d.%d.weight'%(i,j)],
+    #                              stride=module[j].stride,
+    #                              padding=module[j].padding)
+    #             elif module[j]._get_name() == 'BatchNorm1d':
+    #                 x = F.batch_norm(x,
+    #                                  params['Encoder.Encoder.%d.1.running_mean' % i],
+    #                                  params['Encoder.Encoder.%d.1.running_var' % i],
+    #                                  momentum=1,
+    #                                  training=True)
+    #             elif module[j]._get_name() == 'ReLU':
+    #                 x = F.relu(x)
+    #             elif module[j]._get_name() == 'MaxPool1d':
+    #                 x = F.max_pool1d(x, kernel_size=module[j].kernel_size)
+    #             elif module[j]._get_name() == 'AdaptiveMaxPool1d':
+    #                 x = F.adaptive_max_pool1d(x, output_size=1)
+    #     return x.squeeze()
 
 ###############################################################
 # 参考HATT-ProtoNet中的Encoding实现，使用CNN在序列维度上进行卷积来
