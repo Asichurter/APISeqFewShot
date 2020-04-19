@@ -5,7 +5,7 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 7,
+  "version" : 9,
   "modelName" : "ProtoNet",
 
   "embedSize" : 64,
@@ -27,7 +27,7 @@
   "lrs" : {
     "Embedding.weight" : 1e-3
   },
-  "taskBatchSize": 4,
+  "taskBatchSize": 8,
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
@@ -70,6 +70,6 @@
 
   "description": [
     "减小训练类至10个",
-    "使用任务batch=4"
+    "使用任务batch=8"
   ]
 }
