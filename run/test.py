@@ -1,3 +1,5 @@
+# -*- coding: utf-8
+
 import numpy as np
 import torch as t
 import torch.nn.functional as F
@@ -14,6 +16,7 @@ from extractors.ngram import statNGram, convertToNGramSeq
 
 # 制作基于下标的数据集
 ################################################################
+# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare_20/")
 for d_type in ['train', 'validate', 'test']:
     manager = PathManager(dataset='virushare_20', d_type=d_type)
 
@@ -22,7 +25,7 @@ for d_type in ['train', 'validate', 'test']:
                  seq_length_save_path=manager.FileSeqLen(),
                  data_save_path=manager.FileData(),
                  num_per_class=20,
-                 max_seq_len=50)
+                 max_seq_len=100)
 ################################################################
 
 # 统计序列长度分布
@@ -85,14 +88,14 @@ for d_type in ['train', 'validate', 'test']:
 ################################################################
 
 
-# 训练W2V模型
+# 训练W2V模型(GloVe)
 ################################################################
 # manager = PathManager(dataset='virushare_20', d_type='all')
-# seqs = aggregateApiSequences(manager.Folder())
+# seqs = aggregateApiSequences("/home/asichurter/datasets/JSONs/virushare_20/all/")
 # trainW2Vmodel(seqs,
 #               save_matrix_path=manager.WordEmbedMatrix(),
 #               save_word2index_path=manager.WordIndexMap(),
-#               size=64)
+#               size=300)
 ################################################################
 
 # 统计ngram
@@ -168,4 +171,3 @@ for d_type in ['train', 'validate', 'test']:
 # z = batchDot(p, v, transpose=False)
 ################################################################
 
-# makeDatasetDirStruct(base_path='D:/peimages/JSONs/virushare_20/')

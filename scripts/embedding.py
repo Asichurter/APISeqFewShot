@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 from tqdm import tqdm
@@ -8,7 +7,6 @@ from utils.display import printBulletin
 from utils.manager import PathManager
 
 from gensim.models.word2vec import Word2Vec
-
 
 ############################################
 # 本函数用于从已经处理好的json文件中收集所有样本的api
@@ -58,13 +56,13 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
     if padding:
         pad_matrix = np.zeros((1, model.wv.vectors.shape[1]))
         matrix = np.concatenate((pad_matrix, matrix), axis=0)
+
+        for i, w in enumerate(model.wv.index2word):
+            word2index[w] = i + 1 if padding else i  # 由于idx=0要留给padding，因此所有的下标都加1
         word2index['<PAD>'] = 0
 
     if save_matrix_path:
         np.save(save_matrix_path, matrix)
-
-    for i, w in enumerate(model.wv.index2word):
-        word2index[w] = i + 1 if padding else i  # 由于idx=0要留给padding，因此所有的下标都加1
 
     if save_word2index_path:
         dumpJson(word2index, save_word2index_path)
@@ -73,7 +71,6 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
         return matrix, word2index
 
     printBulletin('Done')
-
 
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='all')

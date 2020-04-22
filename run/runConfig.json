@@ -5,10 +5,10 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 9,
+  "version" : 12,
   "modelName" : "ProtoNet",
 
-  "embedSize" : 64,
+  "embedSize" : 300,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
   "selfAttDim" : null,
@@ -27,7 +27,7 @@
   "lrs" : {
     "Embedding.weight" : 1e-3
   },
-  "taskBatchSize": 8,
+  "taskBatchSize": 4,
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
@@ -70,6 +70,7 @@
 
   "description": [
     "减小训练类至10个",
-    "使用任务batch=8"
+    "使用任务batch=4",
+    "使用300维度的GloVe初始化"
   ]
 }

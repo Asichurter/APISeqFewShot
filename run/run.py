@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-from config import appendProjectPath
+from config import appendProjectPath, saveConfigFile
 
 ################################################
 #----------------------设置系统基本信息------------------
@@ -240,12 +240,8 @@ grad = 0.
 printState('start training')
 stat.startTimer()
 
-# 若目前的version已经存在，则删除之
-if os.path.exists(train_path_manager.Doc()):
-    deleteDir(train_path_manager.Doc())
-os.mkdir(train_path_manager.Doc())
-# 复制运行配置文件
-shutil.copy('./runConfig.json', train_path_manager.Doc()+'config.json')
+# 保存配置文件到doc
+saveConfigFile(train_path_manager.Doc())
 
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TrainingEpoch):
