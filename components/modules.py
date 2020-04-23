@@ -165,7 +165,7 @@ class BiLstmEncoder(nn.Module):
 
     def forward(self, x, lens=None):
         if not isinstance(x, t.nn.utils.rnn.PackedSequence) and lens is not None:
-            x = pack_padded_sequence(x, lens, batch_first=True)
+            x = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)
 
         # x shape: [batch, seq, feature]
         # out shape: [batch, seq, 2*hidden]
@@ -175,7 +175,7 @@ class BiLstmEncoder(nn.Module):
             # 增加一个通道维度以便进行2D标准化
             out = out.unsqueeze(1)
             out = self.BN1(out).squeeze()
-            out = nn.utils.rnn.pack_padded_sequence(out, lens, batch_first=True)
+            out = nn.utils.rnn.pack_padded_sequence(out, lens, batch_first=True, enforce_sorted=False)
         # out, (h, c) = self.Encoder(x)
 
         # return shape: [batch, feature]
@@ -210,7 +210,7 @@ class BiLstmEncoder(nn.Module):
     def static_forward(self, x, lens, params):           # PyTorch1.4目前不支持在rnn上多次backward
         packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
         if not packed and lens is not None:
-            x = pack_padded_sequence(x, lens, batch_first=True)
+            x = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)
 
         x, batch_sizes, sorted_indices, unsorted_indices = x
         max_batch_size = int(batch_sizes[0])

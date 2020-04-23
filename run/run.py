@@ -32,6 +32,7 @@ from utils.file import deleteDir
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
 from models.MetaSGD import MetaSGD
+from models.ATAML import ATAML
 
 
 ################################################
@@ -193,6 +194,12 @@ elif model_type == 'MetaSGD':
                     # word_cnt=wordCnt,
                     # freeze_embedding=False
                     )
+elif model_type == 'ATAML':
+    model = ATAML(n=n,
+                  loss_fn=loss,
+                  lr=default_lr,
+                  pretrained_matrix=word_matrix,
+                  embed_size=EmbedSize)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -356,7 +363,6 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
          gap=ValCycle,
          color_list=('blue', 'red'),
          style_list=('-','-'),
-         ylim=[1,2],
          save_path=train_path_manager.Doc()+'loss.png')
 
 
