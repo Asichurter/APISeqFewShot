@@ -12,8 +12,13 @@ from utils.file import loadJson
 class SeqFileDataset(Dataset):
 
     def __init__(self, data_path, seq_path, N):
-        self.Data = t.load(data_path)
-        self.SeqLength = loadJson(seq_path)
+        self.Data = t.load(data_path)           # 不再利用长度截断，而是所有序列都按照制定长度存储
+
+        seqLength = loadJson(seq_path)
+        self.SeqLength = [0] * len(self.Data)
+        for i,l in seqLength.items():
+            self.SeqLength[int(i)] = l          # 存储序列长度
+
         self.Label = []
         self.ClassNum = len(self.Data) // N
 
@@ -26,16 +31,16 @@ class SeqFileDataset(Dataset):
         for i in range(len(self.Data) // N):
             self.Label += [i] * N
 
-        data_list = [tensor for tensor in self.Data]    # 使用列表装非等长张量
-        for i, length in self.SeqLength.items():
-            idx = int(i)
-            data_list[idx] = data_list[idx][:length]        # 根据序列长度文件中的数据，只取pad前的数据
+        # data_list = [tensor for tensor in self.Data]    # 使用列表装非等长张量
+        # for i, length in self.SeqLength.items():
+        #     idx = int(i)
+        #     data_list[idx] = data_list[idx][:length]        # 根据序列长度文件中的数据，只取pad前的数据
 
-        self.Data = data_list
+        # self.Data = data_list
 
     def __getitem__(self, item):
         # print(item)
-        return self.Data[item], self.Label[item]
+        return (self.Data[item], self.SeqLength[item]), self.Label[item]    # 同时返回数据和长度作为数据
 
     def __len__(self):
         return len(self.Data)

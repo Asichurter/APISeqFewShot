@@ -6,7 +6,7 @@ import time
 
 from components.samplers import EpisodeSamlper
 from utils.magic import magicSeed, randomList
-from utils.training import getBatchSequenceFunc
+from utils.training import getBatchSequenceFunc, batchSequenceWithoutPad
 
 #########################################
 # 基于Episode训练的任务类，包含采样标签空间，
@@ -68,9 +68,9 @@ class EpisodeTask:
         k, qk, n, N = self.readParams()
 
         support_loader = DataLoader(self.Dataset, batch_size=k * n,
-                                    sampler=support_sampler, collate_fn=getBatchSequenceFunc())
+                                    sampler=support_sampler, collate_fn=batchSequenceWithoutPad)#getBatchSequenceFunc())
         query_loader = DataLoader(self.Dataset, batch_size=qk * n,
-                                  sampler=query_sampler, collate_fn=getBatchSequenceFunc())
+                                  sampler=query_sampler, collate_fn=batchSequenceWithoutPad)#getBatchSequenceFunc())
 
         supports, support_labels, support_lens = support_loader.__iter__().next()
         queries, query_labels, query_lens = query_loader.__iter__().next()

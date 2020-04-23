@@ -11,6 +11,7 @@ from utils.training import extractTaskStructFromInput, \
                             repeatQueryToCompShape, \
                             protoDisAdapter, \
                             avgOverHiddenStates
+
 class ProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
@@ -45,24 +46,24 @@ class ProtoNet(nn.Module):
         #                             relus=[True,True],
         #                             pools=['max','ada'])
 
-        # self.Encoder = TransformerEncoder(layer_num=layer_num,
-        #                                   embedding_size=embed_size,
-        #                                   feature_size=hidden,
-        #                                   att_hid=self_att_dim,
-        #                                   reduce=True)
-        self.Encoder = BiLstmEncoder(embed_size,#64
-                                     hidden_size=hidden,
-                                     layer_num=layer_num,
-                                     self_attention=self_attention,
-                                     self_att_dim=self_att_dim,
-                                     useBN=False)
+        self.Encoder = TransformerEncoder(layer_num=layer_num,
+                                          embedding_size=embed_size,
+                                          feature_size=hidden,
+                                          att_hid=self_att_dim,
+                                          reduce=False)
+        # self.Encoder = BiLstmEncoder(embed_size,#64
+        #                              hidden_size=hidden,
+        #                              layer_num=layer_num,
+        #                              self_attention=self_attention,
+        #                              self_att_dim=self_att_dim,
+        #                              useBN=False)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.CNN = CNNEncoder1D(dims=[hidden*2, 512])
+        self.CNN = CNNEncoder1D(dims=[hidden, 512])
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
         #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
@@ -85,8 +86,8 @@ class ProtoNet(nn.Module):
         # query = self.CNN(query)
 
         # # # pack以便输入到LSTM中
-        # support = pack_padded_sequence(support, sup_len, batch_first=True)
-        # query = pack_padded_sequence(query, que_len, batch_first=True)
+        # support = pack_padded_sequence(support, sup_len, batch_first=True, enforce_sorted=False)
+        # query = pack_padded_sequence(query, que_len, batch_first=True, enforce_sorted=False)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
@@ -101,8 +102,8 @@ class ProtoNet(nn.Module):
         support = self.CNN(support, sup_len)
         query = self.CNN(query, que_len)
 
-        # support, s_len = pad_packed_sequence(support, batch_first=True)
-        # query, q_len = pad_packed_sequence(query, batch_first=True)
+        # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
+        # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))

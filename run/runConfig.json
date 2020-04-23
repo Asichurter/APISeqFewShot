@@ -5,13 +5,13 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 12,
+  "version" : 13,
   "modelName" : "ProtoNet",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : null,
+  "selfAttDim" : 128,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -71,6 +71,7 @@
   "description": [
     "减小训练类至10个",
     "使用任务batch=4",
-    "使用300维度的GloVe初始化"
+    "使用300维度的GloVe初始化",
+    "使用Transformer+CNN"
   ]
 }

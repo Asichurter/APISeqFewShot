@@ -25,6 +25,20 @@ def getBatchSequenceFunc(d_type='long'):
 
     return batchSequences
 
+
+def batchSequenceWithoutPad(data):
+    seqs = []
+    lens = []
+    labels = []
+
+    for (seq,leng),label in data:
+        seqs.append(seq.tolist())
+        lens.append(leng)
+        labels.append(label)
+
+    # 注意：此时的序列没有按照长度进行排序，因此需要在pack时enforce_sort=False
+    return t.LongTensor(seqs), t.LongTensor(labels), lens
+
 ################################################
 # 从输入数据中获取任务元参数，如k，n，qk等
 # arg:

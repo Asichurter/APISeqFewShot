@@ -356,6 +356,7 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
          gap=ValCycle,
          color_list=('blue', 'red'),
          style_list=('-','-'),
+         ylim=[1,2],
          save_path=train_path_manager.Doc()+'loss.png')
 
 
