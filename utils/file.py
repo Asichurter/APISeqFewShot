@@ -7,8 +7,8 @@ def loadJson(path):
     return j
 
 def dumpJson(obj, path, indent=4):
-    with open(path, 'w') as f:
-        json.dump(obj, f, indent=indent)
+    with open(path, 'w', encoding='UTF-8') as f:
+        json.dump(obj, f, indent=indent, ensure_ascii=False)
 
 def dumpIterable(iterable, title, path):
     iter_dict = {title: []}

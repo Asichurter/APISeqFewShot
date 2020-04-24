@@ -10,8 +10,6 @@
 
   "trainingEpoch" : 5000,
 
-  "expand": false,
-
   "Ns" : {
           "cluster":20,
           "test":20,
@@ -33,6 +31,6 @@
   },
 
   "description": [
-    ""
+    "使用test"
   ]
 }

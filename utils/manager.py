@@ -4,7 +4,7 @@ import torch as t
 from platform import uname
 import json
 
-from utils.file import loadJson
+from utils.file import loadJson, dumpJson
 from utils.stat import calBeliefeInterval
 
 ##########################################################
@@ -203,6 +203,8 @@ class TestStatManager:
         length = len(self.AccHist) if final else self.Cycle
         cur_acc = np.mean(self.AccHist[-length:])
         cur_loss = np.mean(self.LossHist[-length:])
+        acc_interval = calBeliefeInterval(self.AccHist)
+        loss_interval = calBeliefeInterval(self.LossHist)
 
         print('%d Epoch'%self.Iters)
         print('-'*50)
@@ -212,14 +214,40 @@ class TestStatManager:
             print('Time: %.2f'%(now_stamp-self.TimeStamp))
             self.TimeStamp = now_stamp
         else:
-            print('Acc 95%% interval: %f'%calBeliefeInterval(self.AccHist))
-            print('Loss 95%% interval: %f'%calBeliefeInterval(self.LossHist))
+            print('Acc 95%% interval: %f'%acc_interval)
+            print('Loss 95%% interval: %f'%loss_interval)
         print('-' * 50)
         print('')
 
-    def report(self):
+        if final:
+            return cur_acc, cur_loss, acc_interval, loss_interval
+
+    def report(self, doc_path=None, desc=None):
         print('**************Final Statistics**************')
-        self.printStat(final=True)
+        params = self.printStat(final=True)
+
+        if doc_path is not None:
+            self.saveResult(doc_path+'testResult.json',
+                            desc,
+                            *params)
+
+    @staticmethod
+    def saveResult(path, desc, acc, los, acc_i, los_i):
+        try:
+            results = loadJson(path)
+        except:
+            results = {'results':[]}
+
+        results['results'].append({
+            'acc': acc,
+            'loss': los,
+            'acc_interval': acc_i,
+            'loss_interval': los_i,
+            'desc': desc
+        })
+
+        dumpJson(results, path)
+
 
 class TrainingConfigManager:
 
@@ -295,8 +323,8 @@ class TrainingConfigManager:
     def version(self):                      # for both train and test
         return self.Cfg['version']
 
-    def expand(self):
-        return self.Cfg['expand']
+    def desc(self):
+        return self.Cfg['description']
 
 
 

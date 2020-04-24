@@ -27,8 +27,10 @@ datasetBasePath = cfg.systemParams()
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
 
+USED_SUB_DATASET = 'validate'
+
 ################################################
-#----------------------读取参数------------------
+#----------------------读取任务参数------------------
 ################################################
 
 data_folder = cfg.dataset()#'virushare_20_image'
@@ -40,7 +42,6 @@ version = cfg.version()
 
 TestingEpoch = cfg.epoch()
 
-expand = cfg.expand()
 
 ################################################
 #----------------------定义数据------------------
@@ -48,13 +49,27 @@ expand = cfg.expand()
 
 printState('init managers...')
 test_path_manager = PathManager(dataset=data_folder,
-                               d_type='validate',
+                               d_type=USED_SUB_DATASET,
                                model_name=model_name,
                                version=version)
+
+################################################
+#----------------------读取模型参数------------------
+################################################
+
+model_cfg = TrainingConfigManager(test_path_manager.Doc()+'config.json')
+
+EmbedSize, HiddenSize, BiLstmLayer, SelfAttDim, usePretrained,\
+wordCnt = model_cfg.modelParams()
+
+LRDecayIters, LRDecayGamma, optimizer_type,\
+weight_decay, loss_func, default_lr, lrs, taskBatchSize = model_cfg.trainingParams()
 
 test_dataset = SeqFileDataset(test_path_manager.FileData(),
                                test_path_manager.FileSeqLen(),
                                N)
+
+expand = True if loss_func=='mse' else False
 
 if model_type in ['ATAML', 'MetaSGD']:
     test_task = AdaptEpisodeTask(k, qk, n, N, test_dataset,
@@ -70,14 +85,6 @@ stat = TestStatManager()
 ################################################
 
 printState('init model...')
-model_cfg = TrainingConfigManager(test_path_manager.Doc()+'config.json')
-
-EmbedSize, HiddenSize, BiLstmLayer, SelfAttDim, usePretrained,\
-wordCnt = model_cfg.modelParams()
-
-LRDecayIters, LRDecayGamma, optimizer_type,\
-weight_decay, loss_func, default_lr, lrs, taskBatchSize = model_cfg.trainingParams()
-
 state_dict = t.load(test_path_manager.Model())
 
 word_matrix = state_dict['Embedding.weight']
@@ -126,6 +133,9 @@ statParamNumber(model)
 
 stat.startTimer()
 
+################################################
+#--------------------开始测试------------------
+################################################
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TestingEpoch):
         model.eval()
@@ -146,5 +156,6 @@ with t.autograd.set_detect_anomaly(False):
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val, loss_val_item)
 
-stat.report()
+stat.report(doc_path=test_path_manager.Doc(),
+            desc=cfg.desc())
 
