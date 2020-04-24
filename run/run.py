@@ -121,15 +121,16 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 #                         label_expand=expand,
 #                         unsqueeze=False)
 
-# train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
-#                               cuda=True, expand=expand)
-# val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
-#                               cuda=True, expand=expand)
-
-train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
-                              cuda=True, expand=expand)
-val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
-                              cuda=True, expand=expand)
+if model_type in ['ATAML', 'MetaSGD']:
+    train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
+                                  cuda=True, expand=expand)
+    val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
+                                  cuda=True, expand=expand)
+else:
+    train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
+                                  cuda=True, expand=expand)
+    val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
+                                  cuda=True, expand=expand)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         train_report_iter=ValCycle,

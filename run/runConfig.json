@@ -5,13 +5,13 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 15,
-  "modelName" : "ProtoNet",
+  "version" : 16,
+  "modelName" : "InductionNet",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : null,
+  "selfAttDim" : 64,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -22,7 +22,7 @@
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
-  "lossFunction": "nll",
+  "lossFunction": "mse",
   "defaultLr" : 1e-3,
   "lrs" : {
     "Embedding.weight" : 1e-3
@@ -72,7 +72,6 @@
     "训练类使用满编73个",
     "使用任务batch=4",
     "使用300维度的GloVe初始化",
-    "使用CNN解码",
     "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储"
   ]
 }

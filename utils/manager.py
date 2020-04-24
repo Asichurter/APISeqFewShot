@@ -2,8 +2,10 @@ import numpy as np
 from time import time
 import torch as t
 from platform import uname
+import json
 
 from utils.file import loadJson
+from utils.stat import calBeliefeInterval
 
 ##########################################################
 # 项目数据集路径管理器。
@@ -176,31 +178,77 @@ class TrainStatManager:
         t = np.mean(t.reshape(-1, self.TrainReportIter), axis=1)
         return t, v
 
+class TestStatManager:
+    def __init__(self, report_cycle=100):
+        self.AccHist = []
+        self.LossHist = []
+        self.Iters = 0
+        self.Cycle = report_cycle
+        self.TimeStamp = None
+
+    def startTimer(self):
+        self.TimeStamp = time()
+
+    def record(self, acc, loss):
+
+        self.AccHist.append(acc)
+        self.LossHist.append(loss)
+        self.Iters += 1
+
+        if self.Iters % self.Cycle == 0:
+            self.printStat()
+
+    def printStat(self, final=False):
+        now_stamp = time()
+        length = len(self.AccHist) if final else self.Cycle
+        cur_acc = np.mean(self.AccHist[-length:])
+        cur_loss = np.mean(self.LossHist[-length:])
+
+        print('%d Epoch'%self.Iters)
+        print('-'*50)
+        print('Acc: %f'%cur_acc)
+        print('Loss: %f'%cur_loss)
+        if not final:
+            print('Time: %.2f'%(now_stamp-self.TimeStamp))
+            self.TimeStamp = now_stamp
+        else:
+            print('Acc 95%% interval: %f'%calBeliefeInterval(self.AccHist))
+            print('Loss 95%% interval: %f'%calBeliefeInterval(self.LossHist))
+        print('-' * 50)
+        print('')
+
+    def report(self):
+        print('**************Final Statistics**************')
+        self.printStat(final=True)
+
 class TrainingConfigManager:
 
     def __init__(self, cfg_path):
         self.Cfg = loadJson(cfg_path)
 
-    def taskParams(self):
+    def taskParams(self):               # for both train and test
         dataset = self.Cfg['dataset']
-        N = self.Cfg['Ns'][dataset]
+        try:
+            N = self.Cfg['Ns'][dataset]
+        except json.JSONDecodeError:    # 不存在指定数据集的N时，默认为20
+            N = 20
 
         return self.Cfg['k'],\
                self.Cfg['n'],\
                self.Cfg['qk'], \
                N
 
-    def model(self):
+    def model(self):                    # for both train and test
         return self.Cfg['modelName'],\
         '{model}_v{version}.0'.format(
             model=self.Cfg['modelName'],
             version=self.Cfg['version']
         )
 
-    def dataset(self):
+    def dataset(self):                  # for both train and test
         return self.Cfg['dataset']
 
-    def modelParams(self):
+    def modelParams(self):              # for train only
         return self.Cfg['embedSize'], \
                self.Cfg['hiddenSize'], \
                self.Cfg['biLstmLayer'], \
@@ -208,11 +256,11 @@ class TrainingConfigManager:
                self.Cfg['usePretrained'], \
                self.Cfg['wordCount']
 
-    def valParams(self):
+    def valParams(self):                # for train only
         return self.Cfg['valCycle'], \
                self.Cfg['valEpisode']
 
-    def trainingParams(self):
+    def trainingParams(self):           # for train only
         return self.Cfg['lrDecayIters'], \
                self.Cfg['lrDecayGamma'], \
                self.Cfg['optimizer'], \
@@ -222,30 +270,33 @@ class TrainingConfigManager:
                self.Cfg['lrs'], \
                self.Cfg['taskBatchSize']
 
-    def gradRecParams(self):
+    def gradRecParams(self):             # for train only
         return self.Cfg['recordGradient'], \
                self.Cfg['gradientUpdateCycle']
 
-    def verboseParams(self):
+    def verboseParams(self):             # for train only
         return self.Cfg['trainingVerbose'], \
                self.Cfg['useVisdom']
 
-    def plotParams(self):
+    def plotParams(self):                 # for train only
         return self.Cfg['plot']['types'], \
                self.Cfg['plot']['titles'], \
                self.Cfg['plot']['xlabels'], \
                self.Cfg['plot']['ylabels'], \
                self.Cfg['plot']['legends']
 
-    def epoch(self):
+    def epoch(self):                       # for both train and test
         return self.Cfg['trainingEpoch']
 
-    def systemParams(self):
+    def systemParams(self):                 # for both train and test
         system = uname().system
         return self.Cfg['platform'][system]["datasetBasePath"]
 
-    def version(self):
+    def version(self):                      # for both train and test
         return self.Cfg['version']
+
+    def expand(self):
+        return self.Cfg['expand']
 
 
 

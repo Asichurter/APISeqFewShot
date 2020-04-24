@@ -1,0 +1,38 @@
+{
+  "dataset" :  "virushare_20",
+
+  "k" : 5,
+  "n" : 5,
+  "qk" : 15,
+
+  "version" : 15,
+  "modelName" : "ProtoNet",
+
+  "trainingEpoch" : 5000,
+
+  "expand": false,
+
+  "Ns" : {
+          "cluster":20,
+          "test":20,
+          "virushare_20":20,
+          "drebin_10":10,
+          "miniImageNet":600,
+          "virushare_20_image":20
+          },
+
+  "platform" : {
+
+    "Windows": {
+      "datasetBasePath" : "D:/peimages/JSONs/"
+    },
+
+    "Linux": {
+      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+    }
+  },
+
+  "description": [
+    ""
+  ]
+}
