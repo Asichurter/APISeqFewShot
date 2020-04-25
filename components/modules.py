@@ -135,13 +135,12 @@ class BiLstmEncoder(nn.Module):
                  hidden_size=128,
                  layer_num=1,
                  dropout=0.1,
-                 self_attention=True,
                  self_att_dim=64,
                  useBN=False):
 
         super(BiLstmEncoder, self).__init__()
 
-        self.SelfAtt = self_attention
+        self.SelfAtt = self_att_dim is not None
         self.UseBN = useBN
 
         self.Encoder = nn.LSTM(input_size=input_size,       # GRU
@@ -158,7 +157,7 @@ class BiLstmEncoder(nn.Module):
             # 第二个批标准化建立在自注意力之后的1D向量上
             self.BN2 = nn.BatchNorm1d(2*hidden_size)
 
-        if self_attention:
+        if self.SelfAtt:
             self.Attention = AttnReduction(2*hidden_size, self_att_dim)
         else:
             self.Attention = None

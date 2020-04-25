@@ -326,6 +326,9 @@ class TrainingConfigManager:
     def desc(self):
         return self.Cfg['description']
 
+    def subDataset(self):
+        return self.Cfg['testSubdataset']
+
 
 
 

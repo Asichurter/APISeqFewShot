@@ -25,36 +25,39 @@ class BaseLearner(nn.Module):
                                                       freeze=False,
                                                       padding_idx=0)
         self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = CNNEncoder1D(**kwargs)#BiLstmEncoder(input_size=embed_size, **kwargs)
-        self.Attention = nn.Linear(kwargs['dims'][-1], 1, bias=False)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
+        self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
 
         # out_size = kwargs['hidden_size']
-        self.fc = nn.Linear(kwargs['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
+        self.fc = nn.Linear(seq_len, n)
+        #nn.Linear(kwargs['dims'][-1], n)
+                                                    # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 
     def forward(self, x, lens, params=None):
         length = x.size(0)
         x = self.Embedding(x)
         x = self.EmbedNorm(x)
-        x = self.Encoder(x, lens).transpose(1,2).contiguous()
+        x = self.Encoder(x, lens)
 
         # shape: [batch, seq, dim] => [batch, mem_step, dim]
         dim = x.size(2)
+        mem_step_len = x.size(1)
 
         if params is None:
             att_weight = self.Attention(x).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,mem_step_len)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=1) / len_expansion
+            x = (x * att_weight).sum(dim=2) / len_expansion
 
             x = x.view(length, -1)
             x = self.fc(x)
         else:
             # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
             att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,mem_step_len)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=1) / len_expansion
+            x = (x * att_weight).sum(dim=2) / len_expansion
 
             x = x.view(length, -1)
             x = F.linear(
@@ -93,11 +96,11 @@ class ATAML(nn.Module):
 
         #######################################################
         # For CNN only
-        kwargs['dims'] = [kwargs['embed_size'], 64, 128, 256, 256]
-        kwargs['kernel_sizes'] = [3, 3, 3, 3]
-        kwargs['paddings'] = [1, 1, 1, 1]
-        kwargs['relus'] = [True, True, True, True]
-        kwargs['pools'] = [None, None, None, None]
+        # kwargs['dims'] = [kwargs['embed_size'], 64, 128, 256, 256]
+        # kwargs['kernel_sizes'] = [3, 3, 3, 3]
+        # kwargs['paddings'] = [1, 1, 1, 1]
+        # kwargs['relus'] = [True, True, True, True]
+        # kwargs['pools'] = [None, None, None, None]
         #######################################################
 
         self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta

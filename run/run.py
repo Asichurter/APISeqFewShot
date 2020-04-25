@@ -200,7 +200,11 @@ elif model_type == 'ATAML':
                   loss_fn=loss,
                   lr=default_lr,
                   pretrained_matrix=word_matrix,
-                  embed_size=EmbedSize)
+                  embed_size=EmbedSize,
+                  hidden_size=HiddenSize,
+                  layer_num=BiLstmLayer,
+                  self_att_dim=SelfAttDim
+                  )
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()

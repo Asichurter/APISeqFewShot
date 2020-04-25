@@ -54,7 +54,6 @@ class ProtoNet(nn.Module):
         self.Encoder = BiLstmEncoder(embed_size,#64
                                      hidden_size=hidden,
                                      layer_num=layer_num,
-                                     self_attention=self_attention,
                                      self_att_dim=self_att_dim,
                                      useBN=False)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,

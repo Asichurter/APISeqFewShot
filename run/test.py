@@ -21,13 +21,12 @@ from models.InductionNet import InductionNet
 from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
 
+ADAPTED_MODELS = ['MetaSGD', 'ATAML']
+
 cfg = TrainingConfigManager('testConfig.json')
 datasetBasePath = cfg.systemParams()
 
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
-
-
-USED_SUB_DATASET = 'validate'
 
 ################################################
 #----------------------读取任务参数------------------
@@ -41,6 +40,7 @@ model_type, model_name = cfg.model()
 version = cfg.version()
 
 TestingEpoch = cfg.epoch()
+USED_SUB_DATASET = cfg.subDataset()
 
 
 ################################################
@@ -71,7 +71,7 @@ test_dataset = SeqFileDataset(test_path_manager.FileData(),
 
 expand = True if loss_func=='mse' else False
 
-if model_type in ['ATAML', 'MetaSGD']:
+if model_type in ADAPTED_MODELS:
     test_task = AdaptEpisodeTask(k, qk, n, N, test_dataset,
                                   cuda=True, expand=expand)
 else:
@@ -87,7 +87,12 @@ stat = TestStatManager()
 printState('init model...')
 state_dict = t.load(test_path_manager.Model())
 
-word_matrix = state_dict['Embedding.weight']
+
+if model_type in ADAPTED_MODELS:
+    word_matrix = state_dict['Learner.Embedding.weight']
+else:
+    word_matrix = state_dict['Embedding.weight']
+
 loss = t.nn.NLLLoss().cuda() if loss_func=='nll' else t.nn.MSELoss().cuda()
 
 if model_type == 'ProtoNet':
@@ -156,6 +161,8 @@ with t.autograd.set_detect_anomaly(False):
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val, loss_val_item)
 
+desc = cfg.desc()
+desc.append('使用%s'%USED_SUB_DATASET)
 stat.report(doc_path=test_path_manager.Doc(),
-            desc=cfg.desc())
+            desc=desc)
 
