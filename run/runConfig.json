@@ -5,13 +5,13 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 16,
-  "modelName" : "InductionNet",
+  "version" : 17,
+  "modelName" : "ATAML",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : 64,
+  "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -22,7 +22,7 @@
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
-  "lossFunction": "mse",
+  "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
     "Embedding.weight" : 1e-3

@@ -26,7 +26,7 @@ class BaseLearner(nn.Module):
                                                       padding_idx=0)
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.Encoder = CNNEncoder1D(**kwargs)#BiLstmEncoder(input_size=embed_size, **kwargs)
-        self.Attention = nn.Linear(seq_len, 1, bias=False)
+        self.Attention = nn.Linear(kwargs['dims'][-1], 1, bias=False)
 
         # out_size = kwargs['hidden_size']
         self.fc = nn.Linear(kwargs['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
@@ -36,26 +36,25 @@ class BaseLearner(nn.Module):
         length = x.size(0)
         x = self.Embedding(x)
         x = self.EmbedNorm(x)
-        x = self.Encoder(x, lens)
+        x = self.Encoder(x, lens).transpose(1,2).contiguous()
 
         # shape: [batch, seq, dim] => [batch, mem_step, dim]
         dim = x.size(2)
-        mem_step_len = x.size(1)
 
         if params is None:
             att_weight = self.Attention(x).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,mem_step_len)).cuda()
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=2) / len_expansion
+            x = (x * att_weight).sum(dim=1) / len_expansion
 
             x = x.view(length, -1)
             x = self.fc(x)
         else:
             # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
             att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,mem_step_len)).cuda()
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=2) / len_expansion
+            x = (x * att_weight).sum(dim=1) / len_expansion
 
             x = x.view(length, -1)
             x = F.linear(
