@@ -17,7 +17,6 @@ class ProtoNet(nn.Module):
                  embed_size,
                  hidden=128,
                  layer_num=1,
-                 self_attention=False,
                  self_att_dim=64,
                  word_cnt=None):
         super(ProtoNet, self).__init__()

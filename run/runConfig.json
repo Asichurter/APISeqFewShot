@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 18,
-  "modelName" : "ProtoNet",
+  "version" : 20,
+  "modelName" : "ConvProtoNet",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
@@ -73,6 +73,6 @@
     "使用任务batch=4",
     "使用300维度的GloVe初始化",
     "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-    "使用BiLSTM解码"
+    "使用BiLSTM+CNN解码"
   ]
 }

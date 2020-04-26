@@ -7,6 +7,7 @@ from config import appendProjectPath, saveConfigFile
 #----------------------设置系统基本信息------------------
 ################################################
 
+
 appendProjectPath(depth=1)
 
 # 先添加路径再获取
@@ -33,7 +34,8 @@ from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProto
 from models.InductionNet import InductionNet
 from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
-
+from models.HybridAttentionNet import HAPNet
+from models.ConvProtoNet import ConvProtoNet
 
 ################################################
 #----------------------读取参数------------------
@@ -205,6 +207,24 @@ elif model_type == 'ATAML':
                   layer_num=BiLstmLayer,
                   self_att_dim=SelfAttDim
                   )
+elif model_type == 'HybridAttentionNet':
+    model = HAPNet(k=k,
+                   pretrained_matrix=word_matrix,
+                   embed_size=EmbedSize,
+                   hidden_size=HiddenSize,
+                   layer_num=BiLstmLayer,
+                   self_att_dim=SelfAttDim,
+                   word_cnt=wordCnt
+                   )
+elif model_type == 'ConvProtoNet':
+    model = ConvProtoNet(k=k,
+                   pretrained_matrix=word_matrix,
+                   embed_size=EmbedSize,
+                   hidden_size=HiddenSize,
+                   layer_num=BiLstmLayer,
+                   self_att_dim=SelfAttDim,
+                   word_cnt=wordCnt
+                   )
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()

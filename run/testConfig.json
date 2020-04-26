@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 18,
-  "modelName" : "ProtoNet",
+  "version" : 20,
+  "modelName" : "ConvProtoNet",
 
   "trainingEpoch" : 5000,
 
@@ -30,7 +30,7 @@
     }
   },
 
-  "testSubdataset": "validate",
+  "testSubdataset": "test",
 
   "description": [
   ]

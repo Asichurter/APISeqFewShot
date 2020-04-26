@@ -135,7 +135,7 @@ class BiLstmEncoder(nn.Module):
                  hidden_size=128,
                  layer_num=1,
                  dropout=0.1,
-                 self_att_dim=64,
+                 self_att_dim=None,
                  useBN=False):
 
         super(BiLstmEncoder, self).__init__()
@@ -535,7 +535,7 @@ class ResInception(nn.Module):
         return t.cat((x, x_1, x_3, x_5), dim=1)
 
 def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool='max', flatten=None):
+             relu='relu', pool='max', flatten=None):
     layers = [nn.Conv2d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
@@ -543,8 +543,10 @@ def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
                   bias=False),
             nn.BatchNorm2d(out_feature)]
 
-    if relu:
+    if relu == 'relu' or relu == True:
         layers.append(nn.ReLU(inplace=True))
+    elif relu == 'leaky':
+        layers.append(nn.LeakyReLU(negative_slope=0.01, inplace=True))
 
     if pool == 'max':
         layers.append(nn.MaxPool2d(2))
@@ -784,6 +786,20 @@ class NTN(nn.Module):
         s = self.Scoring(v)
         s = t.sigmoid(s)#t.log_softmax(s.view(-1,n), dim=1)
         return s
+
+
+class Embedding(nn.Module):
+    def __init__(self, pretrained, word_count, freeze=False, embed_dim=None):
+        assert pretrained is not None or word_count is not None, \
+            '至少需要提供词个数或者预训练的词矩阵两者一个'
+
+        if pretrained is not None:
+            self.E = nn.Embedding.from_pretrained(pretrained, freeze=freeze, padding_idx=0)
+        else:
+            self.E = nn.Embedding(word_count, embed_dim, padding_idx=0)
+
+    def forward(self, x):
+        return self.E(x)
 
 
 if __name__ == '__main__':
