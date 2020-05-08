@@ -48,6 +48,7 @@ class PathManager:
         BanedListWhenAll = ['FileDataPath', 'FileSeqLenPath']
 
         self.DataType = d_type
+        self.Dataset = dataset
 
         self.FolderPath = self.ParentPath + self.FolderPathTemp % (dataset, d_type)
 
@@ -86,6 +87,12 @@ class PathManager:
 
     def Doc(self):
         return self.DocPath
+
+    def DatasetBase(self):
+        return self.ParentPath + self.Dataset + '/'
+
+    def DocBase(self):
+        return self.ParentPath + self.Dataset + '/doc/'
 
 
 #########################################

@@ -56,7 +56,7 @@ class ConvProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.CNN = CNNEncoder1D(dims=[hidden_size * 2, 512])
+        # self.CNN = CNNEncoder1D(dims=[hidden_size * 2, 512])
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
         #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
@@ -112,8 +112,8 @@ class ConvProtoNet(nn.Module):
         # support = avgOverHiddenStates(support, sup_len)
         # query = avgOverHiddenStates(query, que_len)
 
-        support = self.CNN(support, sup_len)
-        query = self.CNN(query, que_len)
+        # support = self.CNN(support, sup_len)
+        # query = self.CNN(query, que_len)
 
         # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
         # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)

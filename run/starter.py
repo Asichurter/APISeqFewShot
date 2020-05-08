@@ -14,18 +14,27 @@ from utils.matrix import batchDot
 from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
 
+from config import generateConfigReport
+
+
+# 生成报告总结
+################################################################
+generateConfigReport(dataset='virushare_20', include_result=True)
+################################################################
+
+
 # 制作基于下标的数据集
 ################################################################
 # makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare_20/")
-for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare_20', d_type=d_type)
-
-    makeDataFile(json_path=manager.Folder(),
-                 w2idx_path=manager.WordIndexMap(),
-                 seq_length_save_path=manager.FileSeqLen(),
-                 data_save_path=manager.FileData(),
-                 num_per_class=20,
-                 max_seq_len=50)
+# for d_type in ['train', 'validate', 'test']:
+#     manager = PathManager(dataset='virushare_20', d_type=d_type)
+#
+#     makeDataFile(json_path=manager.Folder(),
+#                  w2idx_path=manager.WordIndexMap(),
+#                  seq_length_save_path=manager.FileSeqLen(),
+#                  data_save_path=manager.FileData(),
+#                  num_per_class=20,
+#                  max_seq_len=50)
 ################################################################
 
 # 统计序列长度分布
