@@ -1,0 +1,96 @@
+import torch as t
+
+
+
+def queryLossProcedure(model,
+                       taskBatchSize,
+                       task,
+                       loss,
+                       optimizer,
+                       scheduler=None,
+                       train=True):
+
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    loss_val = t.zeros((1,)).cuda()
+    acc_val = 0.
+
+    for task_i in range(taskBatchSize):
+        model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
+
+        predicts = model(*model_input)
+
+        loss_val += loss(predicts, labels)
+        predicts = predicts.cpu()
+        acc_val += task.accuracy(predicts)
+
+    loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
+
+    if train:
+        loss_val.backward()
+
+        optimizer.step()
+
+        if scheduler:
+            scheduler.step()
+
+    loss_val_item = loss_val.detach().item()
+
+    return acc_val, loss_val_item
+
+
+
+def fomamlProcedure(model,
+                    taskBatchSize,
+                    task,
+                    loss,
+                    optimizer,
+                    scheduler=None,
+                    train=True):
+
+    if train:
+        model.train()
+        cuml_grad = [t.zeros_like(p).cuda() for p in model.parameters()]
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    loss_val = t.zeros((1,)).cuda()
+    acc_val = 0.
+    loss_val_item = 0.
+
+    for task_i in range(taskBatchSize):
+        model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
+
+        predicts, adapted_par = model(*model_input)
+
+        loss_val = loss(predicts, labels)
+
+        if train:
+            grad = t.autograd.grad(loss_val, model.parameters())
+
+            for i,g in enumerate(grad):
+                cuml_grad[i] += g / taskBatchSize       # batch内取梯度均值
+
+        predicts = predicts.cpu()
+        acc_val += task.accuracy(predicts)
+        loss_val_item += loss_val.detach().item()
+
+    # loss_val.backward()
+    if train:
+        for p,g in zip(model.parameters(), cuml_grad):
+            p.grad = g
+
+        optimizer.step()
+
+        if scheduler:
+            scheduler.step()
+
+    return acc_val, loss_val_item
+

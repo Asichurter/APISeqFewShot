@@ -103,7 +103,7 @@ class PathManager:
 #########################################
 class TrainStatManager:
 
-    def __init__(self, model_save_path, train_report_iter=100, criteria='loss'):
+    def __init__(self, model_save_path, train_report_iter=100, criteria='acc'):
         self.TrainHist = {'accuracy': [],
                           'loss': []}
         self.ValHist = {'accuracy': [],

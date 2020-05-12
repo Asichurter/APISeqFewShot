@@ -62,3 +62,27 @@ def generateConfigReport(dataset, include_result=False):
                             (doc_dir, str(e)))
 
     dumpJson(report, mng.DatasetBase()+'summary.json', sort=True)
+
+ver_check_warning_template = '''
+\n\nYour current running version is equal to the last running 
+version = %d, please check if you would like to override it.
+(type 'y', '1' or '' for comfirmation, otherwise to exit)\n\n
+'''
+
+def checkVersion(cur_v):
+    ver_cfg = loadJson('version.json')
+    last_ver = ver_cfg['lastRunVersion']
+
+    if cur_v == last_ver:
+        logging.warning(ver_check_warning_template%cur_v)
+        opt = input('>>>')
+
+        if opt == 'y' or opt == '1' or opt == '':
+            return
+        else:
+            sys.exit(1)
+
+    else:
+        ver_cfg['lastRunVersion'] = cur_v
+        dumpJson(ver_cfg, 'version.json')
+

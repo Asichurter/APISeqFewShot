@@ -5,8 +5,8 @@
   "qk" : 15,
   "n": 5,
 
-  "version" : 21,
-  "modelName" : "ConvProtoNet",
+  "version" : 23,
+  "modelName" : "ATAML",
 
   "trainingEpoch" : 5000,
 
@@ -30,7 +30,7 @@
     }
   },
 
-  "testSubdataset": "validate",
+  "testSubdataset": "test",
 
   "description": [
   ]

@@ -98,9 +98,9 @@ class BaseLearner(nn.Module):
                     parameters.append(p)
         return parameters
 
-class ATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, method='maml', **kwargs):
-        super(ATAML, self).__init__()
+class PreLayerATAML(nn.Module):
+    def __init__(self, n, loss_fn, lr=5e-2, adapt_iter=3, **kwargs):
+        super(PreLayerATAML, self).__init__()
 
         #######################################################
         # For CNN only
@@ -113,43 +113,29 @@ class ATAML(nn.Module):
 
         self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta
         self.LossFn = loss_fn
-        self.MetaLr = lr
-        self.AdaptedPar = None
-        self.Method = method
+        self.PreLayerLr = nn.Parameter(t.FloatTensor([lr]*adapt_iter))  # 每次adapt step具有不同的学习率
+        self.AdaptIter = adapt_iter
 
-    def forward(self, support, query, sup_len, que_len, s_label,
-                adapt_iter=3):
-        method = self.Method
+
+
+    def forward(self, support, query, sup_len, que_len, s_label):
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
-        for a_i in range(adapt_iter):
+        for a_i in range(self.AdaptIter):
             s_predict = self.Learner(support, sup_len)
             loss = self.LossFn(s_predict, s_label)
-            # self.Learner.zero_grad()        # 先清空基学习器梯度
-
+            self.Learner.zero_grad()        # 先清空基学习器梯度
             grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False), create_graph=True)
             adapted_state_dict = self.Learner.clone_state_dict()
 
             # 计算适应后的参数
             for (key, val), grad in zip(self.Learner.adapt_parameters(with_named=True), grads):
                 # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
-                adapted_state_dict[key] = val - self.MetaLr * grad
+                adapted_lr = self.PreLayerLr[a_i].expand_as(grad)
+                adapted_state_dict[key] = val - adapted_lr * grad
 
-        if method == 'fomaml':
-            adapted_par = []
-            for n,p in adapted_state_dict.items():
-                adapted_par.append(p)
-
-            # 对于一阶MAML，需要查询集loss和适应后参数来计算梯度
-            return self.Learner(query, que_len, params=adapted_state_dict), adapted_par
-
-        # 对于vanilia MAML，只需要query loss
-        else:
-            return self.Learner(query, que_len, params=adapted_state_dict)
-
-
-    def alpha(self, key):
-        return self.Alpha[rename(key)]
+        # 利用适应后的参数来生成测试集结果
+        return self.Learner(query, que_len, params=adapted_state_dict)

@@ -16,7 +16,6 @@ from extractors.ngram import statNGram, convertToNGramSeq
 
 from config import generateConfigReport
 
-
 # 生成报告总结
 ################################################################
 generateConfigReport(dataset='virushare_20', include_result=True)

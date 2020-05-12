@@ -103,15 +103,15 @@ class AttnReduction(nn.Module):
         return (att_weight * x).sum(dim=1)
 
     @staticmethod
-    def static_forward(x, params, lens=None):
+    def static_forward(x, params, lens=None):               # 此处由于命名限制，假定参数是按照使用顺序feed进来的
         if isinstance(x, t.nn.utils.rnn.PackedSequence):
             x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
 
         feature_dim = x.size(2)
 
-        att_weight = F.linear(input=F.tanh(F.linear(input=x,
-                                                    weight=params['Encoder.Attention.IntAtt.weight'])),
-                              weight=params['Encoder.Attention.ExtAtt.weight']).squeeze()
+        att_weight = F.linear(input=t.tanh(F.linear(input=x,
+                                                    weight=params[0])),
+                              weight=params[1]).squeeze()
 
         if lens is not None:
             if not isinstance(lens, t.Tensor):

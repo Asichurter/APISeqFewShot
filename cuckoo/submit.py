@@ -36,9 +36,11 @@ with open(config_path, 'r') as f:
 # with open(config_path, 'w') as f:
 for c_i, c in enumerate(os.listdir(pe_path)):
     for i_i, item in enumerate(os.listdir(pe_path + c + '/')):
-        print(c_i, i_i)
+        print(c_i, i_i, end=' ')
         if item in compl_samples:
+            print('passed')
             continue
+        print('submitted')
         with open(pe_path + c + '/' + item, "rb") as sample:
             files = {"file": (item, sample)}
             try:

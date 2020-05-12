@@ -5,13 +5,13 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 21,
-  "modelName" : "ConvProtoNet",
+  "version" : 24,
+  "modelName" : "ATAML",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
   "biLstmLayer" : 1,
-  "selfAttDim" : 64,
+  "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
 
@@ -73,6 +73,10 @@
     "使用任务batch=4",
     "使用300维度的GloVe初始化",
     "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-    "使用BiLSTM+自注意力解码"
+    "使用BiLSTM解码，使用自定义的自注意力模块进行规约",
+    "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
+    "使用5e-2的inner学习率",
+    "每个 inner loop 进行3次adapt",
+    "一阶maml(fomaml)"
   ]
 }

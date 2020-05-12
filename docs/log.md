@@ -67,3 +67,21 @@ CNN进行解码效果好于使用注意力
 
 - 将支持集进一步划分为辅助支持集和辅助查询集，将支持集内部的辅助损失作为
 损失的一部分
+
+# 5.12
+
+- ATAML在对序列每一个元素进行attend之后，将每一个state相加取平均的论文
+中方法在复现时没有取得训练效果，模型训练停止；但是如果将模型的特征dim维度
+相加取平均，则模型能够训练得动
+
+- ATAML训练不动的谜题解开了：inner learning rate 过小导致outer loop
+无法有效根据inner adapt 的结果进行训练
+
+- 注意：从version=23之后，所有early stop从loss为criteria改为以
+acc作为criteria
+
+- 对于定制grad，直接torch.autograd.grad先求grad再遍历parameter
+一个一个赋值: par.grad = g
+
+- 测试一阶MAML(FOMAML)使用ATAML（分离task-specific和task-shared）
+进行训练，并且使用自注意力规约来从BiLSTM中获取唯一表示

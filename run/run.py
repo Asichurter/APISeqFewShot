@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-from config import appendProjectPath, saveConfigFile
+from config import appendProjectPath, saveConfigFile, checkVersion
 
 ################################################
 #----------------------设置系统基本信息------------------
@@ -29,6 +29,7 @@ from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
 from utils.file import deleteDir
+from components.procedure import queryLossProcedure, fomamlProcedure
 
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
@@ -36,10 +37,13 @@ from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
+from models.PreLayerATAML import PreLayerATAML
 
 ################################################
 #----------------------读取参数------------------
 ################################################
+
+ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PreLayerATAML']
 
 data_folder = cfg.dataset()#'virushare_20_image'
 
@@ -82,6 +86,9 @@ legends = cfg.plotParams()
 
 TrainingEpoch = cfg.epoch()
 
+# 检查版本号，以防止不小心覆盖version
+checkVersion(version)
+
 
 ################################################
 #----------------------定义数据------------------
@@ -123,7 +130,7 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 #                         label_expand=expand,
 #                         unsqueeze=False)
 
-if model_type in ['ATAML', 'MetaSGD']:
+if model_type in ADAPTED_MODELS:
     train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand)
     val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
@@ -188,7 +195,6 @@ elif model_type == 'InductionNet':
 elif model_type == 'MetaSGD':
     model = MetaSGD(n=n,
                     loss_fn=loss,
-                    lr=default_lr,
                     pretrained_matrix=word_matrix,
                     embed_size=EmbedSize
                     # hidden_size=HiddenSize,
@@ -200,12 +206,12 @@ elif model_type == 'MetaSGD':
 elif model_type == 'ATAML':
     model = ATAML(n=n,
                   loss_fn=loss,
-                  lr=default_lr,
                   pretrained_matrix=word_matrix,
                   embed_size=EmbedSize,
                   hidden_size=HiddenSize,
                   layer_num=BiLstmLayer,
-                  self_att_dim=SelfAttDim
+                  self_att_dim=SelfAttDim,
+                  method='fomaml'
                   )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
@@ -225,6 +231,15 @@ elif model_type == 'ConvProtoNet':
                    self_att_dim=SelfAttDim,
                    word_cnt=wordCnt
                    )
+elif model_type == 'ATAML':
+    model = PreLayerATAML(n=n,
+                  loss_fn=loss,
+                  pretrained_matrix=word_matrix,
+                  embed_size=EmbedSize,
+                  hidden_size=HiddenSize,
+                  layer_num=BiLstmLayer,
+                  self_att_dim=SelfAttDim
+                  )
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -281,36 +296,13 @@ with t.autograd.set_detect_anomaly(False):
         if TrainingVerbose:
             printState('Epoch %d'%epoch)
 
-        model.train()
-        model.zero_grad()
-
-        loss_val = t.zeros((1,)).cuda()
-        acc_val = 0.
-
-        for task_i in range(taskBatchSize):
-            if TrainingVerbose:
-                print('forming episode...')
-            model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
-            # support, query, labels = train_task.episode()
-
-            if TrainingVerbose:
-                print('forwarding...')
-
-            # print(model_input[0].size(), model_input[1].size())
-
-            predicts = model(*model_input)
-
-            loss_val += loss(predicts, labels)
-
-            predicts = predicts.cpu()
-            acc_val += train_task.accuracy(predicts)
-
-        if TrainingVerbose:
-            print('backward...')
-        loss_val.backward()
-
-        if TrainingVerbose:
-            print('recording grad...')
+        acc_val, loss_val_item = fomamlProcedure(model,
+                                                 taskBatchSize,
+                                                 train_task,
+                                                 loss,
+                                                 optimizer,
+                                                 scheduler,
+                                                 train=True)
 
         if RecordGradient:
             grad = 0.
@@ -323,17 +315,6 @@ with t.autograd.set_detect_anomaly(False):
                             update={'flag': True,
                                     'val': None if epoch%GradientUpdateCycle==0 else 'append'})
 
-        if TrainingVerbose:
-            print('optimizing...')
-
-        optimizer.step()
-        scheduler.step()
-
-        loss_val_item = loss_val.detach().item()
-
-        if TrainingVerbose:
-            print('recording...')
-
         # 记录任务batch的平均正确率和损失值
         stat.recordTraining(acc_val / taskBatchSize,
                             loss_val_item/ taskBatchSize)
@@ -345,22 +326,29 @@ with t.autograd.set_detect_anomaly(False):
 
         if epoch % ValCycle == 0:
             printState('Test in Epoch %d'%epoch)
-            model.eval()
-            validate_acc = 0.
-            validate_loss = 0.
+            # model.eval()
+            # validate_acc = 0.
+            # validate_loss = 0.
+            #
+            # for i in range(ValEpisode):
+            #     model_input, labels = val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
+            #     # support, query, labels = val_task.episode()
+            #
+            #     # print(model_input[0].size(), model_input[1].size())
+            #     predicts = model(*model_input)
+            #
+            #     loss_val = loss(predicts, labels)
+            #
+            #     predicts = predicts.cpu()
+            #     validate_loss += loss_val.detach().item()
+            #     validate_acc += val_task.accuracy(predicts)
 
-            for i in range(ValEpisode):
-                model_input, labels = val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
-                # support, query, labels = val_task.episode()
-
-                # print(model_input[0].size(), model_input[1].size())
-                predicts = model(*model_input)
-
-                loss_val = loss(predicts, labels)
-
-                predicts = predicts.cpu()
-                validate_loss += loss_val.detach().item()
-                validate_acc += val_task.accuracy(predicts)
+            validate_acc, validate_loss = fomamlProcedure(model,
+                                                          ValEpisode,
+                                                          val_task,
+                                                          loss,
+                                                          optimizer,
+                                                          train=False)
 
             avg_validate_acc = validate_acc / ValEpisode
             avg_validate_loss = validate_loss / ValEpisode
@@ -390,8 +378,46 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
          style_list=('-','-'),
          save_path=train_path_manager.Doc()+'loss.png')
 
-
-
+########################################################################################
+# model.train()
+# model.zero_grad()
+#
+# loss_val = t.zeros((1,)).cuda()
+# acc_val = 0.
+#
+# for task_i in range(taskBatchSize):
+#     if TrainingVerbose:
+#         print('forming episode...')
+#     model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
+#     # support, query, labels = train_task.episode()
+#
+#     if TrainingVerbose:
+#         print('forwarding...')
+#
+#     # print(model_input[0].size(), model_input[1].size())
+#
+#     predicts = model(*model_input)
+#
+#     loss_val += loss(predicts, labels)
+#
+#     predicts = predicts.cpu()
+#     acc_val += train_task.accuracy(predicts)
+#
+# if TrainingVerbose:
+#     print('backward...')
+# loss_val.backward()
+#
+# if TrainingVerbose:
+#     print('recording grad...')
+#
+# if TrainingVerbose:
+#     print('optimizing...')
+#
+# optimizer.step()
+# scheduler.step()
+#
+# loss_val_item = loss_val.detach().item()
+########################################################################################
 
 
 

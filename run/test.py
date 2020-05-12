@@ -22,8 +22,9 @@ from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
+from models.PreLayerATAML import PreLayerATAML
 
-ADAPTED_MODELS = ['MetaSGD', 'ATAML']
+ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PreLayerATAML']
 
 cfg = TrainingConfigManager('testConfig.json')
 datasetBasePath = cfg.systemParams()
@@ -117,7 +118,6 @@ elif model_type == 'InductionNet':
 elif model_type == 'MetaSGD':
     model = MetaSGD(n=n,
                     loss_fn=loss,
-                    lr=default_lr,
                     pretrained_matrix=word_matrix,
                     embed_size=EmbedSize
                     # hidden_size=HiddenSize,
@@ -129,9 +129,12 @@ elif model_type == 'MetaSGD':
 elif model_type == 'ATAML':
     model = ATAML(n=n,
                   loss_fn=loss,
-                  lr=default_lr,
                   pretrained_matrix=word_matrix,
-                  embed_size=EmbedSize)
+                  embed_size=EmbedSize,
+                  hidden_size=HiddenSize,
+                  layer_num=BiLstmLayer,
+                  self_att_dim=SelfAttDim
+                  )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
                    pretrained_matrix=word_matrix,
