@@ -1,5 +1,9 @@
 import torch as t
 from torch.nn.utils.rnn import pad_sequence
+import random as rd
+import numpy as np
+
+from utils.magic import magicSeed
 
 
 #########################################
@@ -57,14 +61,19 @@ def extractTaskStructFromInput(support, query,
         len_dim_base = 1 if not unsqueezed else 2
 
         assert len(support.size()) == support_dim_size, '支持集结构 %s 不符合要求！'%(str(support.size()))
-        assert len(query.size()) == query_dim_size, '查询集结构 %s 不符合要求！'%(str(query.size()))
 
         n = support.size(0)
         k = support.size(1)
         sup_seq_len = support.size(len_dim_base+1)
 
-        qk = query.size(0)
-        que_seq_len = query.size(len_dim_base)
+        if query is not None:       # support for None query
+            assert len(query.size()) == query_dim_size, '查询集结构 %s 不符合要求！' % (str(query.size()))
+            qk = query.size(0)
+            que_seq_len = query.size(len_dim_base)
+
+        else:
+            qk = None
+            que_seq_len = None
 
         # assert sup_seq_len==que_seq_len, \
         #     '支持集序列长度%d和查询集序列%d长度不同！'%(sup_seq_len,que_seq_len,)
@@ -182,6 +191,34 @@ def dynamicRouting(transformer, e, b, k):
     delta_b = (c_expand * e).sum(dim=2)
 
     return b + delta_b, c
+
+def splitMetaBatch(meta_data, meta_label,
+                   batch_num, max_sample_num, sample_num,
+                   meta_len=None):
+
+    assert len(meta_data)==len(meta_label)==len(meta_len)
+
+    index_pool = [i for i in range(len(meta_data))]
+    meta_len = t.LongTensor(meta_len)
+
+    for i in range(batch_num):
+
+        # for each meta-mini-batch, sample certain items per class
+        index = []
+
+        for start_i in range(0,len(meta_data),max_sample_num):
+            rd.seed(magicSeed())
+            class_batch_index = rd.sample(index_pool[start_i:start_i+max_sample_num],
+                                          sample_num)
+            index += class_batch_index
+
+        # print(index)
+
+        if meta_len is not None:
+            yield meta_data[index], meta_label[index], meta_len[index].tolist()
+        else:
+            yield meta_data[index], meta_label[index]
+
 
 
 

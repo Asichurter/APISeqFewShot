@@ -29,7 +29,7 @@ from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
 from utils.file import deleteDir
-from components.procedure import queryLossProcedure, fomamlProcedure
+from components.procedure import queryLossProcedure, fomamlProcedure, reptileProcedure
 
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
@@ -38,6 +38,7 @@ from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
 from models.PreLayerATAML import PreLayerATAML
+from models.Reptile import Reptile
 
 ################################################
 #----------------------读取参数------------------
@@ -135,6 +136,13 @@ if model_type in ADAPTED_MODELS:
                                   cuda=True, expand=expand)
     val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
                                   cuda=True, expand=expand)
+elif model_type == 'Reptile':
+    train_task = ReptileEpisodeTask(N, n, N,
+                                    dataset=train_dataset,
+                                    expand=expand)
+    val_task = ReptileEpisodeTask(N-k, n, N,
+                                    dataset=val_dataset,
+                                    expand=expand)
 else:
     train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand)
@@ -211,7 +219,7 @@ elif model_type == 'ATAML':
                   hidden_size=HiddenSize,
                   layer_num=BiLstmLayer,
                   self_att_dim=SelfAttDim,
-                  method='fomaml'
+                  method='maml'
                   )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
@@ -240,6 +248,15 @@ elif model_type == 'ATAML':
                   layer_num=BiLstmLayer,
                   self_att_dim=SelfAttDim
                   )
+elif model_type == 'Reptile':
+    model = Reptile(n=n,
+                    loss_fn=loss,
+                    pretrained_matrix=word_matrix,
+                    embed_size=EmbedSize,
+                    hidden_size=HiddenSize,
+                    layer_num=BiLstmLayer,
+                    self_att_dim=SelfAttDim
+                    )
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -296,13 +313,25 @@ with t.autograd.set_detect_anomaly(False):
         if TrainingVerbose:
             printState('Epoch %d'%epoch)
 
-        acc_val, loss_val_item = fomamlProcedure(model,
-                                                 taskBatchSize,
-                                                 train_task,
-                                                 loss,
-                                                 optimizer,
-                                                 scheduler,
-                                                 train=True)
+        # acc_val, loss_val_item = fomamlProcedure(model,
+        #                                          taskBatchSize,
+        #                                          train_task,
+        #                                          loss,
+        #                                          optimizer,
+        #                                          scheduler,
+        #                                          train=True)
+        # acc_val, loss_val_item = queryLossProcedure(model,
+        #                                             taskBatchSize,
+        #                                             train_task,
+        #                                             loss,
+        #                                             optimizer,
+        #                                             scheduler,
+        #                                             train=True)
+        acc_val, loss_val_item = reptileProcedure(n, k, model,
+                                                  taskBatchSize=None,
+                                                  task=train_task,
+                                                  loss=loss,
+                                                  train=True)
 
         if RecordGradient:
             grad = 0.
@@ -327,11 +356,11 @@ with t.autograd.set_detect_anomaly(False):
         if epoch % ValCycle == 0:
             printState('Test in Epoch %d'%epoch)
             # model.eval()
-            # validate_acc = 0.
-            # validate_loss = 0.
+            validate_acc = 0.
+            validate_loss = 0.
             #
-            # for i in range(ValEpisode):
-            #     model_input, labels = val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
+            for i in range(ValEpisode):
+            #     model_input, labels =val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
             #     # support, query, labels = val_task.episode()
             #
             #     # print(model_input[0].size(), model_input[1].size())
@@ -343,12 +372,28 @@ with t.autograd.set_detect_anomaly(False):
             #     validate_loss += loss_val.detach().item()
             #     validate_acc += val_task.accuracy(predicts)
 
-            validate_acc, validate_loss = fomamlProcedure(model,
-                                                          ValEpisode,
-                                                          val_task,
-                                                          loss,
-                                                          optimizer,
-                                                          train=False)
+            # validate_acc, validate_loss = fomamlProcedure(model,
+            #                                               ValEpisode,
+            #                                               val_task,
+            #                                               loss,
+            #                                               optimizer,
+            #                                               train=False)
+            # validate_acc, validate_loss = queryLossProcedure(model,
+            #                                                  ValEpisode,
+            #                                                  val_task,
+            #                                                  loss,
+            #                                                  optimizer,
+            #                                                  train=False)
+
+                cur_validate_acc, cur_validate_loss = reptileProcedure(n, k,
+                                                                       model,
+                                                                       taskBatchSize=None,
+                                                                       task=val_task,
+                                                                       loss=loss,
+                                                                       train=False)
+                validate_acc += cur_validate_acc
+                validate_loss += cur_validate_loss
+
 
             avg_validate_acc = validate_acc / ValEpisode
             avg_validate_loss = validate_loss / ValEpisode

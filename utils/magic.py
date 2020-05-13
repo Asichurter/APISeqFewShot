@@ -1,7 +1,7 @@
 from time import time
 import random as rd
 
-magic = 7355605
+magic = 7355608
 magic_list_size = 100000
 
 def magicSeed():

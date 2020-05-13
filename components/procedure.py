@@ -1,5 +1,5 @@
 import torch as t
-
+from components.task import ReptileEpisodeTask
 
 
 def queryLossProcedure(model,
@@ -41,7 +41,7 @@ def queryLossProcedure(model,
 
     loss_val_item = loss_val.detach().item()
 
-    return acc_val, loss_val_item
+    return acc_val, loss_val_item*taskBatchSize     # 适配外部调用
 
 
 
@@ -93,4 +93,34 @@ def fomamlProcedure(model,
             scheduler.step()
 
     return acc_val, loss_val_item
+
+
+
+
+def reptileProcedure(n, k,
+                     model,
+                     taskBatchSize,
+                     task: ReptileEpisodeTask,
+                     loss,
+                     train=True):
+
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    if train:
+        model_input = task.episode(True)
+        acc_val, loss_val = model(n, k, *model_input)
+        loss_val = loss_val.detach().item()
+    else:
+        model_input, labels = task.episode(False)
+        predicts = model(n, k, *model_input)
+
+        loss_val = loss(predicts, labels).detach().item()
+        acc_val = task.accuracy(predicts.cpu())
+
+    return acc_val, loss_val     # 适配外部调用
 

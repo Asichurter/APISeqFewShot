@@ -5,7 +5,7 @@ from warnings import warn
 from torch.optim.adam import Adam
 
 from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
-from utils.training import extractTaskStructFromInput, getMaskFromLens
+from utils.training import extractTaskStructFromInput, getMaskFromLens, splitMetaBatch
 
 def rename(name, token='-'):
     '''
@@ -82,7 +82,6 @@ class BaseLearner(nn.Module):
         cloned_state_dict = {
             key: val.clone()
             for key, val in self.state_dict().items()
-            if key in self.adapted_keys
         }
         return cloned_state_dict
 
@@ -100,9 +99,9 @@ class BaseLearner(nn.Module):
                     parameters.append(p)
         return parameters
 
-class ATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, method='maml', **kwargs):
-        super(ATAML, self).__init__()
+class Reptile(nn.Module):
+    def __init__(self, n, loss_fn, meta_lr=1, adapt_lr=5e-2, **kwargs):
+        super(Reptile, self).__init__()
 
         #######################################################
         # For CNN only
@@ -115,43 +114,54 @@ class ATAML(nn.Module):
 
         self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta
         self.LossFn = loss_fn
-        self.MetaLr = lr
+        self.MetaLr = meta_lr
+        self.AdaLr = adapt_lr
         self.AdaptedPar = None
-        self.Method = method
 
-    def forward(self, support, query, sup_len, que_len, s_label,
-                adapt_iter=3):
-        method = self.Method
-        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
+    def _train(self, n, k, max_sample_num, support, sup_len, s_label):
+        pass
+
+    def forward(self, n, k, support, query, sup_len, que_len, s_label):
+        '''
+            In Reptile, update can be done within each forward loop without
+            evolvement of optimizer, so when calling this method with query
+            provided, the parameters can be updated automatically.
+        '''
+        # n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
+
+        sup_seq_len = support.size(1)
 
         # 提取了任务结构后，将所有样本展平为一个批次
-        support = support.view(n*k, sup_seq_len)
+        support = support.view(-1, sup_seq_len)
 
-        for a_i in range(adapt_iter):
-            s_predict = self.Learner(support, sup_len)
-            loss = self.LossFn(s_predict, s_label)
-            # self.Learner.zero_grad()        # 先清空基学习器梯度
+        accum_grads = [t.zeros_like(p).cuda() for p in self.Learner.adapt_parameters(with_named=False)]
 
-            grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False), create_graph=True)
-            adapted_state_dict = self.Learner.clone_state_dict()
+        # iterate through meta-mini-batches
+        for sup_data_batch, sup_label_batch, sup_len_batch in splitMetaBatch(support, s_label,
+                                                                             batch_num=5,
+                                                                             max_sample_num=len(support)//n,
+                                                                             sample_num=k,
+                                                                             meta_len=sup_len):
+            s_predict = self.Learner(sup_data_batch, sup_len_batch)
+            loss = self.LossFn(s_predict, sup_label_batch)
 
-            # 计算适应后的参数`
-            for (key, val), grad in zip(self.Learner.adapt_parameters(with_named=True), grads):
-                # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
-                adapted_state_dict[key] = val - self.MetaLr * grad
+            grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False))
 
-        if method == 'fomaml':
-            adapted_par = []
-            for n,p in adapted_state_dict.items():
-                adapted_par.append(p)
+            # accumulate inner-loop step gradient
+            for i,g in enumerate(grads):
+                accum_grads[i] += self.AdaLr * g
 
-            # 对于一阶MAML，需要查询集loss和适应后参数来计算梯度
-            return self.Learner(query, que_len, params=adapted_state_dict), adapted_par
+        adapted_pars = self.Learner.clone_state_dict()
 
-        # 对于vanilia MAML，只需要query loss
+        # perform meta-update in Reptile
+        for (key, ada_par), grad in zip(self.Learner.adapt_parameters(with_named=True), accum_grads):
+            adapted_pars[key] = adapted_pars[key] + self.MetaLr*(grad - adapted_pars[key])
+
+        if query is not None:
+            return self.Learner(query, que_len, params=adapted_pars)
         else:
-            return self.Learner(query, que_len, params=adapted_state_dict)
+            acc = (t.argmax(s_predict, dim=1)==sup_label_batch).sum().item() / s_predict.size(0)
+            loss_val = loss.detach().item()
+            self.Learner.load_state_dict(adapted_pars)      # no query indicates updating parameters in training stage
 
-
-    def alpha(self, key):
-        return self.Alpha[rename(key)]
+            return acc, loss

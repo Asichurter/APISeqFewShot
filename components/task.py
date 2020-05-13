@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import random as rd
 import time
 
-from components.samplers import EpisodeSamlper
+from components.samplers import EpisodeSamlper, ReptileSamlper
 from utils.magic import magicSeed, randomList
 from utils.training import getBatchSequenceFunc, batchSequenceWithoutPad
 
@@ -188,6 +188,107 @@ class AdaptEpisodeTask(EpisodeTask):
 
         return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels), \
                query_labels
+
+
+
+
+class ReptileEpisodeTask(EpisodeTask):
+    def __init__(self, training_num, n, N, dataset, cuda=True, expand=False):
+        super(ReptileEpisodeTask, self).__init__(training_num, N-training_num, n, N, dataset, cuda, expand)
+
+    def getTaskSampler(self, label_space, isTrain, seed=None):
+        task_seed = magicSeed() if seed is None else seed
+        k, qk, n, N = self.readParams()
+
+        seed_for_each_class = randomList(num=len(label_space),
+                                         seed=task_seed,
+                                         allow_duplicate=True)  # rd.sample(magicList(), len(label_space))
+
+        support_sampler = ReptileSamlper(N, k, seed_for_each_class,
+                                         mode='support', label_space=label_space)
+
+        if isTrain:
+            query_sampler = None
+
+        else:
+            query_sampler = ReptileSamlper(N, k, seed_for_each_class,
+                                           mode='query', label_space=label_space)
+
+        return support_sampler, query_sampler
+
+    def getEpisodeData(self, support_sampler, query_sampler):
+        k, qk, n, N = self.readParams()
+
+        support_loader = DataLoader(self.Dataset, batch_size=k * n,
+                                    sampler=support_sampler,
+                                    collate_fn=batchSequenceWithoutPad)  # getBatchSequenceFunc())
+
+        supports, support_labels, support_lens = support_loader.__iter__().next()
+
+        self.SupSeqLenCache = support_lens
+
+        if query_sampler:
+            query_loader = DataLoader(self.Dataset, batch_size=qk * n,
+                                      sampler=query_sampler,
+                                      collate_fn=batchSequenceWithoutPad)  # getBatchSequenceFunc())
+
+            queries, query_labels, query_lens = query_loader.__iter__().next()
+
+            self.QueSeqLenCache = query_lens
+
+            return supports, support_labels, queries, query_labels
+
+        else:
+            return supports, support_labels
+
+
+    def episode(self, isTrain=True, task_seed=None, sampling_seed=None):
+        k, qk, n, N = self.readParams()         # 'k' equals the max num of training items per class
+
+        label_space = self.getLabelSpace(task_seed)
+
+        if isTrain:
+            sup_sampler, dummy = self.getTaskSampler(label_space, True, sampling_seed)
+            supports, support_labels = self.getEpisodeData(sup_sampler, dummy)
+
+            sup_seq_len = supports.size(1)
+
+            support_labels = self.taskLabelNormalize(support_labels, support_labels)
+
+            if self.UseCuda:
+                supports = supports.cuda()
+                support_labels = support_labels.cuda()
+
+            supports = supports.view(n * k, sup_seq_len)
+
+            return supports, None, self.SupSeqLenCache, None, support_labels
+
+        else:
+            support_sampler, query_sampler = self.getTaskSampler(label_space, False, sampling_seed)
+            supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
+
+            # 已修正：因为支持集和查询集的序列长度因为pack而长度不一致，需要分开
+            sup_seq_len = supports.size(1)
+            que_seq_len = queries.size(1)
+
+            query_labels = self.taskLabelNormalize(support_labels, query_labels)
+            support_labels = self.taskLabelNormalize(support_labels, support_labels)
+
+            self.LabelsCache = query_labels
+
+            if self.UseCuda:
+                supports = supports.cuda()
+                queries = queries.cuda()
+                support_labels = support_labels.cuda()
+                query_labels = query_labels.cuda()
+
+            # 重整数据结构，便于模型读取任务参数
+            supports = supports.view(n * k, sup_seq_len)
+            queries = queries.view(n * qk, que_seq_len)  # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+            return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels), \
+                   query_labels
+
 
 
 class MatrixProtoEpisodeTask(EpisodeTask):

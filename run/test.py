@@ -15,6 +15,7 @@ from utils.manager import TrainingConfigManager, PathManager, TestStatManager
 from components.datasets import SeqFileDataset, ImageFileDataset
 from utils.display import printState
 from utils.stat import statParamNumber
+from components.procedure import fomamlProcedure, queryLossProcedure
 
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
@@ -133,7 +134,8 @@ elif model_type == 'ATAML':
                   embed_size=EmbedSize,
                   hidden_size=HiddenSize,
                   layer_num=BiLstmLayer,
-                  self_att_dim=SelfAttDim
+                  self_att_dim=SelfAttDim,
+                  method='maml'
                   )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
@@ -166,20 +168,36 @@ stat.startTimer()
 ################################################
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TestingEpoch):
-        model.eval()
+        # model.eval()
+        #
+        # loss_val = t.zeros((1,)).cuda()
+        # acc_val = 0.
+        #
+        # model_input, labels = test_task.episode()
+        #
+        # predicts = model(*model_input)
+        #
+        # loss_val += loss(predicts, labels)
+        #
+        # predicts = predicts.cpu()
+        # acc_val = test_task.accuracy(predicts)
+        # loss_val_item = loss_val.detach().item()
 
-        loss_val = t.zeros((1,)).cuda()
-        acc_val = 0.
+        # acc_val, loss_val_item = fomamlProcedure(model,
+        #                                          1,
+        #                                          test_task,
+        #                                          loss,
+        #                                          None,
+        #                                          None,
+        #                                          train=False)
 
-        model_input, labels = test_task.episode()
-
-        predicts = model(*model_input)
-
-        loss_val += loss(predicts, labels)
-
-        predicts = predicts.cpu()
-        acc_val = test_task.accuracy(predicts)
-        loss_val_item = loss_val.detach().item()
+        acc_val, loss_val_item = queryLossProcedure(model,
+                                                    1,
+                                                    test_task,
+                                                    loss,
+                                                    None,
+                                                    None,
+                                                    train=False)
 
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val, loss_val_item)
