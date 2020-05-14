@@ -37,14 +37,14 @@ from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
-from models.PreLayerATAML import PreLayerATAML
+from models.PerLayerATAML import PerLayerATAML
 from models.Reptile import Reptile
 
 ################################################
 #----------------------读取参数------------------
 ################################################
 
-ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PreLayerATAML']
+ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
 data_folder = cfg.dataset()#'virushare_20_image'
 
@@ -239,15 +239,15 @@ elif model_type == 'ConvProtoNet':
                    self_att_dim=SelfAttDim,
                    word_cnt=wordCnt
                    )
-elif model_type == 'ATAML':
-    model = PreLayerATAML(n=n,
-                  loss_fn=loss,
-                  pretrained_matrix=word_matrix,
-                  embed_size=EmbedSize,
-                  hidden_size=HiddenSize,
-                  layer_num=BiLstmLayer,
-                  self_att_dim=SelfAttDim
-                  )
+elif model_type == 'PerLayerATAML':
+    model = PerLayerATAML(n=n,
+                          loss_fn=loss,
+                          pretrained_matrix=word_matrix,
+                          embed_size=EmbedSize,
+                          hidden_size=HiddenSize,
+                          layer_num=BiLstmLayer,
+                          self_att_dim=SelfAttDim
+                          )
 elif model_type == 'Reptile':
     model = Reptile(n=n,
                     loss_fn=loss,
@@ -291,7 +291,7 @@ else:
 
 scheduler = t.optim.lr_scheduler.StepLR(optimizer,
                                         step_size=LRDecayIters,
-                                        gamma=LRDecayGamma)
+                                         gamma=LRDecayGamma)
 
 
 ################################################
@@ -320,18 +320,19 @@ with t.autograd.set_detect_anomaly(False):
         #                                          optimizer,
         #                                          scheduler,
         #                                          train=True)
-        # acc_val, loss_val_item = queryLossProcedure(model,
-        #                                             taskBatchSize,
-        #                                             train_task,
-        #                                             loss,
-        #                                             optimizer,
-        #                                             scheduler,
-        #                                             train=True)
-        acc_val, loss_val_item = reptileProcedure(n, k, model,
-                                                  taskBatchSize=None,
-                                                  task=train_task,
-                                                  loss=loss,
-                                                  train=True)
+        acc_val, loss_val_item = queryLossProcedure(model,
+                                                    taskBatchSize,
+                                                    train_task,
+                                                    loss,
+                                                    optimizer,
+                                                    scheduler,
+                                                    train=True)
+
+        # acc_val, loss_val_item = reptileProcedure(n, k, model,
+        #                                           taskBatchSize=None,
+        #                                           task=train_task,
+        #                                           loss=loss,
+        #                                           train=True)
 
         if RecordGradient:
             grad = 0.
@@ -359,7 +360,7 @@ with t.autograd.set_detect_anomaly(False):
             validate_acc = 0.
             validate_loss = 0.
             #
-            for i in range(ValEpisode):
+            # for i in range(ValEpisode):
             #     model_input, labels =val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
             #     # support, query, labels = val_task.episode()
             #
@@ -378,21 +379,21 @@ with t.autograd.set_detect_anomaly(False):
             #                                               loss,
             #                                               optimizer,
             #                                               train=False)
-            # validate_acc, validate_loss = queryLossProcedure(model,
-            #                                                  ValEpisode,
-            #                                                  val_task,
-            #                                                  loss,
-            #                                                  optimizer,
-            #                                                  train=False)
+            validate_acc, validate_loss = queryLossProcedure(model,
+                                                             ValEpisode,
+                                                             val_task,
+                                                             loss,
+                                                             optimizer,
+                                                             train=False)
 
-                cur_validate_acc, cur_validate_loss = reptileProcedure(n, k,
-                                                                       model,
-                                                                       taskBatchSize=None,
-                                                                       task=val_task,
-                                                                       loss=loss,
-                                                                       train=False)
-                validate_acc += cur_validate_acc
-                validate_loss += cur_validate_loss
+                # cur_validate_acc, cur_validate_loss = reptileProcedure(n, k,
+                #                                                        model,
+                #                                                        taskBatchSize=None,
+                #                                                        task=val_task,
+                #                                                        loss=loss,
+                #                                                        train=False)
+                # validate_acc += cur_validate_acc
+                # validate_loss += cur_validate_loss
 
 
             avg_validate_acc = validate_acc / ValEpisode

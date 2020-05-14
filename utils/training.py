@@ -220,5 +220,16 @@ def splitMetaBatch(meta_data, meta_label,
             yield meta_data[index], meta_label[index]
 
 
+##################################################
+# 从参数字典中虎丘列表形式的参数，用于torch.autograd.grad
+# 等需要参数列表的场合
+##################################################
+def collectParamsFromStateDict(par_dict):
+    pars = []
+    for n,p in par_dict.items():
+        pars.append(p)
+    return pars
+
+
 
 

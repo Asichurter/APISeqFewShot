@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 26,
-  "modelName" : "Reptile",
+  "version" : 28,
+  "modelName" : "PerLayerATAML",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
@@ -73,8 +73,9 @@
     "使用任务batch=4",
     "使用300维度的GloVe初始化",
     "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-    "使用BiLSTM解码，使用自定义的自注意力模块进行规约",
+    "使用BiLSTM解码，使用点乘注意力进行规约",
     "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
-    "使用5e-2的inner学习率, 1e-3 outer lr"
+    "使用3e-2的逐层inner初始学习率",
+    "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效"
   ]
 }

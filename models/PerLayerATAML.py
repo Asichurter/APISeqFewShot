@@ -5,7 +5,8 @@ from warnings import warn
 from torch.optim.adam import Adam
 
 from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
-from utils.training import extractTaskStructFromInput, getMaskFromLens
+from utils.training import extractTaskStructFromInput, getMaskFromLens, \
+                            collectParamsFromStateDict
 
 def rename(name, token='-'):
     '''
@@ -18,8 +19,10 @@ class BaseLearner(nn.Module):
     def __init__(self, n, pretrained_matrix, embed_size, seq_len, **kwargs):
         super(BaseLearner, self).__init__()
         # 需要adapt的参数名称
-        self.adapted_keys = ['Attention.IntAtt.weight',
-                             'Attention.ExtAtt.weight',
+        self.adapted_keys = [
+                            # 'Attention.IntAtt.weight',
+                            # 'Attention.ExtAtt.weight',
+                            'Attention.weight',
                             'fc.weight',
                             'fc.bias']
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
@@ -27,8 +30,8 @@ class BaseLearner(nn.Module):
                                                       padding_idx=0)
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
-        # self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
-        self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
+        self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
+        # self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
 
         # out_size = kwargs['hidden_size']
         # self.fc = nn.Linear(seq_len, n)
@@ -47,25 +50,28 @@ class BaseLearner(nn.Module):
         mem_step_len = x.size(1)
 
         if params is None:
-            # att_weight = self.Attention(x).repeat((1,1,dim))
-            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # -------original dot-product attention-------
+            att_weight = self.Attention(x).repeat((1,1,dim))
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            # x = (x * att_weight).sum(dim=1) / len_expansion
-            x = self.Attention(x)
+            x = (x * att_weight).sum(dim=1) / len_expansion
+
+            # # ------- self-made dual-layer MLP attention-------
+            # x = self.Attention(x)
 
             x = x.view(length, -1)
             x = self.fc(x)
         else:
             # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
-            # att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
-            # # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            # x = (x * att_weight).sum(dim=1) / len_expansion
+            att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # c = ∑ αi·si / T = ∑(θ·si)·si / T
+            x = (x * att_weight).sum(dim=1) / len_expansion
 
-            x = self.Attention.static_forward(x,
-                                              params=[params['Attention.IntAtt.weight'],
-                                                      params['Attention.ExtAtt.weight']],
-                                              lens=lens)
+            # x = self.Attention.static_forward(x,
+            #                                   params=[params['Attention.IntAtt.weight'],
+            #                                           params['Attention.ExtAtt.weight']],
+            #                                   lens=lens)
 
             x = x.view(length, -1)
             x = F.linear(
@@ -98,9 +104,9 @@ class BaseLearner(nn.Module):
                     parameters.append(p)
         return parameters
 
-class PreLayerATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, adapt_iter=3, **kwargs):
-        super(PreLayerATAML, self).__init__()
+class PerLayerATAML(nn.Module):
+    def __init__(self, n, loss_fn, lr=3e-2, adapt_iter=3, **kwargs):
+        super(PerLayerATAML, self).__init__()
 
         #######################################################
         # For CNN only
@@ -124,15 +130,26 @@ class PreLayerATAML(nn.Module):
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
+        # ---------------------------------------------------------------
+        # fix the bug, which: reset the 'adapted_par' in every adapt iteration
+        # ---------------------------------------------------------------
+        adapted_state_dict = self.Learner.clone_state_dict()
+        for n,p in adapted_state_dict.items():
+            p.requires_grad_(True)
+
         for a_i in range(self.AdaptIter):
-            s_predict = self.Learner(support, sup_len)
+            # ---------------------------------------------------------------
+            # fix the bug, which: use original parameters instead of the adapted
+            # ones in every adapt iteration
+            # ---------------------------------------------------------------
+            adapted_pars = collectParamsFromStateDict(adapted_state_dict)
+
+            s_predict = self.Learner(support, sup_len, params=adapted_state_dict)
             loss = self.LossFn(s_predict, s_label)
-            self.Learner.zero_grad()        # 先清空基学习器梯度
-            grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False), create_graph=True)
-            adapted_state_dict = self.Learner.clone_state_dict()
+            grads = t.autograd.grad(loss, adapted_pars, create_graph=True)
 
             # 计算适应后的参数
-            for (key, val), grad in zip(self.Learner.adapt_parameters(with_named=True), grads):
+            for (key, val), grad in zip(adapted_state_dict.items(), grads):
                 # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
                 adapted_lr = self.PreLayerLr[a_i].expand_as(grad)
                 adapted_state_dict[key] = val - adapted_lr * grad

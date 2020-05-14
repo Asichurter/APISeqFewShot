@@ -23,9 +23,9 @@ from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
-from models.PreLayerATAML import PreLayerATAML
+from models.PerLayerATAML import PerLayerATAML
 
-ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PreLayerATAML']
+ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
 cfg = TrainingConfigManager('testConfig.json')
 datasetBasePath = cfg.systemParams()
@@ -155,6 +155,15 @@ elif model_type == 'ConvProtoNet':
                    self_att_dim=SelfAttDim,
                    word_cnt=wordCnt
                    )
+elif model_type == 'PerLayerATAML':
+    model = PerLayerATAML(n=n,
+                          loss_fn=loss,
+                          pretrained_matrix=word_matrix,
+                          embed_size=EmbedSize,
+                          hidden_size=HiddenSize,
+                          layer_num=BiLstmLayer,
+                          self_att_dim=SelfAttDim
+                          )
 
 model.load_state_dict(state_dict)
 model = model.cuda()

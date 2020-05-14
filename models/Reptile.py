@@ -18,12 +18,6 @@ class BaseLearner(nn.Module):
     def __init__(self, n, pretrained_matrix, embed_size, seq_len, **kwargs):
         super(BaseLearner, self).__init__()
         # 需要adapt的参数名称
-        self.adapted_keys = [
-                            # 'Attention.IntAtt.weight',
-                            # 'Attention.ExtAtt.weight',
-                            'Attention.weight',
-                            'fc.weight',
-                            'fc.bias']
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
                                                       freeze=False,
                                                       padding_idx=0)
@@ -37,6 +31,21 @@ class BaseLearner(nn.Module):
         self.fc = nn.Linear(kwargs['hidden_size']*2, n)
                                                     # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
+
+        self.adapted_keys = []
+                            # [
+                            # # 'Attention.IntAtt.weight',
+                            # # 'Attention.ExtAtt.weight',
+                            # 'Attention.weight',
+                            # 'fc.weight',
+                            # 'fc.bias']
+
+        self.addAdaptedKeys()
+
+
+    def addAdaptedKeys(self):
+        for n,p in self.named_parameters():
+            self.adapted_keys.append(n)
 
     def forward(self, x, lens, params=None):
         length = x.size(0)
@@ -99,6 +108,12 @@ class BaseLearner(nn.Module):
                     parameters.append(p)
         return parameters
 
+    # def eval(self):
+    #     self.Embedding.eval()
+    #     self.EmbedNorm.eval()
+    #     self.Encoder.train()
+    #     self.Attention.eval()
+
 class Reptile(nn.Module):
     def __init__(self, n, loss_fn, meta_lr=1, adapt_lr=5e-2, **kwargs):
         super(Reptile, self).__init__()
@@ -134,7 +149,7 @@ class Reptile(nn.Module):
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(-1, sup_seq_len)
 
-        accum_grads = [t.zeros_like(p).cuda() for p in self.Learner.adapt_parameters(with_named=False)]
+        accum_grads = [t.zeros_like(p).cuda() for p in self.Learner.parameters()]
 
         # iterate through meta-mini-batches
         for sup_data_batch, sup_label_batch, sup_len_batch in splitMetaBatch(support, s_label,
@@ -145,7 +160,7 @@ class Reptile(nn.Module):
             s_predict = self.Learner(sup_data_batch, sup_len_batch)
             loss = self.LossFn(s_predict, sup_label_batch)
 
-            grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False))
+            grads = t.autograd.grad(loss, self.Learner.parameters())
 
             # accumulate inner-loop step gradient
             for i,g in enumerate(grads):
@@ -154,14 +169,22 @@ class Reptile(nn.Module):
         adapted_pars = self.Learner.clone_state_dict()
 
         # perform meta-update in Reptile
-        for (key, ada_par), grad in zip(self.Learner.adapt_parameters(with_named=True), accum_grads):
+        for (key, ada_par), grad in zip(self.Learner.named_parameters(), accum_grads):
             adapted_pars[key] = adapted_pars[key] + self.MetaLr*(grad - adapted_pars[key])
 
         if query is not None:
-            return self.Learner(query, que_len, params=adapted_pars)
+            # 避免了LSTM的Functional调用
+            origin_pars = self.Learner.clone_state_dict()
+            self.Learner.load_state_dict(adapted_pars)
+            res = self.Learner(query, que_len)              # , params=adapted_pars,
+            self.Learner.load_state_dict(origin_pars)
+            return res
         else:
             acc = (t.argmax(s_predict, dim=1)==sup_label_batch).sum().item() / s_predict.size(0)
             loss_val = loss.detach().item()
             self.Learner.load_state_dict(adapted_pars)      # no query indicates updating parameters in training stage
 
             return acc, loss
+
+    # def eval(self):
+    #     self.Learner.eval()

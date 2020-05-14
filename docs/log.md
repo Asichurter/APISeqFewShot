@@ -85,3 +85,15 @@ acc作为criteria
 
 - 测试一阶MAML(FOMAML)使用ATAML（分离task-specific和task-shared）
 进行训练，并且使用自注意力规约来从BiLSTM中获取唯一表示
+
+# 5.13
+
+- PyTorch不支持RNN的高阶导数和RNN在eval阶段的一切反向传播，因此使用adapt
+  方法时需要小心，至少Reptile不好做（因为所有参数更新都来自inner-loop的adapt，
+  因此需要在测试阶段计算LSTM的导数来adapt，然而不支持）
+
+
+# 5.14 TODO
+
+- Task Condition，基于TADAM论文中的思路，引入task prototype 来对固定
+  嵌入引入一些task-specific信息以优化原share common embedding

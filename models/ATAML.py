@@ -5,7 +5,8 @@ from warnings import warn
 from torch.optim.adam import Adam
 
 from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
-from utils.training import extractTaskStructFromInput, getMaskFromLens
+from utils.training import extractTaskStructFromInput, getMaskFromLens, \
+                            collectParamsFromStateDict
 
 def rename(name, token='-'):
     '''
@@ -127,23 +128,31 @@ class ATAML(nn.Module):
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
-        for a_i in range(adapt_iter):
-            s_predict = self.Learner(support, sup_len)
-            loss = self.LossFn(s_predict, s_label)
-            # self.Learner.zero_grad()        # 先清空基学习器梯度
+        # ---------------------------------------------------------------
+        # fix the bug, which: reset the 'adapted_par' in every adapt iteration
+        # ---------------------------------------------------------------
+        adapted_state_dict = self.Learner.clone_state_dict()
+        for n,p in adapted_state_dict.items():
+            p.requires_grad_(True)
 
-            grads = t.autograd.grad(loss, self.Learner.adapt_parameters(with_named=False), create_graph=True)
-            adapted_state_dict = self.Learner.clone_state_dict()
+        for a_i in range(adapt_iter):
+            # ---------------------------------------------------------------
+            # fix the bug, which: use original parameters instead of the adapted
+            # ones in every adapt iteration
+            # ---------------------------------------------------------------
+            adapted_pars = collectParamsFromStateDict(adapted_state_dict)
+
+            s_predict = self.Learner(support, sup_len, params=adapted_state_dict)
+            loss = self.LossFn(s_predict, s_label)
+            grads = t.autograd.grad(loss, adapted_pars, create_graph=True)
 
             # 计算适应后的参数`
-            for (key, val), grad in zip(self.Learner.adapt_parameters(with_named=True), grads):
+            for (key, val), grad in zip(adapted_state_dict, grads):
                 # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
                 adapted_state_dict[key] = val - self.MetaLr * grad
 
         if method == 'fomaml':
-            adapted_par = []
-            for n,p in adapted_state_dict.items():
-                adapted_par.append(p)
+            adapted_par = collectParamsFromStateDict(adapted_state_dict)
 
             # 对于一阶MAML，需要查询集loss和适应后参数来计算梯度
             return self.Learner(query, que_len, params=adapted_state_dict), adapted_par
