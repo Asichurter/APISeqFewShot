@@ -295,9 +295,13 @@ class TransformerEncoder(nn.Module):
         # shape: [seq, batch, dim]
         # 由于transformer要序列优先，因此对于batch优先的输入先进行转置
         x = x.transpose(0,1).contiguous()
-        max_len = int(lens[0])
+        max_len = int(max(lens))
         mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
         x = self.PositionEncoding(x)
+        # print('\n\nmax_len:', max_len)
+        # print('lens:', lens)
+        # print('x size:', x.size())
+        # print('mask.size:', mask.size())
         x = self.Encoder(src=x,
                          src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
         x = x.transpose(0,1).contiguous()
@@ -561,13 +565,15 @@ def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
 
 
 def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool='max'):
+             relu=True, pool='max', bn=True):
     layers = [nn.Conv1d(in_feature, out_feature,
                   kernel_size=kernel,
                   padding=padding,
                   stride=stride,
-                  bias=False),
-            nn.BatchNorm1d(out_feature)]
+                  bias=False)]
+
+    if bn:
+        layers.append(nn.BatchNorm1d(out_feature))
 
     if relu:
         layers.append(nn.ReLU(inplace=True))
@@ -590,7 +596,8 @@ class CNNEncoder1D(nn.Module):
                  kernel_sizes=[3],
                  paddings=[1],
                  relus=[True],
-                 pools=['ada']):
+                 pools=['ada'],
+                 bn=[True]):
         super(CNNEncoder1D, self).__init__()
 
         # self.Params = {
@@ -605,12 +612,13 @@ class CNNEncoder1D(nn.Module):
                              kernel=kernel_sizes[i],
                              padding=paddings[i],
                              relu=relus[i],
-                             pool=pools[i])
+                             pool=pools[i],
+                             bn=bn[i])
                   for i in range(len(dims)-1)]
 
         self.Encoder = nn.Sequential(*layers)
 
-    def forward(self, x, lens=None, params=None):
+    def forward(self, x, lens=None, params=None, stats=None, prefix='Encoder'):
         # input shape: [batch, seq, dim] => [batch, dim(channel), seq]
         x = x.transpose(1,2).contiguous()
 
@@ -620,15 +628,17 @@ class CNNEncoder1D(nn.Module):
             for i, module in enumerate(self.Encoder):
                 for j in range(len(module)):
                     if module[j]._get_name() == 'Conv1d':
-                        x = F.conv1d(x, weight=params['Encoder.Encoder.%d.%d.weight' % (i, j)],
+                        x = F.conv1d(x, weight=params['%s.Encoder.%d.%d.weight' % (prefix, i, j)],
                                      stride=module[j].stride,
                                      padding=module[j].padding)
                     elif module[j]._get_name() == 'BatchNorm1d':
                         x = F.batch_norm(x,
-                                         params['Encoder.Encoder.%d.1.running_mean' % i],
-                                         params['Encoder.Encoder.%d.1.running_var' % i],
+                                         module[1].running_mean,
+                                         module[1].running_var,
+                                         params['%s.Encoder.%d.1.weight' % (prefix, i)],
+                                         params['%s.Encoder.%d.1.bias' % (prefix, i)],
                                          momentum=1,
-                                         training=True)
+                                         training=self.training)
                     elif module[j]._get_name() == 'ReLU':
                         x = F.relu(x)
                     elif module[j]._get_name() == 'MaxPool1d':
@@ -638,6 +648,7 @@ class CNNEncoder1D(nn.Module):
 
         # shape: [batch, dim, seq]
         return x.squeeze()
+
 
     # def static_forward(self, x, lens=None, params=None):
     #     x = x.transpose(1, 2).contiguous()
@@ -788,18 +799,77 @@ class NTN(nn.Module):
         return s
 
 
-class Embedding(nn.Module):
-    def __init__(self, pretrained, word_count, freeze=False, embed_dim=None):
-        assert pretrained is not None or word_count is not None, \
-            '至少需要提供词个数或者预训练的词矩阵两者一个'
+class ResDenseLayer(nn.Module):
 
-        if pretrained is not None:
-            self.E = nn.Embedding.from_pretrained(pretrained, freeze=freeze, padding_idx=0)
-        else:
-            self.E = nn.Embedding(word_count, embed_dim, padding_idx=0)
+    def __init__(self, dim):
+        super(ResDenseLayer, self).__init__()
+        self.Weight = nn.Linear(dim, dim)
 
     def forward(self, x):
-        return self.E(x)
+        return t.relu(x+self.Weight(x))
+
+
+class TenStepAffine1D(nn.Module):
+
+    def __init__(self, task_dim, step_length, layer_num=3):
+        super(TenStepAffine1D, self).__init__()
+        
+        assert layer_num > 1
+
+        # the weight TEN generate the vector of length equal to
+        # sequence length, to weight each step
+        weight_ten = [nn.Linear(task_dim, step_length),
+                      nn.ReLU(inplace=True)]
+        for i in range(layer_num-1):
+            weight_ten.append(ResDenseLayer(step_length))
+        self.WeightTEN = nn.Sequential(*weight_ten)
+
+
+        bias_ten = [nn.Linear(task_dim, step_length),
+                    nn.ReLU(inplace=True)]
+        for i in range(layer_num-1):
+            bias_ten.append(ResDenseLayer(step_length))
+        self.BiasTEN = nn.Sequential(*bias_ten)
+
+        self.WeightMuplier = nn.Parameter(t.empty((step_length,)))
+        nn.init.normal_(self.WeightMuplier.data, mean=0, std=0.01)
+
+        self.BiasMuplier = nn.Parameter(t.empty((step_length,)))
+        nn.init.normal_(self.BiasMuplier.data, mean=0, std=0.01)
+
+    def forward(self, x, task_proto=None):
+
+        # not feed task proto, identity mapping
+        if task_proto is None:
+            return x
+
+        else:
+            # shape: [step_len,]
+            weight = self.WeightTEN(task_proto)
+            bias = self.BiasTEN(task_proto)
+
+            x_batch_size, x_feature_dim = x.size(0), x.size(2)
+
+            # post-multiplier is designed to operate step-wise multiply
+            weight = (weight * self.WeightMuplier) + t.ones_like(weight, device='cuda:0')
+            bias = bias * self.BiasMuplier
+
+            # weight and bias are applied on each step channel
+            # identically for each sample
+            weight = weight.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+            bias = bias.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+
+
+            # weight_mul = self.WeightMuplier.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+            # bias_mul = self.BiasMuplier.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+
+            return weight*x + bias
+
+    def penalizedNorm(self):
+        return self.WeightMuplier.norm(), self.BiasMuplier.norm()
+
+
+
 
 
 if __name__ == '__main__':

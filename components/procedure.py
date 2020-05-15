@@ -1,5 +1,6 @@
 import torch as t
 from components.task import ReptileEpisodeTask
+from models.TCProtoNet import TCProtoNet
 
 
 def queryLossProcedure(model,
@@ -123,4 +124,50 @@ def reptileProcedure(n, k,
         acc_val = task.accuracy(predicts.cpu())
 
     return acc_val, loss_val     # 适配外部调用
+
+
+def taskCondQLossProcedure(model: TCProtoNet,
+                           taskBatchSize,
+                           task,
+                           loss,
+                           optimizer,
+                           scheduler=None,
+                           train=True):
+
+    l2_penalized_factor = 0.01
+
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    loss_val = t.zeros((1,)).cuda()
+    acc_val = 0.
+
+    for task_i in range(taskBatchSize):
+        model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
+
+        predicts = model(*model_input)
+
+        loss_val += loss(predicts, labels)
+        predicts = predicts.cpu()
+        acc_val += task.accuracy(predicts)
+
+    loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
+
+    loss_val += model.penalizedNorm() * l2_penalized_factor     # apply penalization on post-multiplier
+
+    if train:
+        loss_val.backward()
+
+        optimizer.step()
+
+        if scheduler:
+            scheduler.step()
+
+    loss_val_item = loss_val.detach().item()
+
+    return acc_val, loss_val_item*taskBatchSize     # 适配外部调用
 

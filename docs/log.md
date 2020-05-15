@@ -91,9 +91,28 @@ acc作为criteria
 - PyTorch不支持RNN的高阶导数和RNN在eval阶段的一切反向传播，因此使用adapt
   方法时需要小心，至少Reptile不好做（因为所有参数更新都来自inner-loop的adapt，
   因此需要在测试阶段计算LSTM的导数来adapt，然而不支持）
+  
+
+# 5.14
+- PreLayerATAML确实可以提高ATAML的性能，且学习到的层学习率逐层递减，符合
+  实践中越后的update对应着越小的学习率。可以考虑相比于模型其他权重，逐层学习
+  率参数的基础学习率更小一些（如5e-4）
+  
+- 提高adapt层数可以略微提高性能，也容易导致模型的不稳定和后期严重的过拟合
 
 
-# 5.14 TODO
+# 5.15 TODO
 
 - Task Condition，基于TADAM论文中的思路，引入task prototype 来对固定
   嵌入引入一些task-specific信息以优化原share common embedding
+  
+  
+# 5.15
+
+- 直接使用TADAM中的task prototype方法，使用ResidualFC和post-multiplier
+  创建TEN任务嵌入模块。但是原文中，从任务中生成的affine parameter作用在卷积后
+  的每一个feature map上（BN后），相当于一个卷积核dense层。BiLSTM没有卷积核，
+  因此选择作用在feature map级别上，即序列的step上。multiplier没有介绍清楚到
+  底是一个标量还是一个与affine参数维度相同的向量，此处当做向量
+  
+  

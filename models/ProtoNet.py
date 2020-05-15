@@ -236,6 +236,10 @@ class CNNLstmProtoNet(nn.Module):
         return F.log_softmax(similarity, dim=1)
 
 
+if __name__ == '__main__':
+    n = ProtoNet(None, 64, word_cnt=100)
+
+
 
 
 
@@ -415,6 +419,8 @@ class ImageProtoNet(nn.Module):
         return posterior
 
 
+if __name__ == '__main__':
+    n = ProtoNet(None, 64, word_cnt=100)
 
 
 

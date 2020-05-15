@@ -102,7 +102,8 @@ class BaseLearner(nn.Module):
         return parameters
 
 class ATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, method='maml', **kwargs):
+    def __init__(self, n, loss_fn, lr=5e-2, method='maml',
+                 adapt_iter=1, **kwargs):
         super(ATAML, self).__init__()
 
         #######################################################
@@ -119,9 +120,10 @@ class ATAML(nn.Module):
         self.MetaLr = lr
         self.AdaptedPar = None
         self.Method = method
+        self.AdaptIter = adapt_iter
 
     def forward(self, support, query, sup_len, que_len, s_label,
-                adapt_iter=3):
+                adapt_iter=1):
         method = self.Method
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
@@ -135,7 +137,7 @@ class ATAML(nn.Module):
         for n,p in adapted_state_dict.items():
             p.requires_grad_(True)
 
-        for a_i in range(adapt_iter):
+        for a_i in range(self.AdaptIter):
             # ---------------------------------------------------------------
             # fix the bug, which: use original parameters instead of the adapted
             # ones in every adapt iteration
@@ -146,9 +148,8 @@ class ATAML(nn.Module):
             loss = self.LossFn(s_predict, s_label)
             grads = t.autograd.grad(loss, adapted_pars, create_graph=True)
 
-            # 计算适应后的参数`
-            for (key, val), grad in zip(adapted_state_dict, grads):
-                # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
+            # 计算适应后的参数
+            for (key, val), grad in zip(adapted_state_dict.items(), grads):
                 adapted_state_dict[key] = val - self.MetaLr * grad
 
         if method == 'fomaml':

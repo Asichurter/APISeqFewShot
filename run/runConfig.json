@@ -3,14 +3,14 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 15,
+  "qk" : 5,
 
-  "version" : 28,
-  "modelName" : "PerLayerATAML",
+  "version" : 36,
+  "modelName" : "TCProtoNet",
 
   "embedSize" : 300,
   "hiddenSize" : 128,
-  "biLstmLayer" : 1,
+  "biLstmLayer" : 2,
   "selfAttDim" : null,
   "usePretrained" : true,
   "wordCount" : null,
@@ -25,7 +25,8 @@
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-3
+    "Embedding.weight" : 1e-3,
+    "PreLayerLr": 5e-4
   },
   "taskBatchSize": 1,
 
@@ -70,12 +71,10 @@
 
   "description": [
     "训练类使用满编73个",
-    "使用任务batch=4",
+    "使用任务batch=1 ",
     "使用300维度的GloVe初始化",
     "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-    "使用BiLSTM解码，使用点乘注意力进行规约",
-    "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
-    "使用3e-2的逐层inner初始学习率",
-    "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效"
+    "使用BiLSTM解码，使用CNN1D解码，中间插入一个TEN模块作用在序列维度",
+    "使用的TEN的affine作用在序列的step级别，即每一个step有一个对应的α和β"
   ]
 }

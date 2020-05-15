@@ -4,7 +4,8 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
+from components.modules import BiLstmEncoder, CNNEncoder1D, \
+                                AttnReduction, TransformerEncoder
 from utils.training import extractTaskStructFromInput, getMaskFromLens, \
                             collectParamsFromStateDict
 
@@ -22,15 +23,26 @@ class BaseLearner(nn.Module):
         self.adapted_keys = [
                             # 'Attention.IntAtt.weight',
                             # 'Attention.ExtAtt.weight',
-                            'Attention.weight',
+                            'Attention.Encoder.0.0.weight',
+                            'Attention.Encoder.0.1.weight',
+                            'Attention.Encoder.0.1.bias',
+                            # 'Attention.weight',
                             'fc.weight',
                             'fc.bias']
+
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
                                                       freeze=False,
                                                       padding_idx=0)
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
-        self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
+        # self.Encoder = TransformerEncoder(layer_num=kwargs['layer_num'],
+        #                                   embedding_size=embed_size,
+        #                                   feature_size=kwargs['hidden_size'],
+        #                                   att_hid=64,
+        #                                   reduce=False)#CNNEncoder1D(**kwargs)
+        # self.Attention = nn.Linear(kwargs['hidden_size']*2, 1, bias=False)
+        self.Attention = CNNEncoder1D(dims=[kwargs['hidden_size']*2, 256],
+                                      bn=[False])
         # self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
 
         # out_size = kwargs['hidden_size']
@@ -39,7 +51,7 @@ class BaseLearner(nn.Module):
                                                     # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 
-    def forward(self, x, lens, params=None):
+    def forward(self, x, lens, params=None, stats=None):
         length = x.size(0)
         x = self.Embedding(x)
         x = self.EmbedNorm(x)
@@ -50,23 +62,25 @@ class BaseLearner(nn.Module):
         mem_step_len = x.size(1)
 
         if params is None:
-            # -------original dot-product attention-------
-            att_weight = self.Attention(x).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
-            # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=1) / len_expansion
+            # # -------original dot-product attention-------
+            # att_weight = self.Attention(x).repeat((1,1,dim))
+            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # # c = ∑ αi·si / T = ∑(θ·si)·si / T
+            # x = (x * att_weight).sum(dim=1) / len_expansion
 
-            # # ------- self-made dual-layer MLP attention-------
-            # x = self.Attention(x)
+            # # ------- self-made attention-------
+            x = self.Attention(x)
 
             x = x.view(length, -1)
             x = self.fc(x)
         else:
-            # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
-            att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
-            # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            x = (x * att_weight).sum(dim=1) / len_expansion
+            # # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
+            # att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
+            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # # c = ∑ αi·si / T = ∑(θ·si)·si / T
+            # x = (x * att_weight).sum(dim=1) / len_expansion
+
+            x = self.Attention(x, lens, params=params, stats=stats, prefix='Attention')
 
             # x = self.Attention.static_forward(x,
             #                                   params=[params['Attention.IntAtt.weight'],
@@ -93,6 +107,10 @@ class BaseLearner(nn.Module):
     ##############################################
     # 获取本模型中需要被adapt的参数，named参数用于指定是否
     # 在返回时附带参数名称
+    #
+    # 注意：与clone_state有所不同，对于normalization，
+    # 参数中不含有running_mean等，但是这些都是state_dict
+    # 的一部分
     ##############################################
     def adapt_parameters(self, with_named=False):
         parameters = []
@@ -150,7 +168,6 @@ class PerLayerATAML(nn.Module):
 
             # 计算适应后的参数
             for (key, val), grad in zip(adapted_state_dict.items(), grads):
-                # 利用已有参数和每个参数对应的alpha调整系数来计算适应后的参数
                 adapted_lr = self.PreLayerLr[a_i].expand_as(grad)
                 adapted_state_dict[key] = val - adapted_lr * grad
 

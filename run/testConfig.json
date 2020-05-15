@@ -5,7 +5,7 @@
   "qk" : 15,
   "n": 5,
 
-  "version" : 27,
+  "version" : 35,
   "modelName" : "PerLayerATAML",
 
   "trainingEpoch" : 5000,
@@ -30,7 +30,7 @@
     }
   },
 
-  "testSubdataset": "validate",
+  "testSubdataset": "test",
 
   "description": [
   ]

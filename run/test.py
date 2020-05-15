@@ -104,7 +104,6 @@ if model_type == 'ProtoNet':
                      embed_size=EmbedSize,
                      hidden=HiddenSize,
                      layer_num=BiLstmLayer,
-                     self_attention=SelfAttDim is not None,
                      self_att_dim=SelfAttDim,
                      word_cnt=wordCnt)
 elif model_type == 'InductionNet':

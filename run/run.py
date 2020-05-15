@@ -29,7 +29,7 @@ from utils.init import LstmInit
 from utils.display import printState
 from utils.stat import statParamNumber
 from utils.file import deleteDir
-from components.procedure import queryLossProcedure, fomamlProcedure, reptileProcedure
+from components.procedure import *
 
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
@@ -39,6 +39,7 @@ from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
 from models.PerLayerATAML import PerLayerATAML
 from models.Reptile import Reptile
+from models.TCProtoNet import TCProtoNet
 
 ################################################
 #----------------------读取参数------------------
@@ -86,10 +87,6 @@ ylabels,\
 legends = cfg.plotParams()
 
 TrainingEpoch = cfg.epoch()
-
-# 检查版本号，以防止不小心覆盖version
-checkVersion(version)
-
 
 ################################################
 #----------------------定义数据------------------
@@ -188,7 +185,6 @@ if model_type == 'ProtoNet':
                      embed_size=EmbedSize,
                      hidden=HiddenSize,
                      layer_num=BiLstmLayer,
-                     self_attention=SelfAttDim is not None,
                      self_att_dim=SelfAttDim,
                      word_cnt=wordCnt)
 elif model_type == 'InductionNet':
@@ -204,12 +200,10 @@ elif model_type == 'MetaSGD':
     model = MetaSGD(n=n,
                     loss_fn=loss,
                     pretrained_matrix=word_matrix,
-                    embed_size=EmbedSize
-                    # hidden_size=HiddenSize,
-                    # layer_num=BiLstmLayer,
-                    # self_att_dim=SelfAttDim
-                    # word_cnt=wordCnt,
-                    # freeze_embedding=False
+                    embed_size=EmbedSize,
+                    hidden_size=HiddenSize,
+                    layer_num=BiLstmLayer,
+                    self_att_dim=SelfAttDim
                     )
 elif model_type == 'ATAML':
     model = ATAML(n=n,
@@ -257,6 +251,13 @@ elif model_type == 'Reptile':
                     layer_num=BiLstmLayer,
                     self_att_dim=SelfAttDim
                     )
+elif model_type == 'TCProtoNet':
+    model = TCProtoNet(pretrained_matrix=word_matrix,
+                       embed_size=EmbedSize,
+                       hidden=HiddenSize,
+                       layer_num=BiLstmLayer,
+                       self_att_dim=SelfAttDim,
+                       word_cnt=wordCnt)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -304,6 +305,8 @@ grad = 0.
 printState('start training')
 stat.startTimer()
 
+# 检查版本号，以防止不小心覆盖version
+checkVersion(version)
 # 保存配置文件到doc
 saveConfigFile(train_path_manager.Doc())
 
@@ -313,26 +316,37 @@ with t.autograd.set_detect_anomaly(False):
         if TrainingVerbose:
             printState('Epoch %d'%epoch)
 
-        # acc_val, loss_val_item = fomamlProcedure(model,
-        #                                          taskBatchSize,
-        #                                          train_task,
-        #                                          loss,
-        #                                          optimizer,
-        #                                          scheduler,
-        #                                          train=True)
-        acc_val, loss_val_item = queryLossProcedure(model,
-                                                    taskBatchSize,
-                                                    train_task,
-                                                    loss,
-                                                    optimizer,
-                                                    scheduler,
-                                                    train=True)
+        if model_type == 'TCProtoNet':
+            acc_val, loss_val_item =taskCondQLossProcedure(model,
+                                                           taskBatchSize,
+                                                           train_task,
+                                                           loss,
+                                                           optimizer,
+                                                           scheduler,
+                                                           train=True)
+        else:
 
-        # acc_val, loss_val_item = reptileProcedure(n, k, model,
-        #                                           taskBatchSize=None,
-        #                                           task=train_task,
-        #                                           loss=loss,
-        #                                           train=True)
+            # acc_val, loss_val_item = fomamlProcedure(model,
+            #                                          taskBatchSize,
+            #                                          train_task,
+            #                                          loss,
+            #                                          optimizer,
+            #                                          scheduler,
+            #                                          train=True)
+
+            acc_val, loss_val_item = queryLossProcedure(model,
+                                                        taskBatchSize,
+                                                        train_task,
+                                                        loss,
+                                                        optimizer,
+                                                        scheduler,
+                                                        train=True)
+
+            # acc_val, loss_val_item = reptileProcedure(n, k, model,
+            #                                           taskBatchSize=None,
+            #                                           task=train_task,
+            #                                           loss=loss,
+            #                                           train=True)
 
         if RecordGradient:
             grad = 0.
@@ -466,5 +480,9 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
 ########################################################################################
 
 
-
+# "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
+# "使用3e-2的逐层inner初始学习率，并调小了逐层学习率的学习率(5e-4)",
+# "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效",
+# "每个 inner loop 进行3次adapt",
+# "qk减小到5"
 
