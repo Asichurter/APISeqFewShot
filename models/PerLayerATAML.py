@@ -23,26 +23,27 @@ class BaseLearner(nn.Module):
         self.adapted_keys = [
                             # 'Attention.IntAtt.weight',
                             # 'Attention.ExtAtt.weight',
-                            'Attention.Encoder.0.0.weight',
-                            'Attention.Encoder.0.1.weight',
-                            'Attention.Encoder.0.1.bias',
-                            # 'Attention.weight',
+                            # 'Attention.Encoder.0.0.weight',
+                            # 'Attention.Encoder.0.1.weight',
+                            # 'Attention.Encoder.0.1.bias',
+                            'Attention.weight',
                             'fc.weight',
                             'fc.bias']
 
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
                                                       freeze=False,
                                                       padding_idx=0)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
+        # self.EncNorm = nn.LayerNorm(2*kwargs['hidden_size'])
         # self.Encoder = TransformerEncoder(layer_num=kwargs['layer_num'],
         #                                   embedding_size=embed_size,
         #                                   feature_size=kwargs['hidden_size'],
         #                                   att_hid=64,
         #                                   reduce=False)#CNNEncoder1D(**kwargs)
-        # self.Attention = nn.Linear(kwargs['hidden_size']*2, 1, bias=False)
-        self.Attention = CNNEncoder1D(dims=[kwargs['hidden_size']*2, 256],
-                                      bn=[False])
+        self.Attention = nn.Linear(kwargs['hidden_size']*2, 1, bias=False)
+        # self.Attention = CNNEncoder1D(dims=[kwargs['hidden_size']*2, 256],
+        #                               bn=[False])
         # self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
 
         # out_size = kwargs['hidden_size']
@@ -54,33 +55,34 @@ class BaseLearner(nn.Module):
     def forward(self, x, lens, params=None, stats=None):
         length = x.size(0)
         x = self.Embedding(x)
-        x = self.EmbedNorm(x)
+        # x = self.EmbedNorm(x)
         x = self.Encoder(x, lens)
+        # x = self.EncNorm(x)
 
         # shape: [batch, seq, dim] => [batch, mem_step, dim]
         dim = x.size(2)
         mem_step_len = x.size(1)
 
         if params is None:
-            # # -------original dot-product attention-------
-            # att_weight = self.Attention(x).repeat((1,1,dim))
-            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
-            # # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            # x = (x * att_weight).sum(dim=1) / len_expansion
+            # -------original dot-product attention-------
+            att_weight = self.Attention(x).repeat((1,1,dim))
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # c = ∑ αi·si / T = ∑(θ·si)·si / T
+            x = (x * att_weight).sum(dim=1) / len_expansion
 
             # # ------- self-made attention-------
-            x = self.Attention(x)
+            # x = self.Attention(x)
 
             x = x.view(length, -1)
             x = self.fc(x)
         else:
-            # # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
-            # att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            # len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
-            # # c = ∑ αi·si / T = ∑(θ·si)·si / T
-            # x = (x * att_weight).sum(dim=1) / len_expansion
+            # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
+            att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
+            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            # c = ∑ αi·si / T = ∑(θ·si)·si / T
+            x = (x * att_weight).sum(dim=1) / len_expansion
 
-            x = self.Attention(x, lens, params=params, stats=stats, prefix='Attention')
+            # x = self.Attention(x, lens, params=params, stats=stats, prefix='Attention')
 
             # x = self.Attention.static_forward(x,
             #                                   params=[params['Attention.IntAtt.weight'],

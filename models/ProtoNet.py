@@ -6,6 +6,7 @@ import logging
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import *
+from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -18,7 +19,8 @@ class ProtoNet(nn.Module):
                  hidden=128,
                  layer_num=1,
                  self_att_dim=64,
-                 word_cnt=None):
+                 word_cnt=None,
+                 **kwargs):
         super(ProtoNet, self).__init__()
 
         # 可训练的嵌入层
@@ -50,18 +52,38 @@ class ProtoNet(nn.Module):
         #                                   feature_size=hidden,
         #                                   att_hid=self_att_dim,
         #                                   reduce=False)
-        self.Encoder = BiLstmEncoder(embed_size,#64
-                                     hidden_size=hidden,
-                                     layer_num=layer_num,
-                                     self_att_dim=self_att_dim,
-                                     useBN=False)
+        # self.Encoder =  BiLstmEncoder(embed_size,  # 64
+        #                               hidden_size=hidden,
+        #                               layer_num=layer_num,
+        #                               self_att_dim=self_att_dim,
+        #                               useBN=False)
+        self.Encoder = TemporalConvNet(**kwargs)
+
+        # self.Encoder = nn.ModuleList([
+        #     BiLstmEncoder(embed_size,  # 64
+        #                   hidden_size=hidden,
+        #                   layer_num=1,
+        #                   self_att_dim=self_att_dim,
+        #                   useBN=False),
+        #     BiLstmEncoder(2*hidden,  # 64
+        #                   hidden_size=hidden,
+        #                   layer_num=1,
+        #                   self_att_dim=self_att_dim,
+        #                   useBN=False)
+        # ])
+        # self.EncoderNorm = nn.ModuleList([
+        #     nn.LayerNorm(2*hidden),
+        #     nn.LayerNorm(2*hidden)
+        # ])
+
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.CNN = CNNEncoder1D(dims=[hidden*2, 512])
+        # self.CNN = CNNEncoder1D(dims=[hidden*2, 512])
+        self.CNN = CNNEncoder1D(dims=[256, 256])
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
         #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
@@ -90,6 +112,9 @@ class ProtoNet(nn.Module):
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
+        # for i in range(len(self.Encoder)):
+        #     support = self.EncoderNorm[i](self.Encoder[i](support, sup_len))
+        #     query = self.EncoderNorm[i](self.Encoder[i](query, que_len))
 
         # support, sup_len = pad_packed_sequence(support, batch_first=True)
         # query, que_len = pad_packed_sequence(query, batch_first=True)

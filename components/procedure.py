@@ -126,13 +126,13 @@ def reptileProcedure(n, k,
     return acc_val, loss_val     # 适配外部调用
 
 
-def taskCondQLossProcedure(model: TCProtoNet,
-                           taskBatchSize,
-                           task,
-                           loss,
-                           optimizer,
-                           scheduler=None,
-                           train=True):
+def penalQLossProcedure(model: TCProtoNet,
+                        taskBatchSize,
+                        task,
+                        loss,
+                        optimizer,
+                        scheduler=None,
+                        train=True):
 
     l2_penalized_factor = 0.01
 

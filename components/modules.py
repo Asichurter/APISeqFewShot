@@ -136,12 +136,15 @@ class BiLstmEncoder(nn.Module):
                  layer_num=1,
                  dropout=0.1,
                  self_att_dim=None,
-                 useBN=False):
+                 useBN=False,
+                 sequential=False,
+                 **kwargs):
 
         super(BiLstmEncoder, self).__init__()
 
         self.SelfAtt = self_att_dim is not None
         self.UseBN = useBN
+        self.Sequential = sequential
 
         self.Encoder = nn.LSTM(input_size=input_size,       # GRU
                                hidden_size=hidden_size,
@@ -162,7 +165,7 @@ class BiLstmEncoder(nn.Module):
         else:
             self.Attention = None
 
-    def forward(self, x, lens=None):
+    def forward(self, x, lens):
         if not isinstance(x, t.nn.utils.rnn.PackedSequence) and lens is not None:
             x = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)
 
@@ -183,11 +186,14 @@ class BiLstmEncoder(nn.Module):
             out = self.Attention(out)
             if self.UseBN:
                 out = self.BN2(out)
-            return out
-        else:
 
-            # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
+        else:
+            # 由于使用了CNN进行解码，因此还是可以返回整个序列
             out, lens = pad_packed_sequence(out, batch_first=True)
+
+        if self.Sequential:
+            return out, lens
+        else:
             return out
 
     @staticmethod
@@ -809,6 +815,11 @@ class ResDenseLayer(nn.Module):
         return t.relu(x+self.Weight(x))
 
 
+#####################################################
+# 基于序列时间步仿射变换的任务嵌入结构，用于向模型中提供任务信息。
+# 提供任务原型后生成仿射权重和仿射偏置，作用在序列的每一个step上。
+# 主要由残差全连接层构成，还有一个范数惩罚的后乘子
+#####################################################
 class TenStepAffine1D(nn.Module):
 
     def __init__(self, task_dim, step_length, layer_num=3):

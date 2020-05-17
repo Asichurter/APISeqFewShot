@@ -116,3 +116,28 @@ acc作为criteria
   底是一个标量还是一个与affine参数维度相同的向量，此处当做向量
   
   
+# 5.16
+
+- 测试LayerNorm效果：
+
+    - 移除了Embedding之后，Encoding之前的LayerNorm后，模型收敛速度大幅下降，
+      且最终正确率也下降些许
+    
+    - 在Encoder和点乘注意力之前加入一个LayerNorm导致模型不稳定，且收敛速度和正确率
+    大大下降
+
+- 多层LSTM测试结果：
+    
+    - 2层的LSTM收敛比1层慢得多
+    
+    - 2层的性能与1层的相比几乎没有上升,损失值相比之下要大一些
+
+- 使用MSE+sigmoid激活的性能与nll+softmax几乎相当，甚至更好
+
+
+# 5.17 TODO
+
+- 改变Task-conditioning的结果，例如使用一个单独的task embedding来生成任务
+  原型，代替原TEN中使用类中心作为任务原型使用相同嵌入的方法
+  
+  

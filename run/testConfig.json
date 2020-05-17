@@ -5,8 +5,8 @@
   "qk" : 15,
   "n": 5,
 
-  "version" : 35,
-  "modelName" : "PerLayerATAML",
+  "version" : 44,
+  "modelName" : "ProtoNet",
 
   "trainingEpoch" : 5000,
 
@@ -30,8 +30,7 @@
     }
   },
 
-  "testSubdataset": "test",
+  "testSubdataset": "validate",
 
-  "description": [
-  ]
+  "description": []
 }

@@ -20,14 +20,13 @@ class InductionNet(nn.Module):
                  ntn_hidden=100,
                  routing_iters=3,
                  word_cnt=None,
-                 freeze_embedding=False):
+                 **kwargs):
         super(InductionNet, self).__init__()
 
         self.Iters = routing_iters
 
         if pretrained_matrix is not None:
             self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
-                                                          freeze=freeze_embedding,
                                                           padding_idx=0)
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)

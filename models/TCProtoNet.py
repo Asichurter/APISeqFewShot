@@ -6,6 +6,7 @@ import logging
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import *
+from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -18,7 +19,8 @@ class TCProtoNet(nn.Module):
                  hidden=128,
                  layer_num=1,
                  self_att_dim=64,
-                 word_cnt=None):
+                 word_cnt=None,
+                 **modelParams):
         super(TCProtoNet, self).__init__()
 
         # 可训练的嵌入层
@@ -40,16 +42,22 @@ class TCProtoNet(nn.Module):
         #                                   feature_size=hidden,
         #                                   att_hid=self_att_dim,
         #                                   reduce=False)
-        self.Encoder = BiLstmEncoder(embed_size,#64
-                                     hidden_size=hidden,
-                                     layer_num=layer_num,
-                                     self_att_dim=self_att_dim,
-                                     useBN=False)
+        # self.Encoder = BiLstmEncoder(embed_size,#64
+        #                              hidden_size=hidden,
+        #                              layer_num=layer_num,
+        #                              self_att_dim=self_att_dim,
+        #                              useBN=False)
 
-        self.TEN = TenStepAffine1D(task_dim=2*hidden, step_length=50)       # seq len fix to 50
+        self.Encoder = TemporalConvNet(**modelParams)
+
+        # self.TEN = TenStepAffine1D(task_dim=2*hidden, step_length=50)       # seq len fix to 50
+        self.TEN = TenStepAffine1D(task_dim=modelParams['num_channels'][-1],
+                                   step_length=50)       # seq len fix to 50
 
 
-        self.CNN = CNNEncoder1D(dims=[hidden*2, hidden*2])
+        # self.CNN = CNNEncoder1D(dims=[hidden*2, hidden*2])
+        self.CNN = CNNEncoder1D(dims=[modelParams['num_channels'][-1],
+                                      modelParams['num_channels'][-1]])
 
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
@@ -105,7 +113,7 @@ class TCProtoNet(nn.Module):
 
         # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
-
+        # return t.sigmoid(similarity)
 
     def penalizedNorm(self):
         w_norm, b_norm = self.TEN.penalizedNorm()

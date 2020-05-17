@@ -60,12 +60,7 @@ default_lr,\
 lrs, \
 taskBatchSize = cfg.trainingParams()
 
-EmbedSize,\
-HiddenSize,\
-BiLstmLayer,\
-SelfAttDim, \
-usePretrained,\
-wordCnt = cfg.modelParams()
+modelParams = cfg.modelParams()
 
 model_type, model_name = cfg.model()
 
@@ -147,8 +142,9 @@ else:
                                   cuda=True, expand=expand)
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
+                        stat_save_path=train_path_manager.Doc(),
                         train_report_iter=ValCycle,
-                        criteria='loss')
+                        criteria='accuracy')
 
 if RecordGradient:
     types.append('line')
@@ -165,7 +161,7 @@ if UseVisdom:
                       ylabels=ylabels,
                       legends=legends)
 
-if usePretrained:
+if modelParams['usePretrained']:
     word_matrix = t.Tensor(np.load(train_path_manager.WordEmbedMatrix(), allow_pickle=True))
 else:
     word_matrix = None
@@ -182,82 +178,47 @@ printState('init model...')
 #                       depth=3)
 if model_type == 'ProtoNet':
     model = ProtoNet(pretrained_matrix=word_matrix,
-                     embed_size=EmbedSize,
-                     hidden=HiddenSize,
-                     layer_num=BiLstmLayer,
-                     self_att_dim=SelfAttDim,
-                     word_cnt=wordCnt)
+                     **modelParams)
 elif model_type == 'InductionNet':
     model = InductionNet(pretrained_matrix=word_matrix,
-                         embed_size=EmbedSize,
-                         hidden_size=HiddenSize,
-                         layer_num=BiLstmLayer,
-                         self_att_dim=SelfAttDim,
-                         ntn_hidden=100, routing_iters=3,
-                         word_cnt=wordCnt,
-                         freeze_embedding=False)
+                         **modelParams)
 elif model_type == 'MetaSGD':
     model = MetaSGD(n=n,
                     loss_fn=loss,
                     pretrained_matrix=word_matrix,
-                    embed_size=EmbedSize,
-                    hidden_size=HiddenSize,
-                    layer_num=BiLstmLayer,
-                    self_att_dim=SelfAttDim
+                    **modelParams
                     )
 elif model_type == 'ATAML':
     model = ATAML(n=n,
                   loss_fn=loss,
                   pretrained_matrix=word_matrix,
-                  embed_size=EmbedSize,
-                  hidden_size=HiddenSize,
-                  layer_num=BiLstmLayer,
-                  self_att_dim=SelfAttDim,
-                  method='maml'
+                  **modelParams
                   )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
                    pretrained_matrix=word_matrix,
-                   embed_size=EmbedSize,
-                   hidden_size=HiddenSize,
-                   layer_num=BiLstmLayer,
-                   self_att_dim=SelfAttDim,
-                   word_cnt=wordCnt
+                   **modelParams
                    )
 elif model_type == 'ConvProtoNet':
     model = ConvProtoNet(k=k,
                    pretrained_matrix=word_matrix,
-                   embed_size=EmbedSize,
-                   hidden_size=HiddenSize,
-                   layer_num=BiLstmLayer,
-                   self_att_dim=SelfAttDim,
-                   word_cnt=wordCnt
+                   **modelParams
                    )
 elif model_type == 'PerLayerATAML':
     model = PerLayerATAML(n=n,
                           loss_fn=loss,
                           pretrained_matrix=word_matrix,
-                          embed_size=EmbedSize,
-                          hidden_size=HiddenSize,
-                          layer_num=BiLstmLayer,
-                          self_att_dim=SelfAttDim
+                          **modelParams
                           )
 elif model_type == 'Reptile':
     model = Reptile(n=n,
                     loss_fn=loss,
                     pretrained_matrix=word_matrix,
-                    embed_size=EmbedSize,
-                    hidden_size=HiddenSize,
-                    layer_num=BiLstmLayer,
-                    self_att_dim=SelfAttDim
+                    **modelParams
                     )
 elif model_type == 'TCProtoNet':
     model = TCProtoNet(pretrained_matrix=word_matrix,
-                       embed_size=EmbedSize,
-                       hidden=HiddenSize,
-                       layer_num=BiLstmLayer,
-                       self_att_dim=SelfAttDim,
-                       word_cnt=wordCnt)
+                        **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -317,13 +278,13 @@ with t.autograd.set_detect_anomaly(False):
             printState('Epoch %d'%epoch)
 
         if model_type == 'TCProtoNet':
-            acc_val, loss_val_item =taskCondQLossProcedure(model,
-                                                           taskBatchSize,
-                                                           train_task,
-                                                           loss,
-                                                           optimizer,
-                                                           scheduler,
-                                                           train=True)
+            acc_val, loss_val_item =penalQLossProcedure(model,
+                                                        taskBatchSize,
+                                                        train_task,
+                                                        loss,
+                                                        optimizer,
+                                                        scheduler,
+                                                        train=True)
         else:
 
             # acc_val, loss_val_item = fomamlProcedure(model,
@@ -422,13 +383,14 @@ with t.autograd.set_detect_anomaly(False):
                 plot.update(title='accuracy', x_val=epoch, y_val=[[train_acc, val_acc]])
                 plot.update(title='loss', x_val=epoch, y_val=[[train_loss, val_loss]])
 
+# 将训练过程的数据保存到文件中
+stat.dumpTrainingResult()
 
 plotLine(stat.getHistAcc(), ('train acc', 'val acc'),
          title=model_name+' accuracy',
          gap=ValCycle,
          color_list=('blue', 'red'),
          style_list=('-','-'),
-         ylim=[0,1],
          save_path=train_path_manager.Doc()+'acc.png')
 
 plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
@@ -481,8 +443,9 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
 
 
 # "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
-# "使用3e-2的逐层inner初始学习率，并调小了逐层学习率的学习率(5e-4)",
+# "使用3e-2的逐层inner初始学习率",
 # "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效",
 # "每个 inner loop 进行3次adapt",
-# "qk减小到5"
+# "qk减小到5",
+# "使用mse作为损失函数"
 

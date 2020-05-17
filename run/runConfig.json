@@ -5,15 +5,17 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 36,
+  "version" : 45,
   "modelName" : "TCProtoNet",
 
-  "embedSize" : 300,
-  "hiddenSize" : 128,
-  "biLstmLayer" : 2,
-  "selfAttDim" : null,
-  "usePretrained" : true,
-  "wordCount" : null,
+  "modelParams": {
+    "embed_size": 300,
+    "usePretrained": true,
+    "num_inputs": 300,
+    "init_hidden_channel": 32,
+    "num_channels": [32, 64, 128],
+    "kernel_size": 3
+  },
 
   "valCycle" : 100,
   "valEpisode" : 100,
@@ -25,8 +27,7 @@
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-3,
-    "PreLayerLr": 5e-4
+    "Embedding.weight" : 1e-3
   },
   "taskBatchSize": 1,
 
@@ -70,11 +71,11 @@
   },
 
   "description": [
-    "训练类使用满编73个",
-    "使用任务batch=1 ",
-    "使用300维度的GloVe初始化",
-    "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-    "使用BiLSTM解码，使用CNN1D解码，中间插入一个TEN模块作用在序列维度",
-    "使用的TEN的affine作用在序列的step级别，即每一个step有一个对应的α和β"
+            "训练类使用满编73个",
+            "使用任务batch=1 ",
+            "使用300维度的GloVe初始化",
+            "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+            "使用时间卷积网络TCN代替BiLSTM进行编码，还是使用1D的CNN进行解码",
+            "在Encoder和CNN之间插入TEN模块使之对step进行FiLM变换"
   ]
 }

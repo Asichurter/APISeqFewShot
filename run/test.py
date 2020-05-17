@@ -15,7 +15,7 @@ from utils.manager import TrainingConfigManager, PathManager, TestStatManager
 from components.datasets import SeqFileDataset, ImageFileDataset
 from utils.display import printState
 from utils.stat import statParamNumber
-from components.procedure import fomamlProcedure, queryLossProcedure
+from components.procedure import *
 
 from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
 from models.InductionNet import InductionNet
@@ -24,6 +24,7 @@ from models.ATAML import ATAML
 from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
 from models.PerLayerATAML import PerLayerATAML
+from models.TCProtoNet import TCProtoNet
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
@@ -63,8 +64,7 @@ test_path_manager = PathManager(dataset=data_folder,
 
 model_cfg = TrainingConfigManager(test_path_manager.Doc()+'config.json')
 
-EmbedSize, HiddenSize, BiLstmLayer, SelfAttDim, usePretrained,\
-wordCnt = model_cfg.modelParams()
+modelParams = model_cfg.modelParams()
 
 LRDecayIters, LRDecayGamma, optimizer_type,\
 weight_decay, loss_func, default_lr, lrs, taskBatchSize = model_cfg.trainingParams()
@@ -101,68 +101,47 @@ loss = t.nn.NLLLoss().cuda() if loss_func=='nll' else t.nn.MSELoss().cuda()
 
 if model_type == 'ProtoNet':
     model = ProtoNet(pretrained_matrix=word_matrix,
-                     embed_size=EmbedSize,
-                     hidden=HiddenSize,
-                     layer_num=BiLstmLayer,
-                     self_att_dim=SelfAttDim,
-                     word_cnt=wordCnt)
+                     **modelParams)
 elif model_type == 'InductionNet':
     model = InductionNet(pretrained_matrix=word_matrix,
-                         embed_size=EmbedSize,
-                         hidden_size=HiddenSize,
-                         layer_num=BiLstmLayer,
-                         self_att_dim=SelfAttDim,
-                         ntn_hidden=100, routing_iters=3,
-                         word_cnt=wordCnt,
-                         freeze_embedding=False)
+                         **modelParams)
 elif model_type == 'MetaSGD':
     model = MetaSGD(n=n,
                     loss_fn=loss,
                     pretrained_matrix=word_matrix,
-                    embed_size=EmbedSize
-                    # hidden_size=HiddenSize,
-                    # layer_num=BiLstmLayer,
-                    # self_att_dim=SelfAttDim
-                    # word_cnt=wordCnt,
-                    # freeze_embedding=False
+                    **modelParams
                     )
 elif model_type == 'ATAML':
     model = ATAML(n=n,
                   loss_fn=loss,
                   pretrained_matrix=word_matrix,
-                  embed_size=EmbedSize,
-                  hidden_size=HiddenSize,
-                  layer_num=BiLstmLayer,
-                  self_att_dim=SelfAttDim,
-                  method='maml'
+                  **modelParams
                   )
 elif model_type == 'HybridAttentionNet':
     model = HAPNet(k=k,
                    pretrained_matrix=word_matrix,
-                   embed_size=EmbedSize,
-                   hidden_size=HiddenSize,
-                   layer_num=BiLstmLayer,
-                   self_att_dim=SelfAttDim,
-                   word_cnt=wordCnt
+                   **modelParams
                    )
 elif model_type == 'ConvProtoNet':
     model = ConvProtoNet(k=k,
                    pretrained_matrix=word_matrix,
-                   embed_size=EmbedSize,
-                   hidden_size=HiddenSize,
-                   layer_num=BiLstmLayer,
-                   self_att_dim=SelfAttDim,
-                   word_cnt=wordCnt
+                   **modelParams
                    )
 elif model_type == 'PerLayerATAML':
     model = PerLayerATAML(n=n,
                           loss_fn=loss,
                           pretrained_matrix=word_matrix,
-                          embed_size=EmbedSize,
-                          hidden_size=HiddenSize,
-                          layer_num=BiLstmLayer,
-                          self_att_dim=SelfAttDim
+                          **modelParams
                           )
+# elif model_type == 'Reptile':
+#     model = Reptile(n=n,
+#                     loss_fn=loss,
+#                     pretrained_matrix=word_matrix,
+#                     **modelParams
+#                     )
+elif model_type == 'TCProtoNet':
+    model = TCProtoNet(pretrained_matrix=word_matrix,
+                        **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -199,13 +178,23 @@ with t.autograd.set_detect_anomaly(False):
         #                                          None,
         #                                          train=False)
 
-        acc_val, loss_val_item = queryLossProcedure(model,
-                                                    1,
-                                                    test_task,
-                                                    loss,
-                                                    None,
-                                                    None,
-                                                    train=False)
+        if model_type == 'TCProtoNet':
+            acc_val, loss_val_item =penalQLossProcedure(model,
+                                                        taskBatchSize,
+                                                        test_task,
+                                                        loss,
+                                                        None,
+                                                        None,
+                                                        train=False)
+
+        else:
+            acc_val, loss_val_item = queryLossProcedure(model,
+                                                        1,
+                                                        test_task,
+                                                        loss,
+                                                        None,
+                                                        None,
+                                                        train=False)
 
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val, loss_val_item)

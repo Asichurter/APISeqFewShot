@@ -103,7 +103,11 @@ class PathManager:
 #########################################
 class TrainStatManager:
 
-    def __init__(self, model_save_path, train_report_iter=100, criteria='acc'):
+    def __init__(self,
+                 model_save_path,
+                 stat_save_path,
+                 train_report_iter=100,
+                 criteria='accuracy'):
         self.TrainHist = {'accuracy': [],
                           'loss': []}
         self.ValHist = {'accuracy': [],
@@ -112,6 +116,7 @@ class TrainStatManager:
         assert criteria in self.TrainHist.keys(), '给定的标准 %s 不在支持范围内!'%criteria
 
         self.ModelSavePath = model_save_path
+        self.StatSavePath = stat_save_path
         self.Criteria = criteria
         self.BestVal = float('inf') if criteria=='loss' else -1.
         self.BestValEpoch = -1
@@ -185,6 +190,13 @@ class TrainStatManager:
         t = np.mean(t.reshape(-1, self.TrainReportIter), axis=1)
         return t, v
 
+    def dumpTrainingResult(self):
+        res = {
+            'train': self.TrainHist,
+            'validate': self.ValHist
+        }
+        dumpJson(self.StatSavePath+'stat.json')
+
 class TestStatManager:
     def __init__(self, report_cycle=100):
         self.AccHist = []
@@ -229,7 +241,7 @@ class TestStatManager:
         if final:
             return cur_acc, cur_loss, acc_interval, loss_interval
 
-    def report(self, doc_path=None, desc=None):
+    def report(self, doc_path=None, desc=None)   :
         print('**************Final Statistics**************')
         params = self.printStat(final=True)
 
@@ -284,12 +296,13 @@ class TrainingConfigManager:
         return self.Cfg['dataset']
 
     def modelParams(self):              # for train only
-        return self.Cfg['embedSize'], \
-               self.Cfg['hiddenSize'], \
-               self.Cfg['biLstmLayer'], \
-               self.Cfg['selfAttDim'], \
-               self.Cfg['usePretrained'], \
-               self.Cfg['wordCount']
+        return self.Cfg['modelParams']
+            # self.Cfg['embedSize'], \
+            #    self.Cfg['hiddenSize'], \
+            #    self.Cfg['biLstmLayer'], \
+            #    self.Cfg['selfAttDim'], \
+            #    self.Cfg['usePretrained'], \
+            #    self.Cfg['wordCount']
 
     def valParams(self):                # for train only
         return self.Cfg['valCycle'], \
