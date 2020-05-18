@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.modules import CNNBlock1D
+from components.sequence.CNN import CNNBlock1D
+
 
 def rename(name, token='-'):
     '''

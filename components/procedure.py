@@ -1,5 +1,6 @@
 import torch as t
 from components.task import ReptileEpisodeTask
+from models.FEAT import FEAT
 from models.TCProtoNet import TCProtoNet
 
 
@@ -158,6 +159,59 @@ def penalQLossProcedure(model: TCProtoNet,
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
     loss_val += model.penalizedNorm() * l2_penalized_factor     # apply penalization on post-multiplier
+
+    if train:
+        loss_val.backward()
+
+        optimizer.step()
+
+        if scheduler:
+            scheduler.step()
+
+    loss_val_item = loss_val.detach().item()
+
+    return acc_val, loss_val_item*taskBatchSize     # 适配外部调用
+
+
+def featProcedure(model: FEAT,
+                n, k, qk,
+                taskBatchSize,
+                task,
+                loss,
+                optimizer,
+                scheduler=None,
+                train=True,
+                contrastive_factor=0.01):
+
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    loss_val = t.zeros((1,)).cuda()
+    acc_val = 0.
+
+    for task_i in range(taskBatchSize):
+        model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
+
+        if train and contrastive_factor is not None:
+            predicts, adaPredicts = model(*model_input)
+
+            adaLabels = t.LongTensor([i for i in range(n)]).cuda()
+            adaLabels = adaLabels.unsqueeze(1).expand((n,(qk+k))).flatten()
+
+            loss_val += loss(adaPredicts, adaLabels) * contrastive_factor
+        else:
+            predicts = model(*model_input)
+
+        loss_val += loss(predicts, labels)
+
+        predicts = predicts.cpu()
+        acc_val += task.accuracy(predicts)
+
+    loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
     if train:
         loss_val.backward()

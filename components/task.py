@@ -60,7 +60,7 @@ class EpisodeTask:
         support_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
                                          mode='support', label_space=label_space, shuffle=False)
         query_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
-                                       mode='query', label_space=label_space, shuffle=True)
+                                       mode='query', label_space=label_space, shuffle=False)        # make query set labels cluster
 
         return support_sampler, query_sampler
 

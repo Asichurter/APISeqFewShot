@@ -4,7 +4,9 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
+from components.reduction.selfatt import AttnReduction
+from components.sequence.CNN import CNNEncoder1D
+from components.sequence.LSTM import BiLstmEncoder
 from utils.training import extractTaskStructFromInput, getMaskFromLens, splitMetaBatch
 
 def rename(name, token='-'):

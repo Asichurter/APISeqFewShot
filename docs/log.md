@@ -141,3 +141,17 @@ acc作为criteria
   原型，代替原TEN中使用类中心作为任务原型使用相同嵌入的方法
   
   
+# 5.17
+
+- TCN在大部分任务下并没有达到和BiLSTM相同的性能（特别是在adapt方法中），在
+  metric-based方法中性能略微低于BiLSTM（ProtoNet，HAP），但是在adapt
+  方法中性能大幅下降（ATAML， PerLayerATAML），而且训练过程震荡较大，对
+  inner-loop学习率极度敏感，收敛后的性能也远低于BiLSTM
+
+- 据观察，TCN占用的显存数量并不比BiLSTM小（原因可能是使用了residual使得
+  深度增加）
+  
+- 由于使用了预训练的embedding，因此大部分模型在较少的几次迭代中很快到达了性能
+  上限，此时较大的学习率容易导致过拟合。因此，考虑减小初始学习率
+  
+  

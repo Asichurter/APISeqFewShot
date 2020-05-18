@@ -3,7 +3,8 @@ import torch.nn as nn
 
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from components.modules import BiLstmEncoder, NTN
+from components.modules import NTN
+from components.sequence.LSTM import BiLstmEncoder
 from utils.training import dynamicRouting, \
                             extractTaskStructFromInput, \
                             repeatProtoToCompShape, \

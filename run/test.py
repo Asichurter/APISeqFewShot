@@ -5,6 +5,7 @@ from config import appendProjectPath, saveConfigFile
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
+from models.FEAT import FEAT
 
 appendProjectPath(depth=1)
 
@@ -142,6 +143,9 @@ elif model_type == 'PerLayerATAML':
 elif model_type == 'TCProtoNet':
     model = TCProtoNet(pretrained_matrix=word_matrix,
                         **modelParams)
+elif model_type == 'FEAT':
+    model = FEAT(pretrained_matrix=word_matrix,
+                 **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -186,6 +190,17 @@ with t.autograd.set_detect_anomaly(False):
                                                         None,
                                                         None,
                                                         train=False)
+
+        elif model_type == 'FEAT':
+            acc_val, loss_val_item = featProcedure(model,
+                                                 n,k,qk,
+                                                 taskBatchSize,
+                                                 test_task,
+                                                 loss,
+                                                 None,
+                                                 None,
+                                                 train=False,
+                                                 contrastive_factor=modelParams['contrastive_factor'])
 
         else:
             acc_val, loss_val_item = queryLossProcedure(model,

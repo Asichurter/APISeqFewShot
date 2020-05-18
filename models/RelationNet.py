@@ -1,7 +1,8 @@
 import torch as t
 import torch.nn as nn
 
-from components.modules import BiLstmEncoder
+from components.sequence.LSTM import BiLstmEncoder
+
 
 class RelationNet(nn.Module):
 

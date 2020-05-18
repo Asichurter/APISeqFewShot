@@ -21,13 +21,15 @@ def appendProjectPath(depth=1):
     sys.path.append(projectPath)  # 添加当前项目路径到包搜索路径中
 
 
-def saveConfigFile(folder_path):
+def saveConfigFile(folder_path, model):
     # 若目前的version已经存在，则删除之
     if os.path.exists(folder_path):
         deleteDir(folder_path)
     os.mkdir(folder_path)
     # 复制运行配置文件
     shutil.copy('./runConfig.json', folder_path + 'config.json')
+    # 复制模型代码文件
+    shutil.copy(f'../models/{model}.py', folder_path + f'{model}.py')
 
 
 ###########################################################

@@ -2,7 +2,10 @@ import torch as t
 import torch.nn as nn
 import warnings
 
-from components.modules import CNNBlock2D, BiLstmEncoder, CNNEncoder1D
+from components.modules import CNNBlock2D
+from components.sequence.CNN import CNNEncoder1D
+from components.sequence.LSTM import BiLstmEncoder
+from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput
 
 class InstanceAttention(nn.Module):
@@ -30,7 +33,8 @@ class HAPNet(nn.Module):
                  hidden_size=128,
                  layer_num=1,
                  self_att_dim=64,
-                 word_cnt=None):
+                 word_cnt=None,
+                 **modelParams):
         super(HAPNet, self).__init__()
 
         assert pretrained_matrix is not None or word_cnt is not None, \
@@ -45,14 +49,13 @@ class HAPNet(nn.Module):
 
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.Encoder = BiLstmEncoder(embed_size,
-                                     hidden_size=hidden_size,
-                                     layer_num=layer_num,
-                                     self_att_dim=self_att_dim)
+                                     **modelParams)
+        # self.Encoder = TemporalConvNet(**modelParams)
 
         # 嵌入后的向量维度
-        feature_dim = 2*hidden_size
+        feature_dim = 2*hidden_size#modelParams['num_channels'][-1]#
 
-        self.CnnEncoder = CNNEncoder1D(dims=[feature_dim, feature_dim])
+        self.CnnEncoder = CNNEncoder1D(num_channels=[feature_dim, feature_dim])
 
         # 获得样例注意力的模块
         # 将嵌入后的向量拼接成单通道矩阵后，有多少个支持集就为几个batch

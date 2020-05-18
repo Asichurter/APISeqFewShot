@@ -40,6 +40,7 @@ from models.ConvProtoNet import ConvProtoNet
 from models.PerLayerATAML import PerLayerATAML
 from models.Reptile import Reptile
 from models.TCProtoNet import TCProtoNet
+from models.FEAT import FEAT
 
 ################################################
 #----------------------读取参数------------------
@@ -144,7 +145,7 @@ else:
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
                         train_report_iter=ValCycle,
-                        criteria='accuracy')
+                        criteria='loss')
 
 if RecordGradient:
     types.append('line')
@@ -219,6 +220,9 @@ elif model_type == 'Reptile':
 elif model_type == 'TCProtoNet':
     model = TCProtoNet(pretrained_matrix=word_matrix,
                         **modelParams)
+elif model_type == 'FEAT':
+    model = FEAT(pretrained_matrix=word_matrix,
+                 **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -269,7 +273,7 @@ stat.startTimer()
 # 检查版本号，以防止不小心覆盖version
 checkVersion(version)
 # 保存配置文件到doc
-saveConfigFile(train_path_manager.Doc())
+saveConfigFile(train_path_manager.Doc(), model_type)
 
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TrainingEpoch):
@@ -285,6 +289,18 @@ with t.autograd.set_detect_anomaly(False):
                                                         optimizer,
                                                         scheduler,
                                                         train=True)
+
+        elif model_type == 'FEAT':
+            acc_val, loss_val_item = featProcedure(model,
+                                                 n,k,qk,
+                                                 taskBatchSize,
+                                                 train_task,
+                                                 loss,
+                                                 optimizer,
+                                                 scheduler,
+                                                 train=True,
+                                                 contrastive_factor=modelParams['contrastive_factor'])
+
         else:
 
             # acc_val, loss_val_item = fomamlProcedure(model,
@@ -443,9 +459,7 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
 
 
 # "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
-# "使用3e-2的逐层inner初始学习率",
+# "3e-2 inner-loop 学习率",
 # "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效",
-# "每个 inner loop 进行3次adapt",
-# "qk减小到5",
-# "使用mse作为损失函数"
-
+# "每个 inner loop 进行1次adapt",
+# "qk减小到5"

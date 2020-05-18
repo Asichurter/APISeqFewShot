@@ -4,7 +4,10 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.modules import BiLstmEncoder, CNNEncoder1D, AttnReduction
+from components.reduction.selfatt import AttnReduction
+from components.sequence.CNN import CNNEncoder1D
+from components.sequence.LSTM import BiLstmEncoder
+from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, getMaskFromLens, \
                             collectParamsFromStateDict
 
@@ -29,13 +32,17 @@ class BaseLearner(nn.Module):
                                                       freeze=False,
                                                       padding_idx=0)
         self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
-        self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
+
+        # self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
+        self.Encoder = TemporalConvNet(**kwargs)
+
+        self.Attention = nn.Linear(kwargs['num_channels'][-1], 1, bias=False)
+        # self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
         # self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
 
         # out_size = kwargs['hidden_size']
         # self.fc = nn.Linear(seq_len, n)
-        self.fc = nn.Linear(kwargs['hidden_size']*2, n)
+        self.fc = nn.Linear(kwargs['num_channels'][-1], n)
                                                     # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 

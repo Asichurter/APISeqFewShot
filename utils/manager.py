@@ -195,7 +195,7 @@ class TrainStatManager:
             'train': self.TrainHist,
             'validate': self.ValHist
         }
-        dumpJson(self.StatSavePath+'stat.json')
+        dumpJson(res, self.StatSavePath+'stat.json')
 
 class TestStatManager:
     def __init__(self, report_cycle=100):

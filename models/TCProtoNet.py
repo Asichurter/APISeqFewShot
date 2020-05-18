@@ -1,17 +1,10 @@
-import torch as t
-import torch.nn as nn
-import torch.nn.functional as F
-import logging
-
-from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
-
 from components.modules import *
-from components.sequence.TCN import TemporalConvNet
+from components.sequence.CNN import CNNEncoder1D
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
-                            protoDisAdapter, \
-                            avgOverHiddenStates
+                            protoDisAdapter
+
 
 class TCProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
@@ -31,11 +24,7 @@ class TCProtoNet(nn.Module):
 
         self.EmbedNorm = nn.LayerNorm(embed_size)
 
-        # self.Encoder = CNNEncoder1D(dims=[embed_size, 256, 256],
-        #                             kernel_sizes=[3,3],
-        #                             paddings=[1,1],
-        #                             relus=[True,True],
-        #                             pools=['max','ada'])
+        self.Encoder = CNNEncoder1D(**modelParams)
 
         # self.Encoder = TransformerEncoder(layer_num=layer_num,
         #                                   embedding_size=embed_size,
@@ -48,16 +37,16 @@ class TCProtoNet(nn.Module):
         #                              self_att_dim=self_att_dim,
         #                              useBN=False)
 
-        self.Encoder = TemporalConvNet(**modelParams)
+        # self.Encoder = TemporalConvNet(**modelParams)
 
         # self.TEN = TenStepAffine1D(task_dim=2*hidden, step_length=50)       # seq len fix to 50
         self.TEN = TenStepAffine1D(task_dim=modelParams['num_channels'][-1],
-                                   step_length=50)       # seq len fix to 50
+                                   feature_dim=modelParams['num_channels'][-1])
 
 
         # self.CNN = CNNEncoder1D(dims=[hidden*2, hidden*2])
-        self.CNN = CNNEncoder1D(dims=[modelParams['num_channels'][-1],
-                                      modelParams['num_channels'][-1]])
+        self.CNN = CNNEncoder1D(num_channels=[modelParams['num_channels'][-1],
+                                              modelParams['num_channels'][-1]])
 
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):

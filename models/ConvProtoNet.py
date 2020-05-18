@@ -1,6 +1,7 @@
 import warnings
 
 from components.modules import *
+from components.sequence.LSTM import BiLstmEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \

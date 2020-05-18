@@ -1,24 +1,17 @@
-import torch as t
-import torch.nn as nn
-import torch.nn.functional as F
 import logging
 
-from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
-
 from components.modules import *
-from components.sequence.TCN import TemporalConvNet
+from components.sequence.CNN import CNNEncoder1D
+from components.sequence.LSTM import BiLstmEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
-                            protoDisAdapter, \
-                            avgOverHiddenStates
+                            protoDisAdapter
+
 
 class ProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
-                 hidden=128,
-                 layer_num=1,
-                 self_att_dim=64,
                  word_cnt=None,
                  **kwargs):
         super(ProtoNet, self).__init__()
@@ -41,23 +34,17 @@ class ProtoNet(nn.Module):
         #                             paddings=[1,1,1,1],
         #                             relus=[True,True,True,True],
         #                             pools=['max','max','max','ada'])
-        # self.Encoder = CNNEncoder1D(dims=[embed_size, 256, 256],
-        #                             kernel_sizes=[3,3],
-        #                             paddings=[1,1],
-        #                             relus=[True,True],
-        #                             pools=['max','ada'])
+        # self.Encoder = CNNEncoder1D(**kwargs)
 
-        # self.Encoder = TransformerEncoder(layer_num=layer_num,
-        #                                   embedding_size=embed_size,
-        #                                   feature_size=hidden,
-        #                                   att_hid=self_att_dim,
-        #                                   reduce=False)
+        # self.Encoder = TransformerEncoder(embed_size=embed_size,
+        #                                   **kwargs)
         # self.Encoder =  BiLstmEncoder(embed_size,  # 64
         #                               hidden_size=hidden,
         #                               layer_num=layer_num,
         #                               self_att_dim=self_att_dim,
         #                               useBN=False)
-        self.Encoder = TemporalConvNet(**kwargs)
+        # self.Encoder = TemporalConvNet(**kwargs)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)
 
         # self.Encoder = nn.ModuleList([
         #     BiLstmEncoder(embed_size,  # 64
@@ -82,8 +69,10 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        # self.CNN = CNNEncoder1D(dims=[hidden*2, 512])
-        self.CNN = CNNEncoder1D(dims=[256, 256])
+        self.CNN = CNNEncoder1D([kwargs['hidden_size'],
+                                 kwargs['hidden_size']])
+        # self.CNN = CNNEncoder1D(dims=[kwargs['num_channels'][-1],
+        #                               kwargs['num_channels'][-1]])
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
         #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],

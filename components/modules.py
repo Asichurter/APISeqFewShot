@@ -3,14 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 
-from torch.nn import _VF
-
+from components.sequence.LSTM import BiLstmEncoder
 from utils.matrix import batchDot
-from utils.training import getMaskFromLens, unpackAndMean
+from utils.training import getMaskFromLens
 
-from torch.nn.utils.rnn import pack_padded_sequence, \
-                                pad_packed_sequence, \
-                                PackedSequence
 
 #########################################
 # 自注意力模块。输入一个批次的序列输入，得到序列
@@ -71,283 +67,6 @@ class SelfAttention(nn.Module):
         return batchDot(att_weight, self.V(x))
         # return (att_weight * x).sum(dim=1)
 
-
-class AttnReduction(nn.Module):
-    def __init__(self, input_dim, hidden_dim=256):
-        super(AttnReduction, self).__init__()
-
-        self.IntAtt = nn.Linear(input_dim, hidden_dim, bias=False)
-        self.ExtAtt = nn.Linear(hidden_dim, 1, bias=False)
-
-    def forward(self, x, lens=None):
-        if isinstance(x, t.nn.utils.rnn.PackedSequence):
-            x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
-
-        feature_dim = x.size(2)
-
-        # weight shape: [batch, seq, 1]
-        att_weight = self.ExtAtt(t.tanh(self.IntAtt(x))).squeeze()    # TODO: 根据长度信息来对长度以外的权重进行mask
-
-        if lens is not None:
-            if not isinstance(lens, t.Tensor):
-                lens = t.Tensor(lens)
-            # max_idx = max(lens)#lens[0]
-            # batch_size = len(lens)
-            # idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
-            # len_mask = lens.unsqueeze(1)
-            # mask = idx_matrix.ge(len_mask).cuda()
-            mask = getMaskFromLens(lens)
-            att_weight.masked_fill_(mask, float('-inf'))
-
-        att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
-        return (att_weight * x).sum(dim=1)
-
-    @staticmethod
-    def static_forward(x, params, lens=None):               # 此处由于命名限制，假定参数是按照使用顺序feed进来的
-        if isinstance(x, t.nn.utils.rnn.PackedSequence):
-            x, lens = nn.utils.rnn.pad_packed_sequence(x, batch_first=True)
-
-        feature_dim = x.size(2)
-
-        att_weight = F.linear(input=t.tanh(F.linear(input=x,
-                                                    weight=params[0])),
-                              weight=params[1]).squeeze()
-
-        if lens is not None:
-            if not isinstance(lens, t.Tensor):
-                lens = t.Tensor(lens)
-            mask = getMaskFromLens(lens)
-            att_weight.masked_fill_(mask, float('-inf'))
-
-        att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
-        return (att_weight * x).sum(dim=1)
-
-
-
-
-
-#########################################
-# 双向LTSM并支持自注意力的序列解码器。返回一个
-# 由双向序列隐藏态自注意力对齐得到的编码向量。
-#########################################
-class BiLstmEncoder(nn.Module):
-    def __init__(self, input_size=None,
-                 hidden_size=128,
-                 layer_num=1,
-                 dropout=0.1,
-                 self_att_dim=None,
-                 useBN=False,
-                 sequential=False,
-                 **kwargs):
-
-        super(BiLstmEncoder, self).__init__()
-
-        self.SelfAtt = self_att_dim is not None
-        self.UseBN = useBN
-        self.Sequential = sequential
-
-        self.Encoder = nn.LSTM(input_size=input_size,       # GRU
-                               hidden_size=hidden_size,
-                               num_layers=layer_num,
-                               batch_first=True,
-                               dropout=dropout,
-                               bidirectional=True)
-
-        if useBN:
-            # 第一个批标准化建立在时间序列组成的2D矩阵上，扩增了一个维度为1的通道
-            # 同时因为序列长度不一定，不能直接在序列长度上进行1D标准化
-            self.BN1 = nn.BatchNorm2d(1)
-            # 第二个批标准化建立在自注意力之后的1D向量上
-            self.BN2 = nn.BatchNorm1d(2*hidden_size)
-
-        if self.SelfAtt:
-            self.Attention = AttnReduction(2*hidden_size, self_att_dim)
-        else:
-            self.Attention = None
-
-    def forward(self, x, lens):
-        if not isinstance(x, t.nn.utils.rnn.PackedSequence) and lens is not None:
-            x = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)
-
-        # x shape: [batch, seq, feature]
-        # out shape: [batch, seq, 2*hidden]
-        out, h = self.Encoder(x)
-        if self.UseBN:
-            out, lens = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-            # 增加一个通道维度以便进行2D标准化
-            out = out.unsqueeze(1)
-            out = self.BN1(out).squeeze()
-            out = nn.utils.rnn.pack_padded_sequence(out, lens, batch_first=True, enforce_sorted=False)
-        # out, (h, c) = self.Encoder(x)
-
-        # return shape: [batch, feature]
-        if self.Attention is not None:
-            # out = unpackAndMean(out)
-            out = self.Attention(out)
-            if self.UseBN:
-                out = self.BN2(out)
-
-        else:
-            # 由于使用了CNN进行解码，因此还是可以返回整个序列
-            out, lens = pad_packed_sequence(out, batch_first=True)
-
-        if self.Sequential:
-            return out, lens
-        else:
-            return out
-
-    @staticmethod
-    def permute_hidden(hx, permutation):
-        # type: (Tuple[Tensor, Tensor], Optional[Tensor]) -> Tuple[Tensor, Tensor]
-        if permutation is None:
-            return hx
-        return BiLstmEncoder.apply_permutation(hx[0], permutation), \
-               BiLstmEncoder.apply_permutation(hx[1], permutation)
-
-    @staticmethod
-    def apply_permutation(tensor, permutation, dim=1):
-        # type: (Tensor, Tensor, int) -> Tensor
-        return tensor.index_select(dim, permutation)
-
-    #################################################
-    # 使用给定的参数进行forward
-    #################################################
-    def static_forward(self, x, lens, params):           # PyTorch1.4目前不支持在rnn上多次backward
-        packed = isinstance(x, t.nn.utils.rnn.PackedSequence)
-        if not packed and lens is not None:
-            x = pack_padded_sequence(x, lens, batch_first=True, enforce_sorted=False)
-
-        x, batch_sizes, sorted_indices, unsorted_indices = x
-        max_batch_size = int(batch_sizes[0])
-
-        num_directions = 2
-        zeros = t.zeros(self.Encoder.num_layers * num_directions,
-                            max_batch_size, self.Encoder.hidden_size,
-                            dtype=x.dtype, device=x.device)
-        hx = (zeros, zeros)
-
-        weights = [params['Encoder.Encoder.weight_ih_l0'],
-                   params['Encoder.Encoder.weight_hh_l0'],
-                   params['Encoder.Encoder.bias_ih_l0'],
-                   params['Encoder.Encoder.bias_hh_l0'],
-                   params['Encoder.Encoder.weight_ih_l0_reverse'],
-                   params['Encoder.Encoder.weight_hh_l0_reverse'],
-                   params['Encoder.Encoder.bias_ih_l0_reverse'],
-                   params['Encoder.Encoder.bias_hh_l0_reverse']
-                   ]
-
-        result = _VF.lstm(x, batch_sizes, hx,
-                          weights,
-                          True,     # 是否bias
-                          self.Encoder.num_layers,
-                          self.Encoder.dropout,
-                          self.Encoder.training,
-                          self.Encoder.bidirectional)
-
-        out, h = result[0], result[1:]
-
-        out = PackedSequence(out, batch_sizes, sorted_indices, unsorted_indices)
-        h = BiLstmEncoder.permute_hidden(h, unsorted_indices)
-
-        if self.Attention is not None:
-            out = AttnReduction.static_forward(out, params)
-            return out
-        else:
-            # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列
-            out, lens = pad_packed_sequence(out, batch_first=True)
-            return out
-
-
-
-
-            # 没有自注意力时，返回最后一个隐藏态
-            # num_directions = 2 if self.Encoder.bidirectional else 1
-            # batch_size = h.size(1)
-            # h = h.view(self.Encoder.num_layers,
-            #            num_directions,
-            #            batch_size,
-            #            self.Encoder.hidden_size)
-            # 取最后一个隐藏态的最后一层的所有方向的拼接向量
-            # return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
-
-#################################################
-# 利用Transformer进行序列嵌入归纳的Encoder，整合了Position
-# Embedding和transformer，得到的序列结果使用自注意力归纳
-#################################################
-class TransformerEncoder(nn.Module):
-    def __init__(self, layer_num,
-                 embedding_size,
-                 feature_size,
-                 att_hid=128,
-                 head_size=8,
-                 dropout=0.1,
-                 reduce=True):
-        super(TransformerEncoder, self).__init__()
-        self.ForwardTrans = nn.Linear(embedding_size, feature_size)
-        encoder_layer = nn.TransformerEncoderLayer(d_model=feature_size,
-                                                   nhead=head_size,
-                                                   dropout=dropout,
-                                                   dim_feedforward=256)
-
-        self.Encoder = nn.TransformerEncoder(encoder_layer, layer_num)
-
-        self.PositionEncoding = PositionalEncoding(embedding_size, dropout=dropout)
-
-        self.Attention = AttnReduction(input_dim=feature_size, hidden_dim=att_hid) if reduce else None
-
-    def forward(self, x, lens):
-        x = self.ForwardTrans(x)
-
-        # shape: [seq, batch, dim]
-        # 由于transformer要序列优先，因此对于batch优先的输入先进行转置
-        x = x.transpose(0,1).contiguous()
-        max_len = int(max(lens))
-        mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
-        x = self.PositionEncoding(x)
-        # print('\n\nmax_len:', max_len)
-        # print('lens:', lens)
-        # print('x size:', x.size())
-        # print('mask.size:', mask.size())
-        x = self.Encoder(src=x,
-                         src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
-        x = x.transpose(0,1).contiguous()
-
-        if self.Attention is not None:
-            x = self.Attention(x, lens)
-        return x
-
-class PositionalEncoding(nn.Module):
-
-    def __init__(self, d_model, dropout=0.1, max_len=4000):
-        super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
-        self.d_model = d_model
-
-        pe = t.zeros(max_len, d_model)
-        position = t.arange(0, max_len, dtype=t.float).unsqueeze(1)
-        div_term = t.exp(t.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
-        pe[:, 0::2] = t.sin(position * div_term)
-        pe[:, 1::2] = t.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
-        self.register_buffer('pe', pe)
-
-    def forward(self, x):
-        # 由于PositionEncoding位于Transformer中，因此seq先于batch
-        # shape: [seq, batch, dim]
-        max_len = x.size(0)
-        d_model = x.size(2)
-        bacth_size = x.size(1)
-
-        pe = t.zeros(max_len, d_model)
-        position = t.arange(0, max_len, dtype=t.float).unsqueeze(1)
-        div_term = t.exp(t.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
-        pe[:, 0::2] = t.sin(position * div_term)
-        pe[:, 1::2] = t.cos(position * div_term)
-        pe = pe.repeat((bacth_size,1,1)).transpose(0, 1).cuda()
-
-        x = x + pe
-
-        return self.dropout(x)
 
 class BiLstmCellLayer(nn.Module):
     def __init__(self,
@@ -569,115 +288,6 @@ def CNNBlock2D(in_feature, out_feature, stride=1, kernel=3, padding=1,
     return nn.Sequential(*layers)
 
 
-
-def CNNBlock1D(in_feature, out_feature, stride=1, kernel=3, padding=1,
-             relu=True, pool='max', bn=True):
-    layers = [nn.Conv1d(in_feature, out_feature,
-                  kernel_size=kernel,
-                  padding=padding,
-                  stride=stride,
-                  bias=False)]
-
-    if bn:
-        layers.append(nn.BatchNorm1d(out_feature))
-
-    if relu:
-        layers.append(nn.ReLU(inplace=True))
-
-    if pool == 'ada':
-        layers.append(nn.AdaptiveMaxPool1d(1))
-    elif pool == 'max':
-        layers.append(nn.MaxPool1d(2))
-
-    return nn.Sequential(*layers)
-
-
-###############################################################
-# 参考HATT-ProtoNet中的Encoding实现，使用CNN在序列维度上进行卷积来
-# 解码从RNN中提取到的特征
-###############################################################
-class CNNEncoder1D(nn.Module):
-    def __init__(self,
-                 dims,
-                 kernel_sizes=[3],
-                 paddings=[1],
-                 relus=[True],
-                 pools=['ada'],
-                 bn=[True]):
-        super(CNNEncoder1D, self).__init__()
-
-        # self.Params = {
-        #     'dims': dims,
-        #     'kernels': kernel_sizes,
-        #     'paddings': paddings,
-        #     'relus' : relus,
-        #     'pools' : pools
-        # }
-
-        layers = [CNNBlock1D(dims[i], dims[i+1],
-                             kernel=kernel_sizes[i],
-                             padding=paddings[i],
-                             relu=relus[i],
-                             pool=pools[i],
-                             bn=bn[i])
-                  for i in range(len(dims)-1)]
-
-        self.Encoder = nn.Sequential(*layers)
-
-    def forward(self, x, lens=None, params=None, stats=None, prefix='Encoder'):
-        # input shape: [batch, seq, dim] => [batch, dim(channel), seq]
-        x = x.transpose(1,2).contiguous()
-
-        if params is None:
-            x = self.Encoder(x)
-        else:
-            for i, module in enumerate(self.Encoder):
-                for j in range(len(module)):
-                    if module[j]._get_name() == 'Conv1d':
-                        x = F.conv1d(x, weight=params['%s.Encoder.%d.%d.weight' % (prefix, i, j)],
-                                     stride=module[j].stride,
-                                     padding=module[j].padding)
-                    elif module[j]._get_name() == 'BatchNorm1d':
-                        x = F.batch_norm(x,
-                                         module[1].running_mean,
-                                         module[1].running_var,
-                                         params['%s.Encoder.%d.1.weight' % (prefix, i)],
-                                         params['%s.Encoder.%d.1.bias' % (prefix, i)],
-                                         momentum=1,
-                                         training=self.training)
-                    elif module[j]._get_name() == 'ReLU':
-                        x = F.relu(x)
-                    elif module[j]._get_name() == 'MaxPool1d':
-                        x = F.max_pool1d(x, kernel_size=module[j].kernel_size)
-                    elif module[j]._get_name() == 'AdaptiveMaxPool1d':
-                        x = F.adaptive_max_pool1d(x, output_size=1)
-
-        # shape: [batch, dim, seq]
-        return x.squeeze()
-
-
-    # def static_forward(self, x, lens=None, params=None):
-    #     x = x.transpose(1, 2).contiguous()
-    #     for i,module in enumerate(self.Encoder):
-    #         for j in range(len(module)):
-    #             if module[j]._get_name() == 'Conv1d':
-    #                 x = F.conv1d(x, weight=params['Encoder.Encoder.%d.%d.weight'%(i,j)],
-    #                              stride=module[j].stride,
-    #                              padding=module[j].padding)
-    #             elif module[j]._get_name() == 'BatchNorm1d':
-    #                 x = F.batch_norm(x,
-    #                                  params['Encoder.Encoder.%d.1.running_mean' % i],
-    #                                  params['Encoder.Encoder.%d.1.running_var' % i],
-    #                                  momentum=1,
-    #                                  training=True)
-    #             elif module[j]._get_name() == 'ReLU':
-    #                 x = F.relu(x)
-    #             elif module[j]._get_name() == 'MaxPool1d':
-    #                 x = F.max_pool1d(x, kernel_size=module[j].kernel_size)
-    #             elif module[j]._get_name() == 'AdaptiveMaxPool1d':
-    #                 x = F.adaptive_max_pool1d(x, output_size=1)
-    #     return x.squeeze()
-
 ###############################################################
 # 参考HATT-ProtoNet中的Encoding实现，使用CNN在序列维度上进行卷积来
 # 解码从RNN中提取到的特征
@@ -822,30 +432,30 @@ class ResDenseLayer(nn.Module):
 #####################################################
 class TenStepAffine1D(nn.Module):
 
-    def __init__(self, task_dim, step_length, layer_num=3):
+    def __init__(self, task_dim, feature_dim, layer_num=3):
         super(TenStepAffine1D, self).__init__()
         
         assert layer_num > 1
 
         # the weight TEN generate the vector of length equal to
         # sequence length, to weight each step
-        weight_ten = [nn.Linear(task_dim, step_length),
+        weight_ten = [nn.Linear(task_dim, feature_dim),
                       nn.ReLU(inplace=True)]
         for i in range(layer_num-1):
-            weight_ten.append(ResDenseLayer(step_length))
+            weight_ten.append(ResDenseLayer(feature_dim))
         self.WeightTEN = nn.Sequential(*weight_ten)
 
 
-        bias_ten = [nn.Linear(task_dim, step_length),
+        bias_ten = [nn.Linear(task_dim, feature_dim),
                     nn.ReLU(inplace=True)]
         for i in range(layer_num-1):
-            bias_ten.append(ResDenseLayer(step_length))
+            bias_ten.append(ResDenseLayer(feature_dim))
         self.BiasTEN = nn.Sequential(*bias_ten)
 
-        self.WeightMuplier = nn.Parameter(t.empty((step_length,)))
+        self.WeightMuplier = nn.Parameter(t.empty((feature_dim,)))
         nn.init.normal_(self.WeightMuplier.data, mean=0, std=0.01)
 
-        self.BiasMuplier = nn.Parameter(t.empty((step_length,)))
+        self.BiasMuplier = nn.Parameter(t.empty((feature_dim,)))
         nn.init.normal_(self.BiasMuplier.data, mean=0, std=0.01)
 
     def forward(self, x, task_proto=None):
@@ -859,20 +469,24 @@ class TenStepAffine1D(nn.Module):
             weight = self.WeightTEN(task_proto)
             bias = self.BiasTEN(task_proto)
 
-            x_batch_size, x_feature_dim = x.size(0), x.size(2)
+            # ----------------------------step-wise affine -------------------------------------
+            # x_batch_size, x_feature_dim = x.size(0), x.size(2)
+            #
+            # # post-multiplier is designed to operate step-wise multiply
+            # weight = (weight * self.WeightMuplier) + t.ones_like(weight, device='cuda:0')
+            # bias = bias * self.BiasMuplier
+            #
+            # # weight and bias are applied on each step channel
+            # # identically for each sample
+            # weight = weight.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+            # bias = bias.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
+            #--------------------------------------------------------------------------
 
-            # post-multiplier is designed to operate step-wise multiply
-            weight = (weight * self.WeightMuplier) + t.ones_like(weight, device='cuda:0')
-            bias = bias * self.BiasMuplier
+            # ----------------------------feature-wise affine -------------------------------------
+            weight = weight.expand_as(x)
+            bias = bias.expand_as(x)
+            #--------------------------------------------------------------------------
 
-            # weight and bias are applied on each step channel
-            # identically for each sample
-            weight = weight.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
-            bias = bias.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
-
-
-            # weight_mul = self.WeightMuplier.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
-            # bias_mul = self.BiasMuplier.unsqueeze(1).repeat(1,x_feature_dim).repeat(x_batch_size,1,1)
 
             return weight*x + bias
 

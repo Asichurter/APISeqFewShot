@@ -5,16 +5,25 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 45,
-  "modelName" : "TCProtoNet",
+  "version" : 55,
+  "modelName" : "FEAT",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
-    "num_inputs": 300,
-    "init_hidden_channel": 32,
-    "num_channels": [32, 64, 128],
-    "kernel_size": 3
+
+    "hidden_size" : 128,
+    "num_layers" : 1,
+    "self_att_dim" : null,
+    "bidirectional": false,
+
+    "dropout": 0.5,
+    "contrastive_factor": 0.1,
+    "feat_avg": "post",
+
+    "set_function": "transformer",
+    "trans_hidden_dim": 64,
+    "trans_dropout": 0.5
   },
 
   "valCycle" : 100,
@@ -27,7 +36,7 @@
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-3
+    "Embedding.weight_" : 1e-3
   },
   "taskBatchSize": 1,
 
@@ -74,8 +83,11 @@
             "训练类使用满编73个",
             "使用任务batch=1 ",
             "使用300维度的GloVe初始化",
+            "提前终止的标准改为loss",
             "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-            "使用时间卷积网络TCN代替BiLSTM进行编码，还是使用1D的CNN进行解码",
-            "在Encoder和CNN之间插入TEN模块使之对step进行FiLM变换"
+            "使用单向LSTM编码，使用1DCNN解码",
+            "采用Transformer作为set function",
+            "训练时使用了contrastive loss",
+            "使用Post-avg，其中map的时候所有样本n*k个均视为一个序列样本"
   ]
 }

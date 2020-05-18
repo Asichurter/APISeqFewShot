@@ -5,8 +5,8 @@
   "qk" : 15,
   "n": 5,
 
-  "version" : 44,
-  "modelName" : "ProtoNet",
+  "version" : 55,
+  "modelName" : "FEAT",
 
   "trainingEpoch" : 5000,
 

@@ -47,7 +47,14 @@ class TemporalBlock(nn.Module):
 
 
 class TemporalConvNet(nn.Module):
-    def __init__(self, num_inputs, init_hidden_channel, num_channels, kernel_size=2, dropout=0.2, **kwargs):
+    def __init__(self,
+                 num_inputs,
+                 init_hidden_channel,
+                 num_channels,
+                 kernel_size=2,
+                 dropout=0.2,
+                 dilations=None,
+                 **kwargs):
         super(TemporalConvNet, self).__init__()
 
         self.Transform = nn.Linear(num_inputs, init_hidden_channel)
@@ -55,7 +62,7 @@ class TemporalConvNet(nn.Module):
         layers = []
         num_levels = len(num_channels)
         for i in range(num_levels):
-            dilation_size = 2 ** (i+1)
+            dilation_size = 2 ** (i+1) if dilations is None else dilations[i]
             in_channels = init_hidden_channel if i == 0 else num_channels[i-1]
             out_channels = num_channels[i]
 
@@ -72,7 +79,7 @@ class TemporalConvNet(nn.Module):
         # switch the 'seq' dim and 'feature' dim
         x = x.transpose(1,2).contiguous()
         # treat 'feature' dim as channel, convolute over 'seq' dim
-        x = self.network(x).transpose(1,2)
+        x = self.network(x).transpose(1,2).contiguous()
         return x
 
         # return self.network(x)
