@@ -430,10 +430,10 @@ class ResDenseLayer(nn.Module):
 # 提供任务原型后生成仿射权重和仿射偏置，作用在序列的每一个step上。
 # 主要由残差全连接层构成，还有一个范数惩罚的后乘子
 #####################################################
-class TenStepAffine1D(nn.Module):
+class TenAffine1D(nn.Module):
 
     def __init__(self, task_dim, feature_dim, layer_num=3):
-        super(TenStepAffine1D, self).__init__()
+        super(TenAffine1D, self).__init__()
         
         assert layer_num > 1
 

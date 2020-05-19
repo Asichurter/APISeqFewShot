@@ -40,8 +40,9 @@ def generateConfigReport(dataset, include_result=False):
     mng = PathManager(dataset)
 
     report = {}
+    warnings = []
 
-    for doc_dir in os.listdir(mng.DocBase()):
+    for doc_dir in tqdm(os.listdir(mng.DocBase())):
         config_path = mng.DocBase() + doc_dir + '/'
 
         try:
@@ -60,8 +61,11 @@ def generateConfigReport(dataset, include_result=False):
                 report[int(cfg['version'])]['results'] = res['results']
 
         except Exception as e:
-            logging.warning('Error occurred when process %s: %s'%
+            warnings.append('Error occurred when process %s: %s'%
                             (doc_dir, str(e)))
+
+    for w in warnings:
+        logging.warning(w)
 
     dumpJson(report, mng.DatasetBase()+'summary.json', sort=True)
 

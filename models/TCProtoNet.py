@@ -9,44 +9,34 @@ from utils.training import extractTaskStructFromInput, \
 class TCProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
-                 hidden=128,
-                 layer_num=1,
-                 self_att_dim=64,
-                 word_cnt=None,
                  **modelParams):
         super(TCProtoNet, self).__init__()
 
         # 可训练的嵌入层
-        if pretrained_matrix is not None:
-            self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
-        else:
-            self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
-
+        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedNorm = nn.LayerNorm(embed_size)
 
-        self.Encoder = CNNEncoder1D(**modelParams)
+        # self.Encoder = CNNEncoder1D(**modelParams)
 
         # self.Encoder = TransformerEncoder(layer_num=layer_num,
         #                                   embedding_size=embed_size,
         #                                   feature_size=hidden,
         #                                   att_hid=self_att_dim,
         #                                   reduce=False)
-        # self.Encoder = BiLstmEncoder(embed_size,#64
-        #                              hidden_size=hidden,
-        #                              layer_num=layer_num,
-        #                              self_att_dim=self_att_dim,
-        #                              useBN=False)
+        self.Encoder = BiLstmEncoder(embed_size,#64
+                                     **modelParams)
 
         # self.Encoder = TemporalConvNet(**modelParams)
 
-        # self.TEN = TenStepAffine1D(task_dim=2*hidden, step_length=50)       # seq len fix to 50
-        self.TEN = TenStepAffine1D(task_dim=modelParams['num_channels'][-1],
-                                   feature_dim=modelParams['num_channels'][-1])
+        self.TEN = TenAffine1D(task_dim=modelParams['hidden_size'],
+                               feature_dim=modelParams['hidden_size'])       # seq len fix to 50
+        # self.TEN = TenStepAffine1D(task_dim=modelParams['num_channels'][-1],
+        #                            feature_dim=modelParams['num_channels'][-1])
 
 
         # self.CNN = CNNEncoder1D(dims=[hidden*2, hidden*2])
-        self.CNN = CNNEncoder1D(num_channels=[modelParams['num_channels'][-1],
-                                              modelParams['num_channels'][-1]])
+        self.CNN = CNNEncoder1D(num_channels=[modelParams['hidden_size'],
+                                              modelParams['hidden_size']])
 
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):

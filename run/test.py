@@ -5,6 +5,7 @@ from config import appendProjectPath, saveConfigFile
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
+from models.AFEAT import AFEAT
 from models.FEAT import FEAT
 
 appendProjectPath(depth=1)
@@ -145,6 +146,9 @@ elif model_type == 'TCProtoNet':
                         **modelParams)
 elif model_type == 'FEAT':
     model = FEAT(pretrained_matrix=word_matrix,
+                 **modelParams)
+elif model_type == 'AFEAT':
+    model = AFEAT(pretrained_matrix=word_matrix,
                  **modelParams)
 
 model.load_state_dict(state_dict)

@@ -7,6 +7,7 @@ from components.set2set.deepset import DeepSet
 from components.set2set.transformer import TransformerSet
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
+from components.reduction.selfatt import AttnReduction
 from utils.training import extractTaskStructFromInput, repeatProtoToCompShape, repeatQueryToCompShape, protoDisAdapter
 
 class FEAT(nn.Module):
@@ -22,17 +23,18 @@ class FEAT(nn.Module):
 
         self.Avg = feat_avg
         self.ContraFac = contrastive_factor
+        self.DisTempr = modelParams['temperature'] if 'temperature' in modelParams else 1
 
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
         self.EmbedNorm = nn.LayerNorm(embed_size)
 
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
 
-        self.Decoder = CNNEncoder1D([(modelParams['bidirectional']+1)*modelParams['hidden_size'],
-                                     (modelParams['bidirectional']+1)*modelParams['hidden_size']])
-
+        # self.Decoder = CNNEncoder1D([(modelParams['bidirectional']+1)*modelParams['hidden_size'],
+        #                              (modelParams['bidirectional']+1)*modelParams['hidden_size']])
 
         if modelParams['set_function'] == 'deepset':
             self.SetFunc = DeepSet(embed_dim=(modelParams['bidirectional']+1)*modelParams['hidden_size'],
@@ -56,15 +58,15 @@ class FEAT(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        support = self.EmbedNorm(support)
-        query = self.EmbedNorm(query)
+        support = self.EmbedDrop(self.EmbedNorm(support))
+        query = self.EmbedDrop(self.EmbedNorm(query))
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
 
-        support = self.Decoder(support, sup_len)
-        query = self.Decoder(query, que_len)
+        # support = self.Decoder(support, sup_len)
+        # query = self.Decoder(query, que_len)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))
@@ -125,7 +127,9 @@ class FEAT(nn.Module):
         support = repeatProtoToCompShape(support, qk, n)
         query = repeatQueryToCompShape(query, qk, n)
 
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
+        similarity = protoDisAdapter(support, query, qk, n, dim,
+                                     dis_type='euc',
+                                     temperature=self.DisTempr)
 
         if self.training and self.ContraFac is not None:
             return F.log_softmax(similarity, dim=1), adapted_res

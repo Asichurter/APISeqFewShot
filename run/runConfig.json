@@ -5,7 +5,7 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 55,
+  "version" : 63,
   "modelName" : "FEAT",
 
   "modelParams": {
@@ -14,16 +14,18 @@
 
     "hidden_size" : 128,
     "num_layers" : 1,
-    "self_att_dim" : null,
+    "self_att_dim" : 64,
     "bidirectional": false,
+    "temperature": 1,
 
     "dropout": 0.5,
-    "contrastive_factor": 0.1,
+    "contrastive_factor": null,
     "feat_avg": "post",
 
-    "set_function": "transformer",
-    "trans_hidden_dim": 64,
-    "trans_dropout": 0.5
+    "set_function": "deepset",
+    "trans_hidden_dim": 128,
+    "trans_dropout": 0.5,
+    "trans_num_layer": 2
   },
 
   "valCycle" : 100,
@@ -36,7 +38,7 @@
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight_" : 1e-3
+    "Embedding.weight" : 5e-4
   },
   "taskBatchSize": 1,
 
@@ -69,7 +71,6 @@
   },
 
   "platform" : {
-
     "Windows": {
       "datasetBasePath" : "D:/peimages/JSONs/"
     },
@@ -83,11 +84,12 @@
             "训练类使用满编73个",
             "使用任务batch=1 ",
             "使用300维度的GloVe初始化",
-            "提前终止的标准改为loss",
+            "提前终止的标准改为accuracy",
             "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-            "使用单向LSTM编码，使用1DCNN解码",
-            "采用Transformer作为set function",
-            "训练时使用了contrastive loss",
-            "使用Post-avg，其中map的时候所有样本n*k个均视为一个序列样本"
+            "使用单向LSTM编码，使用自注意力模块进行解码",
+            "采用deepset作为set function",
+            "训练时使用了contrastive loss = 0",
+            "使用Post-avg，其中map的时候所有样本n*k个均视为一个序列样本",
+            "在EmbedNorm之后添加了dropout"
   ]
 }

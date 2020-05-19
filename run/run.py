@@ -6,7 +6,7 @@ from config import appendProjectPath, saveConfigFile, checkVersion
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
-
+from models.AFEAT import AFEAT
 
 appendProjectPath(depth=1)
 
@@ -145,7 +145,7 @@ else:
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
                         train_report_iter=ValCycle,
-                        criteria='loss')
+                        criteria='accuracy')
 
 if RecordGradient:
     types.append('line')
@@ -222,6 +222,9 @@ elif model_type == 'TCProtoNet':
                         **modelParams)
 elif model_type == 'FEAT':
     model = FEAT(pretrained_matrix=word_matrix,
+                 **modelParams)
+elif model_type == 'AFEAT':
+    model = AFEAT(pretrained_matrix=word_matrix,
                  **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
@@ -364,28 +367,35 @@ with t.autograd.set_detect_anomaly(False):
             #     validate_loss += loss_val.detach().item()
             #     validate_acc += val_task.accuracy(predicts)
 
-            # validate_acc, validate_loss = fomamlProcedure(model,
-            #                                               ValEpisode,
-            #                                               val_task,
-            #                                               loss,
-            #                                               optimizer,
-            #                                               train=False)
-            validate_acc, validate_loss = queryLossProcedure(model,
+            if model_type == 'TCProtoNet':
+                validate_acc, validate_loss = penalQLossProcedure(model,
                                                              ValEpisode,
                                                              val_task,
                                                              loss,
-                                                             optimizer,
+                                                             None,
+                                                             None,
                                                              train=False)
 
-                # cur_validate_acc, cur_validate_loss = reptileProcedure(n, k,
-                #                                                        model,
-                #                                                        taskBatchSize=None,
-                #                                                        task=val_task,
-                #                                                        loss=loss,
-                #                                                        train=False)
-                # validate_acc += cur_validate_acc
-                # validate_loss += cur_validate_loss
+            elif model_type == 'FEAT':
+                validate_acc, validate_loss = featProcedure(model,
+                                                       n, k, qk,
+                                                       ValEpisode,
+                                                       val_task,
+                                                       loss,
+                                                       None,
+                                                       None,
+                                                       train=False,
+                                                       contrastive_factor=modelParams['contrastive_factor'])
 
+            else:
+
+                validate_acc, validate_loss = queryLossProcedure(model,
+                                                            ValEpisode,
+                                                            val_task,
+                                                            loss,
+                                                            None,
+                                                            None,
+                                                            train=False)
 
             avg_validate_acc = validate_acc / ValEpisode
             avg_validate_loss = validate_loss / ValEpisode

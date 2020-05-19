@@ -91,13 +91,16 @@ def repeatQueryToCompShape(query, qk, n):
 
     return query
 
-def squEucDistance(v1, v2, neg=False):
+def squEucDistance(v1, v2, neg=False, temperature=None):
     assert v1.size()==v2.size() and len(v1.size())==2, \
         '两组向量形状必须相同，且均为(batch, dim)结构！'
 
-    factor = -1 if neg else 1
+    if temperature is None:
+        temperature = -1 if neg else 1
+    else:
+        temperature = temperature * ((-1) ** (2+neg))
 
-    return ((v1-v2)**2).sum(dim=1) * factor
+    return ((v1-v2)**2).sum(dim=1) * temperature
 
 def cosDistance(v1, v2, neg=False, factor=10):
     assert v1.size()==v2.size() and len(v1.size())==2, \
@@ -108,14 +111,14 @@ def cosDistance(v1, v2, neg=False, factor=10):
     return t.cosine_similarity(v1, v2, dim=1) * factor
     # return ((v1-v2)**2).sum(dim=1) * factor
 
-def protoDisAdapter(support, query, qk, n, dim, dis_type='euc'):
+def protoDisAdapter(support, query, qk, n, dim, dis_type='euc', **kwargs):
     support = support.view(qk*n, dim)
     query = query.view(qk*n, dim)
 
     if dis_type == 'euc':
-        sim = squEucDistance(support, query, neg=True)
+        sim = squEucDistance(support, query, neg=True, **kwargs)
     elif dis_type == 'cos':
-        sim = cosDistance(support, query, neg=False)
+        sim = cosDistance(support, query, neg=False, **kwargs)
 
     return sim.view(qk, n)
 
