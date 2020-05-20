@@ -6,8 +6,6 @@ from config import appendProjectPath, saveConfigFile, checkVersion
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
-from models.AFEAT import AFEAT
-
 appendProjectPath(depth=1)
 
 # 先添加路径再获取
@@ -41,6 +39,7 @@ from models.PerLayerATAML import PerLayerATAML
 from models.Reptile import Reptile
 from models.TCProtoNet import TCProtoNet
 from models.FEAT import FEAT
+from models.AFEAT import AFEAT
 
 ################################################
 #----------------------读取参数------------------

@@ -75,6 +75,11 @@ version = %d, please check if you would like to override it.
 (type 'y', '1' or '' for comfirmation, otherwise to exit)\n\n
 '''
 
+#############################################################33
+# Check the current running version and the last running
+# version and warn users to ensure if deplicated. This prevents
+# from unexpected configuration covering.
+#############################################################33
 def checkVersion(cur_v):
     ver_cfg = loadJson('version.json')
     last_ver = ver_cfg['lastRunVersion']

@@ -1,22 +1,23 @@
 {
-  "dataset" :  "virushare_20",
+  "dataset" :  "virushare-10-seq",
 
   "k" : 5, 
-  "qk" : 15,
+  "qk" : 5,
   "n": 5,
 
-  "version" : 62,
+  "version" : 66,
   "modelName" : "FEAT",
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 25000,
 
   "Ns" : {
           "cluster":20,
           "test":20,
-          "virushare_20":20,
+          "virushare-20-3gram":20,
           "drebin_10":10,
           "miniImageNet":600,
-          "virushare_20_image":20
+          "virushare_20_image":20,
+          "virushare-10-seq": 10
           },
 
   "platform" : {
@@ -30,7 +31,7 @@
     }
   },
 
-  "testSubdataset": "validate",
+  "testSubdataset": "test",
 
   "description": []
 }

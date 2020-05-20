@@ -51,8 +51,8 @@ class TemporalConvNet(nn.Module):
                  num_inputs,
                  init_hidden_channel,
                  num_channels,
-                 kernel_size=2,
-                 dropout=0.2,
+                 kernel_size=3,
+                 dropout=0.5,
                  dilations=None,
                  **kwargs):
         super(TemporalConvNet, self).__init__()

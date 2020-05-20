@@ -1,20 +1,20 @@
 {
-  "dataset" :  "virushare_20",
+  "dataset" :  "virushare-20-3gram",
 
   "k" : 5,
   "n" : 5,
   "qk" : 5,
 
-  "version" : 63,
+  "version" : 67,
   "modelName" : "FEAT",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
 
-    "hidden_size" : 128,
+    "hidden_size" : 300,
     "num_layers" : 1,
-    "self_att_dim" : 64,
+    "self_att_dim" : null,
     "bidirectional": false,
     "temperature": 1,
 
@@ -38,7 +38,7 @@
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 5e-4
+    "Embedding.weight" : 1e-3
   },
   "taskBatchSize": 1,
 
@@ -53,10 +53,11 @@
   "Ns" : {
           "cluster":20,
           "test":20,
-          "virushare_20":20,
+          "virushare-20-3gram":20,
           "drebin_10":10,
           "miniImageNet":600,
-          "virushare_20_image":20
+          "virushare_20_image":20,
+          "virushare-10-seq": 10
           },
 
   "plot" : {
@@ -84,12 +85,13 @@
             "训练类使用满编73个",
             "使用任务batch=1 ",
             "使用300维度的GloVe初始化",
+            "序列长度为100的3Gram",
             "提前终止的标准改为accuracy",
             "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-            "使用单向LSTM编码，使用自注意力模块进行解码",
+            "使用单向LSTM编码，使用1DCNN解码",
             "采用deepset作为set function",
             "训练时使用了contrastive loss = 0",
-            "使用Post-avg，其中map的时候所有样本n*k个均视为一个序列样本",
+            "使用Post-avg，只将n*k个支持集输入adapt",
             "在EmbedNorm之后添加了dropout"
   ]
 }

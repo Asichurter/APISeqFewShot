@@ -27,7 +27,14 @@ def splitDatas(src, dest, ratio, mode='x', is_dir=False):
     assert mode in ['c', 'x'], '选择的模式错误，只能复制c或者剪切x'
 
     All = os.listdir(src)
-    size = int(len(All) * ratio) if ratio < 1 else ratio
+
+    if ratio < 0:
+        size = len(All)
+    elif 1 > ratio > 0:
+        size = int(len(All) * ratio)
+    else:
+        size = ratio
+    # size = int(len(All) * ratio) if ratio < 1 else ratio
 
     assert len(All) >= size, '分割时，总数量没有要求的数量大！'
 

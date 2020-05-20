@@ -11,6 +11,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import shutil
 import numpy as np
+import random
 
 from utils.error import Reporter
 from utils.file import loadJson, dumpJson, dumpIterable
@@ -242,45 +243,54 @@ def mappingApiNormalize(json_path, mapping, is_class_dir=False):
 # 移除冗余操作是在源文件上覆盖的，注意备份
 #####################################################
 def removeApiRedundance(json_path,
-                        selected_apis=None):
+                        selected_apis=None,
+                        class_dir=True):
 
     reporter = Reporter()
 
-    for item in tqdm(os.listdir(json_path)):
-        item_path = json_path + item + '/%s.json'%item
+    for folder in tqdm(os.listdir(json_path)):
 
-        try:
-            report = loadJson(item_path)
+        if class_dir:
+            items = os.listdir(json_path + folder + '/')
+        else:
+            items = [folder+'.json']
 
-            redun_flag = False
-            redun_api_token = None
+        for item in items:
 
-            new_api_seq = []
+            item_path = json_path + folder + '/' + item
 
-            for api_token in report['apis']:
-                # 只关注选出的那些api
-                # 如果给定的选中API为None代表不进行选择
-                if selected_apis is None or \
-                    api_token in selected_apis:
-                    if api_token != redun_api_token:     # 每当遇到新的api时，刷新当前遇到的api，同时重置flag
-                        redun_api_token = api_token
-                        redun_flag = False
-                    else:
-                        if not redun_flag:              # 如果遇到了一样的api，但是flag没有置位，说明第二次遇到，同时置位flag
-                            redun_flag = True
+            try:
+                report = loadJson(item_path)
+
+                redun_flag = False
+                redun_api_token = None
+
+                new_api_seq = []
+
+                for api_token in report['apis']:
+                    # 只关注选出的那些api
+                    # 如果给定的选中API为None代表不进行选择
+                    if selected_apis is None or \
+                        api_token in selected_apis:
+                        if api_token != redun_api_token:     # 每当遇到新的api时，刷新当前遇到的api，同时重置flag
+                            redun_api_token = api_token
+                            redun_flag = False
                         else:
-                            continue                    # 如果遇到了一样的api且flag置位，说明已经遇到过两次，则跳过冗余api
+                            if not redun_flag:              # 如果遇到了一样的api，但是flag没有置位，说明第二次遇到，同时置位flag
+                                redun_flag = True
+                            else:
+                                continue                    # 如果遇到了一样的api且flag置位，说明已经遇到过两次，则跳过冗余api
 
-                    new_api_seq.append(api_token)
+                        new_api_seq.append(api_token)
 
-            # 使用新api序列覆盖原api序列
-            report['apis'] = new_api_seq
-            dumpJson(report, item_path)
+                # 使用新api序列覆盖原api序列
+                report['apis'] = new_api_seq
+                dumpJson(report, item_path)
 
-            reporter.logSuccess()
+                reporter.logSuccess()
 
-        except Exception as e:
-            reporter.logError(item, str(e))
+            except Exception as e:
+                reporter.logError(folder, str(e))
 
     reporter.report()
 
@@ -361,8 +371,19 @@ def statSatifiedClasses(pe_path,
 # 然后将同类的API调用的json全部收集一个文件夹中。指定的类可以
 # 根据数量阶梯从stair_cls_cnt.json中提取。
 #####################################################
-def collectJsonByClass(pe_path, json_path, dst_path, selected_classes):
+def collectJsonByClass(pe_path,
+                       json_path,
+                       dst_path,
+                       report_path,
+                       num_per_class,
+                       selected_classes,
+                       ):
     reporter = Reporter()
+
+    warn_errs = loadJson(report_path)
+
+    def length_filter(x):
+        return x not in warn_errs['warnings'] and x not in warn_errs['errors']
 
     for cls in tqdm(selected_classes):
         dst_dir = dst_path + cls + '/'
@@ -370,7 +391,16 @@ def collectJsonByClass(pe_path, json_path, dst_path, selected_classes):
         if not os.path.exists(dst_dir):
             os.mkdir(dst_dir)
 
-        for item in os.listdir(pe_path + cls + '/'):
+        # filter those items not satisfying scale requirement
+        cand_items = os.listdir(pe_path + cls + '/')
+        cand_items = list(filter(length_filter, cand_items))
+
+        # for some PE items, there misses the corresponding json item
+        cand_items = list(filter(lambda x: os.path.exists(json_path+x+'/'), cand_items))
+
+        cand_items = random.sample(cand_items, num_per_class)
+
+        for item in cand_items:
             try:
                 shutil.copy(json_path + item + '/%s.json'%item,
                             dst_dir + '/%s.json'%item)
@@ -553,7 +583,10 @@ if __name__ == '__main__':
     #                                         "linkular",
     #                                         "lipler",
     #                                         "llac",
-    #                                         "loadmoney",
+    #                                     ################################################################
+# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
+#                     json_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+    "loadmoney",
     #                                         "loring",
     #                                         "lunam",
     #                                         "mepaow",
