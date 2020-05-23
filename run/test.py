@@ -5,8 +5,6 @@ from config import appendProjectPath, saveConfigFile
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
-from models.AFEAT import AFEAT
-from models.FEAT import FEAT
 
 appendProjectPath(depth=1)
 
@@ -27,6 +25,9 @@ from models.HybridAttentionNet import HAPNet
 from models.ConvProtoNet import ConvProtoNet
 from models.PerLayerATAML import PerLayerATAML
 from models.TCProtoNet import TCProtoNet
+from models.AFEAT import AFEAT
+from models.FEAT import FEAT
+from models.MatchNet import MatchNet
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
@@ -150,6 +151,9 @@ elif model_type == 'FEAT':
 elif model_type == 'AFEAT':
     model = AFEAT(pretrained_matrix=word_matrix,
                  **modelParams)
+elif model_type == 'MatchNet':
+    model = MatchNet(pretrained_matrix=word_matrix,
+                     **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -188,7 +192,7 @@ with t.autograd.set_detect_anomaly(False):
 
         if model_type == 'TCProtoNet':
             acc_val, loss_val_item =penalQLossProcedure(model,
-                                                        taskBatchSize,
+                                                        1,
                                                         test_task,
                                                         loss,
                                                         None,
@@ -198,7 +202,7 @@ with t.autograd.set_detect_anomaly(False):
         elif model_type == 'FEAT':
             acc_val, loss_val_item = featProcedure(model,
                                                  n,k,qk,
-                                                 taskBatchSize,
+                                                 1,
                                                  test_task,
                                                  loss,
                                                  None,

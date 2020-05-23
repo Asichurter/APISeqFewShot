@@ -3,26 +3,20 @@ import logging
 from components.modules import *
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
-from components.reduction.max import StepMaxReduce
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
                             protoDisAdapter
 
 
-class ProtoNet(nn.Module):
+class MatchNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
-                 word_cnt=None,
                  **kwargs):
-        super(ProtoNet, self).__init__()
+        super(MatchNet, self).__init__()
 
         # 可训练的嵌入层
-        if pretrained_matrix is not None:
-            self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
-        else:
-            self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
-
+        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedNorm = nn.LayerNorm(embed_size)
 
         # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
@@ -47,32 +41,8 @@ class ProtoNet(nn.Module):
         # self.Encoder = TemporalConvNet(**kwargs)
         self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)
 
-        # self.Encoder = nn.ModuleList([
-        #     BiLstmEncoder(embed_size,  # 64
-        #                   hidden_size=hidden,
-        #                   layer_num=1,
-        #                   self_att_dim=self_att_dim,
-        #                   useBN=False),
-        #     BiLstmEncoder(2*hidden,  # 64
-        #                   hidden_size=hidden,
-        #                   layer_num=1,
-        #                   self_att_dim=self_att_dim,
-        #                   useBN=False)
-        # ])
-        # self.EncoderNorm = nn.ModuleList([
-        #     nn.LayerNorm(2*hidden),
-        #     nn.LayerNorm(2*hidden)
-        # ])
-
-        # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
-        #                                  hidden_size=hidden,
-        #                                  num_layers=layer_num,
-        #                                  bidirectional=True,
-        #                                  self_att_dim=self_att_dim)
-
-        self.Reduce = CNNEncoder1D([kwargs['hidden_size'],
+        self.CNN = CNNEncoder1D([kwargs['hidden_size'],
                                  kwargs['hidden_size']])
-        # self.Reduce = StepMaxReduce()
         # self.CNN = CNNEncoder1D(dims=[kwargs['num_channels'][-1],
         #                               kwargs['num_channels'][-1]])
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
@@ -93,167 +63,33 @@ class ProtoNet(nn.Module):
         support = self.EmbedNorm(support)
         query = self.EmbedNorm(query)
 
-        # support = self.CNN(support)
-        # query = self.CNN(query)
-
-        # # # pack以便输入到LSTM中
-        # support = pack_padded_sequence(support, sup_len, batch_first=True, enforce_sorted=False)
-        # query = pack_padded_sequence(query, que_len, batch_first=True, enforce_sorted=False)
-
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
-        # for i in range(len(self.Encoder)):
-        #     support = self.EncoderNorm[i](self.Encoder[i](support, sup_len))
-        #     query = self.EncoderNorm[i](self.Encoder[i](query, que_len))
 
-        # support, sup_len = pad_packed_sequence(support, batch_first=True)
-        # query, que_len = pad_packed_sequence(query, batch_first=True)
 
-        # support = avgOverHiddenStates(support, sup_len)
-        # query = avgOverHiddenStates(query, que_len)
-
-        support = self.Reduce(support, sup_len)
-        query = self.Reduce(query, que_len)
-
-        # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
-        # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)
+        support = self.CNN(support, sup_len)
+        query = self.CNN(query, que_len)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))
 
         dim = support.size(1)
 
-        # 原型向量
-        # shape: [n, dim]
-        support = support.view(n, k, dim).mean(dim=1)
-
         # 整型成为可比较的形状: [qk, n, dim]
-        support = repeatProtoToCompShape(support, qk, n)
-        query = repeatQueryToCompShape(query, qk, n)
+        support = support.repeat((qk,1,1)).view(qk,n*k,-1)
+        query = query.repeat(n*k,1,1).transpose(0,1).contiguous().view(qk,n*k,-1)
 
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
+        # directly compare with support samples, instead of prototypes
+        # shape: [qk, n*k, dim]->[qk, n, k, dim] -> [qk, n]
+        similarity = ((support - query) ** 2).neg().view(qk,n,k,-1).sum((2,3))
 
-        # return t.softmax(similarity, dim=1)
-        return F.log_softmax(similarity, dim=1)
-
-
-class IncepProtoNet(nn.Module):
-
-    def __init__(self, channels, depth=3):
-        super(IncepProtoNet, self).__init__()
-
-        if depth%2 != 1:
-            logging.warning('3D卷积深度为偶数，会导致因为无法padding而序列长度发生变化！')
-
-        layers = [ResInception(in_channel=channels[i] if i==0 else 4*channels[i],
-                               out_channel=channels[i+1],
-                               depth=depth)
-                  for i in range(len(channels)-1)]
-
-        self.Encoder = nn.Sequential(*layers)
-
-        # TODO: 添加多个Inception模块后的Pool
-
-    def forward(self, support, query, sup_len=None, que_len=None):
-        # input shape:
-        # sup=[n, k, 1, sup_seq_len, height, width]
-        # que=[batch, 1, que_seq_len, height, width]
-        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query,
-                                                                        unsqueezed=True,
-                                                                        is_matrix=True)
-        height, width = query.size(3), query.size(4)
-
-        support = support.view(n*k, 1, sup_seq_len, height, width)
-        query = query.view(qk, 1, que_seq_len, height, width)
-
-        # output shape: [batch, out_channel=1, seq_len, height, width]
-        support = self.Encoder(support).squeeze()
-        query = self.Encoder(query).squeeze()
-
-        # TODO:直接展开序列作为特征
-        support = support.view(n, k, -1).mean(dim=1)
-        query = query.view(qk, -1)
-
-        assert support.size(1)==query.size(1), \
-            '支持集和查询集的嵌入后特征维度不相同！'
-
-        dim = support.size(1)
-
-        # 整型成为可比较的形状: [qk, n, dim]
-        support = repeatProtoToCompShape(support, qk, n)
-        query = repeatQueryToCompShape(query, qk, n)
-
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='cos')
-
-        # return t.softmax(similarity, dim=1)
-        return F.log_softmax(similarity, dim=1)
-
-##########################################################
-# 先使用3D卷积来提取每个时间步中的矩阵特征，再将时间步提取到的特征输入
-# 到LSTM中，使用注意力机制从序列中归纳表示
-##########################################################
-class CNNLstmProtoNet(nn.Module):
-
-    def  __init__(self,
-                 channels=[1,32,64,64],     # 默认3个卷积层
-                 lstm_input_size=64*2*2,    # matrix大小为10×10，两次池化为2×2
-                 strides=None,
-                 hidden_size=64,
-                 layer_num=1,
-                 self_att_dim=32):
-        super(CNNLstmProtoNet, self).__init__()
-
-        self.Embedding = CNNEncoder(channels=channels,
-                                    strides=strides,
-                                    flatten=False,      # 保留序列信息
-                                    pools=[True,True,False]
-                                    )
-
-        self.LstmEncoder = BiLstmEncoder(input_size=lstm_input_size,
-                                         hidden_size=hidden_size,
-                                         layer_num=layer_num,
-                                         self_att_dim=self_att_dim)
-
-    def forward(self, support, query, sup_len=None, que_len=None):
-        # input shape:
-        # sup=[n, k, sup_seq_len, height, width]
-        # que=[qk, que_seq_len, height, width]
-        n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query,
-                                                                        unsqueezed=False,
-                                                                        is_matrix=True)
-        height, width = query.size(2), query.size(3)
-
-        support = support.view(n*k, sup_seq_len, height, width)
-
-        # output shape: [batch, seq_len, feature]
-        support = self.Embedding(support)
-        query = self.Embedding(query)
-
-        support = self.LstmEncoder(support)
-        query = self.LstmEncoder(query)
-
-        # TODO:直接展开序列作为特征
-        support = support.view(n, k, -1).mean(dim=1)
-        query = query.view(qk, -1)
-
-        assert support.size(1)==query.size(1), \
-            '支持集和查询集的嵌入后特征维度不相同！'
-
-        dim = support.size(1)
-
-        # 整型成为可比较的形状: [qk, n, dim]
-        support = repeatProtoToCompShape(support, qk, n)
-        query = repeatQueryToCompShape(query, qk, n)
-
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='cos')
-
-        # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
 
 
 if __name__ == '__main__':
-    n = ProtoNet(None, 64, word_cnt=100)
+    pass
+    # n = ProtoNet(None, 64, word_cnt=100)
 
 
 

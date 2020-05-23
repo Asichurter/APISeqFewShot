@@ -128,6 +128,9 @@ def protoDisAdapter(support, query, qk, n, dim, dis_type='euc', **kwargs):
 # 掩码。PAD位置会被置位True，其余位置被置于False
 ################################################
 def getMaskFromLens(lens):
+    if type(lens) == list:
+        lens = t.LongTensor(lens)
+
     max_idx = max(lens)
     batch_size = len(lens)
     idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))

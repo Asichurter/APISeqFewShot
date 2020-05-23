@@ -4,7 +4,8 @@ import numpy as np
 import torch as t
 import torch.nn.functional as F
 
-from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas
+from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
+                                dumpDatasetSplitStruct
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
@@ -18,8 +19,15 @@ from config import generateConfigReport
 
 # 生成报告总结
 ################################################################
-# generateConfigReport(dataset='virushare_20', include_result=True)
+generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 ################################################################
+
+# 生成数据集分割文件
+###############################################################
+# manager = PathManager(dataset='virushare-20-3gram')
+# dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
+#                        dump_path=manager.DatasetBase()+'data/split_1.json')
+###############################################################
 
 
 # 制作基于下标的数据集
@@ -84,19 +92,19 @@ from config import generateConfigReport
 
 # 分割数据集
 ################################################################
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-seq/all/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-seq/train/',
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/all/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
 #            ratio=-1,
 #            mode='c',
 #            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-seq/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-seq/validate/',
-#            ratio=30,
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/validate/',
+#            ratio=20,
 #            mode='x',
 #            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-seq/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-seq/test/',
-#            ratio=30,
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/test/',
+#            ratio=20,
 #            mode='x',
 #            is_dir=True)
 ################################################################

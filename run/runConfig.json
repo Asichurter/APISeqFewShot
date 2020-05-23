@@ -5,21 +5,21 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 67,
+  "version" : 75,
   "modelName" : "FEAT",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
 
-    "hidden_size" : 300,
+    "hidden_size" : 128,
     "num_layers" : 1,
     "self_att_dim" : null,
     "bidirectional": false,
     "temperature": 1,
 
     "dropout": 0.5,
-    "contrastive_factor": null,
+    "contrastive_factor": 0.1,
     "feat_avg": "post",
 
     "set_function": "deepset",
@@ -83,14 +83,14 @@
 
   "description": [
             "训练类使用满编73个",
-            "使用任务batch=1 ",
+            "使用任务batch=1",
             "使用300维度的GloVe初始化",
-            "序列长度为100的3Gram",
+            "序列长度为100的3Gram (第2次分割)",
             "提前终止的标准改为accuracy",
             "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-            "使用单向LSTM编码，使用1DCNN解码",
+            "使用单向LSTM编码（隐藏层128维），使用1DCNN解码",
             "采用deepset作为set function",
-            "训练时使用了contrastive loss = 0",
+            "训练时使用了contrastive loss = 0.1  ",
             "使用Post-avg，只将n*k个支持集输入adapt",
             "在EmbedNorm之后添加了dropout"
   ]

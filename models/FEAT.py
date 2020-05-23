@@ -9,6 +9,7 @@ from components.set2set.transformer import TransformerSet
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from components.reduction.selfatt import AttnReduction
+from components.reduction.max import StepMaxReduce
 from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, repeatProtoToCompShape, repeatQueryToCompShape, protoDisAdapter
 
@@ -45,6 +46,7 @@ class FEAT(nn.Module):
 
         self.Decoder = CNNEncoder1D([(modelParams['bidirectional']+1)*modelParams['hidden_size'],
                                      (modelParams['bidirectional']+1)*modelParams['hidden_size']])
+        # self.Decoder = StepMaxReduce()
 
         if modelParams['set_function'] == 'deepset':
             self.SetFunc = DeepSet(embed_dim=(modelParams['bidirectional']+1)*modelParams['hidden_size'],
@@ -56,7 +58,8 @@ class FEAT(nn.Module):
             raise ValueError('Unrecognized set function type:', modelParams['set_function'])
 
 
-    def forward(self, support, query, sup_len, que_len, metric='euc'):
+    def forward(self, support, query, sup_len, que_len,
+                metric='euc', return_unadapted=False):
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         qk_per_class = qk // n
@@ -114,6 +117,10 @@ class FEAT(nn.Module):
             # where labels permute in order and cluster (every 'qk_per_class+k')
             adapted_res = F.log_softmax(adapted_sim, dim=1)
 
+        if return_unadapted:
+            unada_support = support.view(n,k,-1).mean(1)
+            unada_support = repeatProtoToCompShape(unada_support,
+                                                   qk, n)
 
         ################################################################
         if self.Avg == 'post':
@@ -150,5 +157,12 @@ class FEAT(nn.Module):
             return F.log_softmax(similarity, dim=1), adapted_res
 
         else:
-            return F.log_softmax(similarity, dim=1)
+            if return_unadapted:
+                unada_sim = protoDisAdapter(unada_support, query, qk, n, dim,
+                                     dis_type='euc',
+                                     temperature=self.DisTempr)
+                return F.log_softmax(similarity, dim=1), F.log_softmax(unada_sim, dim=1)
+
+            else:
+                return F.log_softmax(similarity, dim=1)
 

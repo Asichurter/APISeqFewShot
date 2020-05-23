@@ -143,6 +143,24 @@ def makeDatasetDirStruct(base_path):
 
     printState('Done')
 
+##########################################################
+# 本函数用于将训练集，验证集和测试集的数据集分割详情保存到JSON文件
+# 以便复现出实验结果
+##########################################################
+def dumpDatasetSplitStruct(base_path, dump_path):
+    dump = {}
+    for split in ['train', 'validate', 'test']:
+        print(split)
+        folders = []
+
+        for folder in os.listdir(base_path+split+'/'):
+            folders.append(folder)
+
+        dump[split] = folders
+
+    dumpJson(dump, dump_path)
+    print('-- Done --')
+
 
 if __name__ == '__main__':
     pass

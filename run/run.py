@@ -40,6 +40,7 @@ from models.Reptile import Reptile
 from models.TCProtoNet import TCProtoNet
 from models.FEAT import FEAT
 from models.AFEAT import AFEAT
+from models.MatchNet import MatchNet
 
 ################################################
 #----------------------读取参数------------------
@@ -225,6 +226,9 @@ elif model_type == 'FEAT':
 elif model_type == 'AFEAT':
     model = AFEAT(pretrained_matrix=word_matrix,
                  **modelParams)
+elif model_type == 'MatchNet':
+    model = MatchNet(pretrained_matrix=word_matrix,
+                     **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()

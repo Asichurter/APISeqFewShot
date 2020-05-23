@@ -225,3 +225,26 @@ def featProcedure(model: FEAT,
 
     return acc_val, loss_val_item*taskBatchSize     # 适配外部调用
 
+
+###################################################
+# 本方法只能用于测试阶段查看是否adapted方法使得正确率增高
+###################################################
+def adaFeatProcedure(model: FEAT,
+                n, k, qk,
+                task,
+                loss):
+
+    model.eval()
+
+    model_input, labels = task.episode()
+
+    aft_predicts, bef_predicts = model.forward(*model_input, return_unadapted=True)
+
+    bef_loss = loss(bef_predicts, labels).item()
+    bef_acc = task.accuracy(bef_predicts.cpu())
+
+    aft_loss = loss(aft_predicts, labels).item()
+    aft_acc = task.accuracy(aft_predicts.cpu())
+
+    return (bef_acc,bef_loss),(aft_acc,aft_loss)
+

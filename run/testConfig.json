@@ -1,14 +1,14 @@
 {
-  "dataset" :  "virushare-10-seq",
+  "dataset" :  "virushare-20-3gram",
 
   "k" : 5, 
   "qk" : 5,
   "n": 5,
 
-  "version" : 66,
+  "version" : 75,
   "modelName" : "FEAT",
 
-  "trainingEpoch" : 25000,
+  "trainingEpoch" : 5000,
 
   "Ns" : {
           "cluster":20,
