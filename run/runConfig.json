@@ -5,7 +5,7 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 75,
+  "version" : 91,
   "modelName" : "FEAT",
 
   "modelParams": {
@@ -13,34 +13,34 @@
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 1,
+    "num_layers" : 2,
     "self_att_dim" : null,
-    "bidirectional": false,
+    "bidirectional": true,
+
     "temperature": 1,
 
     "dropout": 0.5,
-    "contrastive_factor": 0.1,
+    "contrastive_factor": null,
     "feat_avg": "post",
+    "deepset_hidden_dim": 128,
 
-    "set_function": "deepset",
-    "trans_hidden_dim": 128,
-    "trans_dropout": 0.5,
-    "trans_num_layer": 2
+    "set_function": "transformer",
+    "trans_dropout": 0.5
   },
 
   "valCycle" : 100,
   "valEpisode" : 100,
 
-  "lrDecayIters" : 15000,
+  "lrDecayIters" : 24000,
   "lrDecayGamma" : 0.1,
   "optimizer": "adam",
   "weightDecay" : 1e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
-    "Embedding.weight" : 1e-3
+    "Embedding.weight_" : 1e-3
   },
-  "taskBatchSize": 1,
+  "taskBatchSize": 4,
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
@@ -81,17 +81,17 @@
     }
   },
 
-  "description": [
-            "训练类使用满编73个",
-            "使用任务batch=1",
-            "使用300维度的GloVe初始化",
-            "序列长度为100的3Gram (第2次分割)",
-            "提前终止的标准改为accuracy",
-            "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-            "使用单向LSTM编码（隐藏层128维），使用1DCNN解码",
-            "采用deepset作为set function",
-            "训练时使用了contrastive loss = 0.1  ",
-            "使用Post-avg，只将n*k个支持集输入adapt",
-            "在EmbedNorm之后添加了dropout"
-  ]
+      "description": [
+                "训练类使用满编73个",
+                "使用任务batch=4",
+                "使用300维度的GloVe初始化",
+                "序列长度为100的3Gram (第1次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用单向多层的LSTM编码，使用1dCNN解码",
+                "采用transformer（实际上是多头注意力）作为set function",
+                "训练时使用了contrastive loss = 0",
+                "在EmbedNorm之后添加了dropout",
+                "延长了学习率衰减周期到24000"
+      ]
 }

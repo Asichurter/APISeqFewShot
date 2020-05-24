@@ -4,28 +4,31 @@ import torch.nn as nn
 class DeepSet(nn.Module):
     
     def __init__(self, embed_dim,
-                 hidden_dim=128,
+                 deepset_hidden_dim=None,
                  dropout=0.5,
                  **kwargs):
         super(DeepSet, self).__init__()
 
+        if deepset_hidden_dim is None:
+            deepset_hidden_dim = 2 * embed_dim#128#
+
         self.h = nn.Sequential(
-            nn.Linear(embed_dim, hidden_dim),
-            nn.LayerNorm(hidden_dim),
+            nn.Linear(embed_dim, deepset_hidden_dim),
+            nn.LayerNorm(deepset_hidden_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, embed_dim),
+            nn.Linear(deepset_hidden_dim, embed_dim),
             nn.LayerNorm(embed_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout)
         )
 
         self.g = nn.Sequential(
-            nn.Linear(2*embed_dim, hidden_dim),     # cat of x and supplement
-            nn.LayerNorm(hidden_dim),
+            nn.Linear(2*embed_dim, 2*deepset_hidden_dim),     # cat of x and supplement
+            nn.LayerNorm(2*deepset_hidden_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, embed_dim),
+            nn.Linear(2*deepset_hidden_dim, embed_dim),
             nn.LayerNorm(embed_dim),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout)

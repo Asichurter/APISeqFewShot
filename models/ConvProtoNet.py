@@ -1,6 +1,7 @@
 import warnings
 
 from components.modules import *
+from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
@@ -11,57 +12,24 @@ class ConvProtoNet(nn.Module):
     def __init__(self, k,
                  pretrained_matrix,
                  embed_size,
-                 hidden_size=128,
-                 layer_num=1,
-                 self_att_dim=64,
-                 word_cnt=None):
+                 **modelParams):
         super(ConvProtoNet, self).__init__()
 
         # 可训练的嵌入层
-        if pretrained_matrix is not None:
-            self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
-        else:
-            self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
-
+        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
         self.EmbedNorm = nn.LayerNorm(embed_size)
+        #
+        self.Encoder = BiLstmEncoder(input_size=embed_size,
+                                     **modelParams)
 
-        # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
-        #                             kernel_sizes=[3,3,3,3],
-        #                             paddings=[1,1,1,1],
-        #                             relus=[True,True,True,True],
-        #                             pools=['max','max','max','ada'])
-        # self.Encoder = CNNEncoder1D(dims=[embed_size, 64, 128, 256, 256],
-        #                             kernel_sizes=[3,3,3,3],
-        #                             paddings=[1,1,1,1],
-        #                             relus=[True,True,True,True],
-        #                             pools=['max','max','max','ada'])
-        # self.Encoder = CNNEncoder1D(dims=[embed_size, 256, 256],
-        #                             kernel_sizes=[3,3],
-        #                             paddings=[1,1],
-        #                             relus=[True,True],
-        #                             pools=['max','ada'])
+        # self.Encoder = TemporalConvNet(num_inputs=embed_size,
+        #                                init_hidden_channel=modelParams['tcn_init_channel'],
+        #                                num_channels=modelParams['tcn_channels'])
 
-        # self.Encoder = TransformerEncoder(layer_num=layer_num,
-        #                                   embedding_size=embed_size,
-        #                                   feature_size=hidden,
-        #                                   att_hid=self_att_dim,
-        #                                   reduce=False)
-        self.Encoder = BiLstmEncoder(embed_size,  #64
-                                     hidden_size=hidden_size,
-                                     layer_num=layer_num,
-                                     self_att_dim=self_att_dim,
-                                     useBN=False)
-        # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
-        #                                  hidden_size=hidden,
-        #                                  num_layers=layer_num,
-        #                                  bidirectional=True,
-        #                                  self_att_dim=self_att_dim)
+        self.Decoder = CNNEncoder1D([(modelParams['bidirectional']+1)*modelParams['hidden_size'],
+                                     (modelParams['bidirectional']+1)*modelParams['hidden_size']])
 
-        # self.CNN = CNNEncoder1D(dims=[hidden_size * 2, 512])
-        # self.CNN = CnnNGramEncoder(dims=[1,32,64],
-        #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
-        #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
-        #                            relus=[True,True])
 
         if k%2==0:
             warnings.warn("K=%d是偶数将会导致feature_attention中卷积核的宽度为偶数，因此部分将会发生一些变化")
@@ -89,35 +57,21 @@ class ConvProtoNet(nn.Module):
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
+        # ------------------------------------------------------
         # shape: [batch, seq, dim]
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        support = self.EmbedNorm(support)
-        query = self.EmbedNorm(query)
-
-        # support = self.CNN(support)
-        # query = self.CNN(query)
-
-        # # # pack以便输入到LSTM中
-        # support = pack_padded_sequence(support, sup_len, batch_first=True, enforce_sorted=False)
-        # query = pack_padded_sequence(query, que_len, batch_first=True, enforce_sorted=False)
+        support = self.EmbedDrop(self.EmbedNorm(support))
+        query = self.EmbedDrop(self.EmbedNorm(query))
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
 
-        # support, sup_len = pad_packed_sequence(support, batch_first=True)
-        # query, que_len = pad_packed_sequence(query, batch_first=True)
-
-        # support = avgOverHiddenStates(support, sup_len)
-        # query = avgOverHiddenStates(query, que_len)
-
-        # support = self.CNN(support, sup_len)
-        # query = self.CNN(query, que_len)
-
-        # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
-        # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)
+        support = self.Decoder(support, sup_len)
+        query = self.Decoder(query, que_len)
+        # ------------------------------------------------------
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))

@@ -4,6 +4,7 @@ from components.modules import *
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from components.reduction.max import StepMaxReduce
+from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -14,8 +15,10 @@ class ProtoNet(nn.Module):
     def __init__(self, pretrained_matrix,
                  embed_size,
                  word_cnt=None,
-                 **kwargs):
+                 **modelParams):
         super(ProtoNet, self).__init__()
+
+        self.DistTemp = modelParams['temperature'] if 'temperature' in modelParams else 1
 
         # 可训练的嵌入层
         if pretrained_matrix is not None:
@@ -30,11 +33,7 @@ class ProtoNet(nn.Module):
         #                             paddings=[1,1,1,1],
         #                             relus=[True,True,True,True],
         #                             pools=['max','max','max','ada'])
-        # self.Encoder = CNNEncoder1D(dims=[embed_size, 64, 128, 256, 256],
-        #                             kernel_sizes=[3,3,3,3],
-        #                             paddings=[1,1,1,1],
-        #                             relus=[True,True,True,True],
-        #                             pools=['max','max','max','ada'])
+        # self.Encoder = CNNEncoder1D(**modelParams)
         # self.Encoder = CNNEncoder1D(**kwargs)
 
         # self.Encoder = TransformerEncoder(embed_size=embed_size,
@@ -44,8 +43,8 @@ class ProtoNet(nn.Module):
         #                               layer_num=layer_num,
         #                               self_att_dim=self_att_dim,
         #                               useBN=False)
-        # self.Encoder = TemporalConvNet(**kwargs)
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)
+        # self.Encoder = TemporalConvNet(**modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
 
         # self.Encoder = nn.ModuleList([
         #     BiLstmEncoder(embed_size,  # 64
@@ -70,11 +69,12 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.Reduce = CNNEncoder1D([kwargs['hidden_size'],
-                                 kwargs['hidden_size']])
+        self.Reduce = CNNEncoder1D([(1+modelParams['bidirectional'])*modelParams['hidden_size'],
+                                    (1+modelParams['bidirectional'])*modelParams['hidden_size']])
+        # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
+        #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()
-        # self.CNN = CNNEncoder1D(dims=[kwargs['num_channels'][-1],
-        #                               kwargs['num_channels'][-1]])
+
         # self.CNN = CnnNGramEncoder(dims=[1,32,64],
         #                            kernel_sizes=[(3,embed_size),(3,embed_size//2+1)],
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
@@ -132,10 +132,31 @@ class ProtoNet(nn.Module):
         support = repeatProtoToCompShape(support, qk, n)
         query = repeatQueryToCompShape(query, qk, n)
 
-        similarity = protoDisAdapter(support, query, qk, n, dim, dis_type='euc')
+        similarity = protoDisAdapter(support, query, qk, n, dim,
+                                     dis_type='euc',
+                                     temperature=self.DistTemp)
 
         # return t.softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class IncepProtoNet(nn.Module):

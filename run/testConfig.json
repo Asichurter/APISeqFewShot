@@ -5,7 +5,7 @@
   "qk" : 5,
   "n": 5,
 
-  "version" : 75,
+  "version" : 90,
   "modelName" : "FEAT",
 
   "trainingEpoch" : 5000,

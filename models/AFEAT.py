@@ -61,29 +61,13 @@ class AFEAT(nn.Module):
 
         dim = support.size(1)
 
-        ################################################################
-        if self.Avg == 'post':
+        # support set2set
+        support_weight = t.softmax(self.SetFunc(support.view(1,n*k,dim)).view(n,k), dim=1)
+        support_weight = support_weight.unsqueeze(-1).repeat(1,1,dim)
 
-            # support set2set
-            support = self.SetFunc(support.view(1,n*k,dim))
-
-            # shape: [n, dim]
-            support = support.view(n, k, dim).mean(dim=1)
-
-        elif self.Avg == 'pre':
-
-            # shape: [n, dim]
-            support = support.view(n, k, dim).mean(dim=1)
-            # support set2set
-            support = self.SetFunc(support.unsqueeze(0))
-        ################################################################
-
-
-        # shape: [n, dim] -> [1, n, dim]
-        # pre-avg in default, treat prototypes as sequence
-        # support = support.view(n, k, dim).mean(dim=1).unsqueeze(0)
-        # # support set2set
-        # support = self.SetFunc(support)
+        # shape: [n, k, dim] -> [n, dim]
+        support = support.view(n, k, dim)
+        support = (support * support_weight).sum(dim=1)
 
         support = repeatProtoToCompShape(support, qk, n)
         query = repeatQueryToCompShape(query, qk, n)

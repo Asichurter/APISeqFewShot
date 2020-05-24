@@ -1,0 +1,308 @@
+{
+  "1DCNN":
+  {
+      "dataset" :  "virushare-20-3gram",
+
+      "k" : 5,
+      "n" : 5,
+      "qk" : 5,
+
+      "version" : 80,
+      "modelName" : "ProtoNet",
+
+      "modelParams": {
+        "embed_size": 300,
+        "usePretrained": true,
+
+        "hidden_size" : 128,
+        "num_layers" : 2,
+        "self_att_dim" : null,
+        "bidirectional": false,
+
+        "num_channels": [300, 64, 128, 256, 256],
+        "kernel_sizes": [3,3,3,3],
+        "paddings": [1,1,1,1],
+        "relus": [true,true,true,true],
+        "pools": ["max","max","max","ada"],
+        "bn": [true,true,true,true],
+
+        "temperature": 1,
+
+        "dropout": 0.5,
+        "contrastive_factor": 0.1,
+        "feat_avg": "post",
+
+        "set_function": "deepset",
+        "trans_hidden_dim": 128,
+        "trans_dropout": 0.5,
+        "trans_num_layer": 2,
+
+        "deepset_hidden_dim": 128
+      },
+
+      "valCycle" : 100,
+      "valEpisode" : 100,
+
+      "lrDecayIters" : 15000,
+      "lrDecayGamma" : 0.1,
+      "optimizer": "adam",
+      "weightDecay" : 1e-4,
+      "lossFunction": "nll",
+      "defaultLr" : 1e-3,
+      "lrs" : {
+        "Embedding.weight" : 1e-3
+      },
+      "taskBatchSize": 1,
+
+      "recordGradient" : false,
+      "gradientUpdateCycle" : 1000,
+
+      "trainingVerbose" : false,
+      "useVisdom" : true,
+
+      "trainingEpoch" : 50000,
+
+      "Ns" : {
+              "cluster":20,
+              "test":20,
+              "virushare-20-3gram":20,
+              "drebin_10":10,
+              "miniImageNet":600,
+              "virushare_20_image":20,
+              "virushare-10-seq": 10
+              },
+
+      "plot" : {
+        "types" : ["line", "line"],
+        "titles": ["accuracy", "loss"],
+        "xlabels" : ["iterations", "iterations"],
+        "ylabels" : ["accuracy", "loss"],
+        "legends" : [
+                    ["train acc", "val acc"],
+                    ["train loss", "val loss"]
+        ]
+      },
+
+      "platform" : {
+        "Windows": {
+          "datasetBasePath" : "D:/peimages/JSONs/"
+        },
+
+        "Linux": {
+          "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+        }
+      },
+
+      "description": [
+                "训练类使用满编73个",
+                "使用任务batch=1",
+                "使用300维度的GloVe初始化",
+                "序列长度为100的3Gram (第2次分割)",
+                "提前终止的标准改为accuracy",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1DCNN进行编码，直接使用max pool进行解码"
+      ]
+    },
+
+  "TempConv":
+      {
+        "dataset" :  "virushare-20-3gram",
+
+        "k" : 5,
+        "n" : 5,
+        "qk" : 5,
+
+        "version" : 81,
+        "modelName" : "ProtoNet",
+
+        "modelParams": {
+          "embed_size": 300,
+          "usePretrained": true,
+
+          "hidden_size" : 128,
+          "num_layers" : 2,
+          "self_att_dim" : null,
+          "bidirectional": false,
+
+          "num_inputs": 300,
+          "init_hidden_channel": 32,
+          "num_channels": [32,64,128],
+          "dilations": null,
+
+          "temperature": 1,
+
+          "dropout": 0.5,
+          "contrastive_factor": 0.1,
+          "feat_avg": "post",
+
+          "set_function": "deepset",
+          "trans_hidden_dim": 128,
+          "trans_dropout": 0.5,
+          "trans_num_layer": 2,
+
+          "deepset_hidden_dim": 128
+        },
+
+        "valCycle" : 100,
+        "valEpisode" : 100,
+
+        "lrDecayIters" : 15000,
+        "lrDecayGamma" : 0.1,
+        "optimizer": "adam",
+        "weightDecay" : 1e-4,
+        "lossFunction": "nll",
+        "defaultLr" : 1e-3,
+        "lrs" : {
+          "Embedding.weight" : 1e-3
+        },
+        "taskBatchSize": 1,
+
+        "recordGradient" : false,
+        "gradientUpdateCycle" : 1000,
+
+        "trainingVerbose" : false,
+        "useVisdom" : true,
+
+        "trainingEpoch" : 50000,
+
+        "Ns" : {
+                "cluster":20,
+                "test":20,
+                "virushare-20-3gram":20,
+                "drebin_10":10,
+                "miniImageNet":600,
+                "virushare_20_image":20,
+                "virushare-10-seq": 10
+                },
+
+        "plot" : {
+          "types" : ["line", "line"],
+          "titles": ["accuracy", "loss"],
+          "xlabels" : ["iterations", "iterations"],
+          "ylabels" : ["accuracy", "loss"],
+          "legends" : [
+                      ["train acc", "val acc"],
+                      ["train loss", "val loss"]
+          ]
+        },
+
+        "platform" : {
+          "Windows": {
+            "datasetBasePath" : "D:/peimages/JSONs/"
+          },
+
+          "Linux": {
+            "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+          }
+        },
+
+        "description": [
+                  "训练类使用满编73个",
+                  "使用任务batch=1",
+                  "使用300维度的GloVe初始化",
+                  "序列长度为100的3Gram (第2次分割)",
+                  "提前终止的标准改为accuracy",
+                  "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                  "使用时序卷积编码，1DCNN解码"
+        ]
+      },
+
+  "FEAT":
+    {
+      "dataset" :  "virushare-20-3gram",
+
+      "k" : 5,
+      "n" : 5,
+      "qk" : 5,
+
+      "version" : 87,
+      "modelName" : "FEAT",
+
+      "modelParams": {
+        "embed_size": 300,
+        "usePretrained": true,
+
+        "hidden_size" : 128,
+        "num_layers" : 1,
+        "self_att_dim" : null,
+        "bidirectional": false,
+
+        "temperature": 1,
+
+        "dropout": 0.5,
+        "contrastive_factor": null,
+        "feat_avg": "post",
+        "deepset_hidden_dim": 128,
+
+        "set_function": "transformer",
+        "trans_dropout": 0.5
+      },
+
+      "valCycle" : 100,
+      "valEpisode" : 100,
+
+      "lrDecayIters" : 24000,
+      "lrDecayGamma" : 0.1,
+      "optimizer": "adam",
+      "weightDecay" : 1e-4,
+      "lossFunction": "nll",
+      "defaultLr" : 1e-3,
+      "lrs" : {
+        "Embedding.weight_" : 1e-3
+      },
+      "taskBatchSize": 2,
+
+      "recordGradient" : false,
+      "gradientUpdateCycle" : 1000,
+
+      "trainingVerbose" : false,
+      "useVisdom" : true,
+
+      "trainingEpoch" : 50000,
+
+      "Ns" : {
+              "cluster":20,
+              "test":20,
+              "virushare-20-3gram":20,
+              "drebin_10":10,
+              "miniImageNet":600,
+              "virushare_20_image":20,
+              "virushare-10-seq": 10
+              },
+
+      "plot" : {
+        "types" : ["line", "line"],
+        "titles": ["accuracy", "loss"],
+        "xlabels" : ["iterations", "iterations"],
+        "ylabels" : ["accuracy", "loss"],
+        "legends" : [
+                    ["train acc", "val acc"],
+                    ["train loss", "val loss"]
+        ]
+      },
+
+      "platform" : {
+        "Windows": {
+          "datasetBasePath" : "D:/peimages/JSONs/"
+        },
+
+        "Linux": {
+          "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+        }
+      },
+
+      "description": [
+                "训练类使用满编73个",
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "序列长度为100的3Gram (第1次分割)",
+                "提前终止的标准改为accuracy",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用单向LSTM编码，使用1DCNN进行解码",
+                "采用transformer（实际上是多头注意力）作为set function",
+                "训练时使用了contrastive loss = 0",
+                "在EmbedNorm之后添加了dropout",
+                "延长了学习率衰减周期到24000"
+      ]
+    }
+}

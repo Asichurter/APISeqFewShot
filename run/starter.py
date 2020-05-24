@@ -25,8 +25,8 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 # 生成数据集分割文件
 ###############################################################
 # manager = PathManager(dataset='virushare-20-3gram')
-# dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_1.json')
+# dumpDatasetSplitStruct(base_path='/media/asichurter/新加卷/peimages/New/virushare_20/',
+#                        dump_path='/home/asichurter/datasets/reports/virushare_image_split.json')
 ###############################################################
 
 
@@ -135,7 +135,7 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 # convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
-#                   ngram_max_nu93m=num)
+#                   ngram_max_num=num)
 ################################################################
 
 

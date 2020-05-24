@@ -37,10 +37,10 @@ class BaseLearner(nn.Module):
                                                       freeze=False,
                                                       padding_idx=0)
         # self.EmbedNorm = nn.LayerNorm(embed_size)
-        # self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
         # self.Encoder = TemporalConvNet(**kwargs)
-        self.Encoder = TransformerEncoder(embed_size=embed_size,
-                                          **kwargs)
+        # self.Encoder = TransformerEncoder(embed_size=embed_size,
+        #                                   **kwargs)
 
         # self.Attention = nn.Linear(kwargs['num_channels'][-1],
         #                            1, bias=False)

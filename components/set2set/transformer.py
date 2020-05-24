@@ -8,33 +8,38 @@ class TransformerSet(nn.Module):
 
     def __init__(self,
                  trans_input_size,
-                 trans_hidden_dim,
-                 trans_num_layer=1,
-                 trans_head_size=1,
-                 trans_dropout=0.1,
+                 trans_dropout=0.5,
                  **kwargs):
         super(TransformerSet, self).__init__()
 
-        self.Transformer = TransformerEncoder(trans_num_layer,
-                                              trans_input_size,
-                                              trans_hidden_dim,
-                                              None,
-                                              trans_head_size,
-                                              trans_dropout)
+        # self.Transformer = TransformerEncoder(trans_num_layer,
+        #                                       trans_input_size,
+        #                                       trans_hidden_dim,
+        #                                       None,
+        #                                       trans_head_size,
+        #                                       trans_dropout)
+        self.Transformer = nn.MultiheadAttention(embed_dim=trans_input_size,
+                                                 num_heads=1,
+                                                 dropout=trans_dropout)
 
-        self.fc = nn.Linear(trans_hidden_dim, trans_input_size)
+        self.fc = nn.Linear(trans_input_size, trans_input_size)
         self.dropout = nn.Dropout(trans_dropout)
         self.layernorm = nn.LayerNorm(trans_input_size)
 
 
     def forward(self, x):
 
-        # for set-to-set operation, all sequence item is valid, no padding
-        dummy_lens = [x.size(1)]*x.size(0)
+        # reshape to [seq, batch, dim]
+        x = x.transpose(0,1).contiguous()
 
-        residual = self.Transformer(x, dummy_lens)
+        # for set-to-set operation, all sequence item is valid, no padding
+        # dummy_lens = [x.size(1)]*x.size(0)
+
+        # input as (query,key,value), namely self-attention
+        residual, _weights = self.Transformer(x,x,x)
+        # residual = self.Transformer(x, dummy_lens)
 
         residual = self.dropout(self.fc(residual))
 
-        return self.layernorm(residual + x)
+        return self.layernorm(residual + x).transpose(0,1).contiguous()
 

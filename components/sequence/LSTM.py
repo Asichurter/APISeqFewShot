@@ -19,6 +19,7 @@ class BiLstmEncoder(nn.Module):
                  useBN=False,
                  sequential=False,
                  bidirectional=True,
+                 return_last_state=False,
                  **kwargs):
 
         super(BiLstmEncoder, self).__init__()
@@ -26,6 +27,7 @@ class BiLstmEncoder(nn.Module):
         self.SelfAtt = self_att_dim is not None
         self.UseBN = useBN
         self.Sequential = sequential
+        self.RetLastSat = return_last_state
 
         self.Encoder = nn.LSTM(input_size=input_size,  # GRU
                                hidden_size=hidden_size,
@@ -54,24 +56,18 @@ class BiLstmEncoder(nn.Module):
         # x shape: [batch, seq, feature]
         # out shape: [batch, seq, 2*hidden]
         out, h = self.Encoder(x)
-        if self.UseBN:
-            out, lens = nn.utils.rnn.pad_packed_sequence(out, batch_first=True)
-            # 增加一个通道维度以便进行2D标准化
-            out = out.unsqueeze(1)
-            out = self.BN1(out).squeeze()
-            out = nn.utils.rnn.pack_padded_sequence(out, lens, batch_first=True, enforce_sorted=False)
-        # out, (h, c) = self.Encoder(x)
 
         # return shape: [batch, feature]
         if self.Attention is not None:
             # out = unpackAndMean(out)
             out = self.Attention(out)
-            if self.UseBN:
-                out = self.BN2(out)
 
         else:
             # 由于使用了CNN进行解码，因此还是可以返回整个序列
             out, lens = pad_packed_sequence(out, batch_first=True)
+
+            if self.RetLastSat:
+                out = out[:,-1,:].squeeze()
 
         if self.Sequential:
             return out, lens

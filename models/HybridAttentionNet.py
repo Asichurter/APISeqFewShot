@@ -30,32 +30,22 @@ class HAPNet(nn.Module):
     def __init__(self, k,
                  pretrained_matrix,
                  embed_size,
-                 hidden_size=128,
-                 layer_num=1,
-                 self_att_dim=64,
-                 word_cnt=None,
                  **modelParams):
         super(HAPNet, self).__init__()
 
-        assert pretrained_matrix is not None or word_cnt is not None, \
-            '至少需要提供词个数或者预训练的词矩阵两者一个'
-        if pretrained_matrix is not None:
-            self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
-                                                          freeze=False,
-                                                          padding_idx=0)
-        else:
-            self.Embedding = nn.Embedding(word_cnt, embed_size, padding_idx=0)
-
-
+        # 可训练的嵌入层
+        self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
         self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = BiLstmEncoder(embed_size,
+        #
+        self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
         # self.Encoder = TemporalConvNet(**modelParams)
 
         # 嵌入后的向量维度
-        feature_dim = 2*hidden_size#modelParams['num_channels'][-1]#
+        feature_dim = (1+modelParams['bidirectional'])*modelParams['hidden_size']#modelParams['num_channels'][-1]#
 
-        self.CnnEncoder = CNNEncoder1D(num_channels=[feature_dim, feature_dim])
+        self.Decoder = CNNEncoder1D(num_channels=[feature_dim, feature_dim])
 
         # 获得样例注意力的模块
         # 将嵌入后的向量拼接成单通道矩阵后，有多少个支持集就为几个batch
@@ -91,14 +81,21 @@ class HAPNet(nn.Module):
 
         support = support.view(n*k, sup_seq_len)
 
-        support = self.EmbedNorm(self.Embedding(support))
-        query = self.EmbedNorm(self.Embedding(query))
+        # ------------------------------------------------------
+        # shape: [batch, seq, dim]
+        support = self.Embedding(support)
+        query = self.Embedding(query)
 
+        support = self.EmbedDrop(self.EmbedNorm(support))
+        query = self.EmbedDrop(self.EmbedNorm(query))
+
+        # shape: [batch, dim]
         support = self.Encoder(support, sup_len)
         query = self.Encoder(query, que_len)
 
-        support = self.CnnEncoder(support, sup_len)
-        query = self.CnnEncoder(query, que_len)
+        support = self.Decoder(support, sup_len)
+        query = self.Decoder(query, que_len)
+        # ------------------------------------------------------
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))

@@ -50,7 +50,7 @@ class FEAT(nn.Module):
 
         if modelParams['set_function'] == 'deepset':
             self.SetFunc = DeepSet(embed_dim=(modelParams['bidirectional']+1)*modelParams['hidden_size'],
-                                   dropout=modelParams['dropout'])
+                                   **modelParams)
         elif modelParams['set_function'] == 'transformer':
             self.SetFunc = TransformerSet(trans_input_size=(modelParams['bidirectional']+1)*modelParams['hidden_size'],
                                           **modelParams)
