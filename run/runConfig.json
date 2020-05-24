@@ -5,7 +5,7 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 91,
+  "version" : 92,
   "modelName" : "FEAT",
 
   "modelParams": {
@@ -15,7 +15,7 @@
     "hidden_size" : 128,
     "num_layers" : 2,
     "self_att_dim" : null,
-    "bidirectional": true,
+    "bidirectional": false,
 
     "temperature": 1,
 
@@ -25,7 +25,8 @@
     "deepset_hidden_dim": 128,
 
     "set_function": "transformer",
-    "trans_dropout": 0.5
+    "trans_dropout": 0.5,
+    "trans_head_nums": 4
   },
 
   "valCycle" : 100,
@@ -85,13 +86,14 @@
                 "训练类使用满编73个",
                 "使用任务batch=4",
                 "使用300维度的GloVe初始化",
-                "序列长度为100的3Gram (第1次分割)",
+                "序列长度为100的3Gram (第2次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用单向多层的LSTM编码，使用1dCNN解码",
                 "采用transformer（实际上是多头注意力）作为set function",
                 "训练时使用了contrastive loss = 0",
                 "在EmbedNorm之后添加了dropout",
-                "延长了学习率衰减周期到24000"
+                "延长了学习率衰减周期到24000",
+                "将多头注意力的头数增加到4"
       ]
 }

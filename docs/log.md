@@ -207,6 +207,9 @@ acc作为criteria
 
 - 很多模型的过拟合发生在学习率改变的时候(15000 epoch)，考虑取消学习率衰减
   或者延长衰减周期
+  
+- FEAT中使用的set function不是原生的Transformer Encoder，只是一个简单的
+  多头注意力
 
 
   
