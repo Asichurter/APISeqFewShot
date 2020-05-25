@@ -69,7 +69,8 @@ def statNGram(parent_path, window=3,
 
 def convertToNGramSeq(parent_path, window=3,
                       ngram_dict=None,              # 统计得到的NGram字典，已排序
-                      ngram_max_num=None):          # 要提取前n个NGram，可从统计函数中获取信息，或者不指定
+                      ngram_max_num=None,
+                      class_dir=False):          # 要提取前n个NGram，可从统计函数中获取信息，或者不指定
 
     reporter = Reporter()
 
@@ -81,27 +82,33 @@ def convertToNGramSeq(parent_path, window=3,
     for folder in tqdm(os.listdir(parent_path)):
         folder_path = parent_path + folder + '/'
 
-        try:
-            ngram_seq = []
-            report = loadJson(folder_path + folder + '.json')
-            api_seq = report['apis']
+        if class_dir:
+            items = os.listdir(folder_path)
+        else:
+            items = [folder+'.json']
 
-            for i in range(len(api_seq) - window):
-                ngram = strlistToStr(api_seq[i:i + window])
+        for item in items:
+            try:
+                ngram_seq = []
+                report = loadJson(folder_path + item)
+                api_seq = report['apis']
 
-                # 没有指定要提取的ngram或者当前ngram存在于要提取的ngram中时才会添加
-                if valid_ngrams is None or ngram in valid_ngrams:
-                    ngram_seq.append(ngram)
+                for i in range(len(api_seq) - window):
+                    ngram = strlistToStr(api_seq[i:i + window])
 
-            # 写回原文件中
-            report['apis'] = ngram_seq
-            dumpJson(report, folder_path + folder + '.json')
+                    # 没有指定要提取的ngram或者当前ngram存在于要提取的ngram中时才会添加
+                    if valid_ngrams is None or ngram in valid_ngrams:
+                        ngram_seq.append(ngram)
 
-            reporter.logSuccess()
+                # 写回原文件中
+                report['apis'] = ngram_seq
+                dumpJson(report, folder_path + item)
 
-        except Exception as e:
-            reporter.logError(entity=folder, msg=str(e))
-            continue
+                reporter.logSuccess()
+
+            except Exception as e:
+                reporter.logError(entity=folder+'/'+item, msg=str(e))
+                continue
 
     reporter.report()
 

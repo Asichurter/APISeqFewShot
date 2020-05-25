@@ -145,7 +145,7 @@ else:
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
                         train_report_iter=ValCycle,
-                        criteria='accuracy')
+                        criteria='loss')
 
 if RecordGradient:
     types.append('line')

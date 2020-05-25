@@ -5,10 +5,10 @@
   "qk" : 5,
   "n": 5,
 
-  "version" : 91,
+  "version" : 95,
   "modelName" : "FEAT",
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 25000,
 
   "Ns" : {
           "cluster":20,
@@ -17,7 +17,8 @@
           "drebin_10":10,
           "miniImageNet":600,
           "virushare_20_image":20,
-          "virushare-10-seq": 10
+          "virushare-10-seq": 10,
+          "virushare-10-3gram": 10
           },
 
   "platform" : {

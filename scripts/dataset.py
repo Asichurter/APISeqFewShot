@@ -161,6 +161,25 @@ def dumpDatasetSplitStruct(base_path, dump_path):
     dumpJson(dump, dump_path)
     print('-- Done --')
 
+##########################################################
+# 本函数用于将训练集，验证集和测试集的数据集分割详情根据保存的JSON文件
+# 还原到数据集分隔文件夹中。
+
+# 注意：调用本方法前需要先删除这些文件夹中的原有类文件夹
+##########################################################
+def revertDatasetSplit(dataset, dump_path):
+    man = PathManager(dataset)
+    split_dump = loadJson(dump_path)
+
+    for typ in ['train', 'validate', 'test']:
+
+        print(typ)
+        for folder in split_dump[typ]:
+            shutil.copytree(src=man.DatasetBase()+'all/'+folder+'/',
+                            dst=man.DatasetBase()+typ+'/'+folder+'/')
+
+    print('-- Done --')
+
 
 if __name__ == '__main__':
     pass

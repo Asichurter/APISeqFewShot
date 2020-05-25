@@ -5,7 +5,8 @@ import torch as t
 import torch.nn.functional as F
 
 from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
-                                dumpDatasetSplitStruct
+                                dumpDatasetSplitStruct, revertDatasetSplit
+from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
@@ -19,14 +20,16 @@ from config import generateConfigReport
 
 # 生成报告总结
 ################################################################
-generateConfigReport(dataset='virushare-20-3gram', include_result=True)
+# generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 ################################################################
 
-# 生成数据集分割文件
+# 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='virushare-20-3gram')
-# dumpDatasetSplitStruct(base_path='/media/asichurter/新加卷/peimages/New/virushare_20/',
-#                        dump_path='/home/asichurter/datasets/reports/virushare_image_split.json')
+# manager = PathManager(dataset='virushare-10-3gram')
+# dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
+#                        dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_split_1.json')
+# revertDatasetSplit(dataset='virushare-10-3gram',
+#                    dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_split_1.json')
 ###############################################################
 
 
@@ -41,16 +44,16 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 #                  seq_length_save_path=manager.FileSeqLen(),
 #                  data_save_path=manager.FileData(),
 #                  num_per_class=20,
-#                  max_seq_len=100)
+#                  max_seq_len=200)
 ################################################################
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/asichurter/datasets/JSONs/virushare-10-seq/all/',
+# apiStat('/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         dump_report_path=None,#'/home/asichurter/datasets/reports/virushare_seq_api_report.json'
-#         dump_apiset_path=None,#'/home/asichurter/datasets/reports/virushare_seq_api_set.json'
-#         class_dir=True)
+#         dump_report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',#None,#
+#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json',#None
+#         class_dir=False)
 ################################################################
 
 
@@ -59,52 +62,52 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 ################################################################
 # statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
 #                     json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                     report_path='/home/asichurter/datasets/reports/virushare_seq_api_report.json',
+#                     report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',
 #                     stat_stairs=[5,10,15,20],
-#                     count_dump_path='/home/asichurter/datasets/reports/virushare_seq_scale_report.json')
+#                     count_dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_scale_report.json')
 ################################################################
 
 # 按照已经知道的满足规模的类进行收集
 ################################################################
-# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare_20/')
+# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/')
 # collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
 #                    json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                    dst_path='/home/asichurter/datasets/JSONs/virushare-10-seq/all/',
-#                    report_path='/home/asichurter/datasets/reports/virushare_seq_api_report.json',
+#                    dst_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
+#                    report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',
 #                    num_per_class=10,
-#                    selected_classes=["winactivator", "gamevance", "ibryte", "zapchast", "xorer", "yakes", "palevo", "banbra", "installmonetizer", "morto", "menti", "convertad", "kovter", "dorifel", "upatre", "fakerean", "klez", "stegvob", "swizzor", "zlob", "sinowal", "pykspa", "swrort", "lunam", "bancos", "mepaow", "darkkomet", "filetour", "sality", "simda", "browsefox", "brontok", "klone", "urelas", "dapato", "staget", "refroso", "vobfus", "ipamor", "delfinject", "bundlore", "scrinject", "imali", "startp", "ngrbot", "fakeie", "berbew", "blacole", "msposer", "soft32downloader", "bettersurf", "archsms", "dealply", "outbrowse", "psyme", "koutodoor", "dybalom", "softpulse", "wajam", "bladabindi", "chekafev", "patchload", "dlhelper", "cidox", "ramnit", "4shared", "badur", "fearso", "disfa", "pirminay", "faceliker", "mabezat", "geral", "autoit", "cycbot", "kykymber", "slugin", "cpllnk", "qqpass", "hotbar", "wapomi", "darbyen", "poison", "lmir", "viking", "multiplug", "gamehack", "hijacker", "domaiq", "kido", "boaxxe", "fujacks", "redir", "framer", "kolabc", "parite", "jyfi", "pasta", "scarsi", "fraudload", "virlock", "pcclient", "webprefix", "llac", "agentb", "fosniw", "cosmu", "fbjack", "nsanti", "softcnapp", "getnow", "1clickdownload", "zegost", "monder", "mudrop", "gator", "atraps", "inor", "socks", "wonka", "vundo", "xpaj", "softonic", "swisyn", "pakes", "nimda", "bamital", "opencandy", "farfli", "nilage", "downloadsponsor", "rbot", "downloadadmin", "egroupdial", "pioneer", "wabot", "rodecap", "antavmu", "skintrim", "beebone", "techsnab", "delbar", "crytex", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "tdss", "ldpinch", "icloader", "spyeye", "reconyc", "vilsel", "installerex", "turkojan", "downloadassistant", "sytro", "onlinegames", "delf", "sefnit", "rebhip", "hupigon", "winwebsec", "staser", "pullupdate", "relnek", "usteal", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "luder", "hlux", "scar", "karagany", "gamarue", "lollipop", "firseria", "mywebsearch", "daws", "loadmoney", "vtflooder", "mydoom", "pophot", "acda", "extenbro", "decdec", "buzus", "black", "fraudrop", "loring", "xtrat", "chifrax", "ganelp", "midia", "amonetize", "installcore", "zusy", "nitol", "linkury", "shipup", "gepys", "installbrain", "medfos", "zvuzona", "sohanad", "blacoleref", "urausy", "flystudio", "lineage", "crossrider", "refresh", "yoddos", "iframeref", "resur", "mikey", "shiz", "kelihos", "goredir", "instally", "toggle", "hidelink", "airinstaller", "megasearch", "malex", "hicrazyk", "simbot", "magania", "picsys", "conficker", "trymedia", "razy", "lipler", "ircbot", "hiloti", "vmprotbad", "qhost", "eorezo", "buterat", "barys", "virut", "dorkbot", "smartfortress", "renos", "fakefolder", "includer", "iframeinject", "bifrose", "bublik", "unruy", "directdownloader", "mira", "kuluoz", "c99shell", "fareit", "mediaget", "windef", "vittalia", "neshta"])
+#                    selected_classes=["winactivator", "gamevance", "ibryte", "zapchast", "xorer", "yakes", "palevo", "banbra", "installmonetizer", "menti", "convertad", "kovter", "dorifel", "upatre", "fakerean", "stegvob", "swizzor", "zlob", "sinowal", "pykspa", "lunam", "bancos", "mepaow", "darkkomet", "filetour", "sality", "simda", "browsefox", "brontok", "klone", "urelas", "dapato", "staget", "refroso", "vobfus", "ipamor", "delfinject", "bundlore", "scrinject", "imali", "startp", "ngrbot", "fakeie", "berbew", "blacole", "msposer", "soft32downloader", "bettersurf", "archsms", "dealply", "outbrowse", "psyme", "koutodoor", "dybalom", "softpulse", "wajam", "bladabindi", "chekafev", "patchload", "dlhelper", "cidox", "ramnit", "4shared", "badur", "fearso", "disfa", "pirminay", "faceliker", "mabezat", "geral", "autoit", "cycbot", "kykymber", "slugin", "cpllnk", "qqpass", "hotbar", "wapomi", "darbyen", "poison", "lmir", "viking", "multiplug", "gamehack", "hijacker", "domaiq", "kido", "boaxxe", "fujacks", "redir", "framer", "kolabc", "parite", "jyfi", "pasta", "scarsi", "fraudload", "virlock", "pcclient", "webprefix", "llac", "agentb", "fosniw", "cosmu", "fbjack", "nsanti", "softcnapp", "getnow", "1clickdownload", "zegost", "monder", "mudrop", "gator", "atraps", "inor", "socks", "wonka", "vundo", "xpaj", "softonic", "swisyn", "pakes", "nimda", "bamital", "opencandy", "farfli", "nilage", "downloadsponsor", "rbot", "downloadadmin", "egroupdial", "pioneer", "wabot", "rodecap", "antavmu", "beebone", "techsnab", "delbar", "crytex", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "tdss", "ldpinch", "icloader", "spyeye", "reconyc", "vilsel", "installerex", "turkojan", "downloadassistant", "sytro", "onlinegames", "delf", "sefnit", "rebhip", "hupigon", "winwebsec", "staser", "pullupdate", "relnek", "usteal", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "luder", "hlux", "scar", "karagany", "gamarue", "lollipop", "firseria", "daws", "loadmoney", "vtflooder", "mydoom", "acda", "extenbro", "decdec", "buzus", "black", "fraudrop", "loring", "xtrat", "chifrax", "ganelp", "midia", "amonetize", "installcore", "zusy", "nitol", "shipup", "gepys", "installbrain", "medfos", "zvuzona", "sohanad", "blacoleref", "urausy", "flystudio", "lineage", "crossrider", "refresh", "yoddos", "iframeref", "resur", "mikey", "shiz", "kelihos", "goredir", "instally", "toggle", "hidelink", "airinstaller", "megasearch", "malex", "hicrazyk", "simbot", "magania", "picsys", "conficker", "trymedia", "razy", "lipler", "ircbot", "hiloti", "vmprotbad", "qhost", "eorezo", "buterat", "barys", "dorkbot", "smartfortress", "renos", "fakefolder", "includer", "iframeinject", "bifrose", "bublik", "unruy", "directdownloader", "mira", "kuluoz", "c99shell", "fareit", "mediaget", "windef", "vittalia", "neshta"])
 ################################################################
 
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare_seq10_api_set.json')
+# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/virushare-10-seq/all/',
+# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                     mapping=mapping,
-#                     is_class_dir=True)
+#                     is_class_dir=False)
 # # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare_seq10_api_set.json')
+# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json')
 ################################################################
 
 
 # 分割数据集
 ################################################################
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/all/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
 #            ratio=-1,
 #            mode='c',
 #            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/validate/',
-#            ratio=20,
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/temp/',
+#            ratio=110,
 #            mode='x',
 #            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-20-3gram/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-20-3gram/test/',
-#            ratio=20,
+# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
+#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/test/',
+#            ratio=35,
 #            mode='x',
 #            is_dir=True)
 ################################################################
@@ -125,17 +128,20 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 # removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                     class_dir=False)
 #
-# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                        window=3,
-#                        dict_save_path='/home/asichurter/datasets/JSONs/3gram_dict.json',
+#                        dict_save_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json',
 #                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95])
 #
 # num = int(input('NGram >> '))
-#
-# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
+# #
+# # d = loadJson('/home/asichurter/datasets/reports/virushare-10_3gram_api_freq.json')
+# #
+# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
-#                   ngram_max_num=num)
+#                   ngram_max_num=num,
+#                   class_dir=False)
 ################################################################
 
 
