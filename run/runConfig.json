@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 95,
-  "modelName" : "FEAT",
+  "version" : 97,
+  "modelName" : "IMP",
 
   "modelParams": {
     "embed_size": 300,
@@ -20,7 +20,7 @@
     "temperature": 1,
 
     "dropout": 0.5,
-    "contrastive_factor": null,
+    "contrastive_factor": 0.1,
     "feat_avg": "post",
     "deepset_hidden_dim": 128,
 
@@ -91,6 +91,6 @@
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用单向多层的LSTM编码，使用1dCNN解码",
-                "使用transformer作为set function"
+                "所有参数使用默认值"
       ]
 }

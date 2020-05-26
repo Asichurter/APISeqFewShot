@@ -1,6 +1,7 @@
 import torch as t
 from components.task import ReptileEpisodeTask
 from models.FEAT import FEAT
+from models.IMP import IMP
 from models.TCProtoNet import TCProtoNet
 
 
@@ -247,4 +248,45 @@ def adaFeatProcedure(model: FEAT,
     aft_acc = task.accuracy(aft_predicts.cpu())
 
     return (bef_acc,bef_loss),(aft_acc,aft_loss)
+
+
+def impProcedure(model: IMP,
+                 taskBatchSize,
+                 task,
+                 optimizer,
+                 scheduler=None,
+                 train=True):
+
+    if train:
+        model.train()
+    else:
+        model.eval()
+
+    model.zero_grad()
+
+    loss_val = t.zeros((1,)).cuda()
+    acc_val = 0.
+
+    for task_i in range(taskBatchSize):
+        model_input = task.episode()
+
+        predicts, epoch_loss = model(*model_input)
+
+        loss_val += epoch_loss
+        predicts = predicts.cpu()
+        acc_val += task.accuracy(predicts, is_labels=True)
+
+    loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
+
+    if train:
+        loss_val.backward()
+
+        optimizer.step()
+
+        if scheduler:
+            scheduler.step()
+
+    loss_val_item = loss_val.detach().item()
+
+    return acc_val, loss_val_item*taskBatchSize     # 适配外部调用
 

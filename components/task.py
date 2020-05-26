@@ -107,16 +107,17 @@ class EpisodeTask:
     def labels(self):
         return self.LabelsCache
 
-    def accuracy(self, out):
+    def accuracy(self, out, is_labels=False):
         k, qk, n, N = self.readParams()
 
         labels = self.LabelsCache
 
-        if not self.Expand:
-            out = t.argmax(out, dim=1)
-        else:
-            out = t.argmax(out.view(-1, n), dim=1)
-            labels = t.argmax(labels, dim=1)
+        if not is_labels:
+            if not self.Expand:
+                out = t.argmax(out, dim=1)
+            else:
+                out = t.argmax(out.view(-1, n), dim=1)
+                labels = t.argmax(labels, dim=1)
 
         acc = (labels==out).sum().item() / labels.size(0)
 
@@ -189,6 +190,38 @@ class AdaptEpisodeTask(EpisodeTask):
         return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels), \
                query_labels
 
+
+class ImpEpisodeTask(EpisodeTask):
+    def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
+        super(ImpEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)
+
+    def episode(self, task_seed=None, sampling_seed=None):
+        k, qk, n, N = self.readParams()
+
+        label_space = self.getLabelSpace(task_seed)
+        support_sampler, query_sampler = self.getTaskSampler(label_space, sampling_seed)
+        supports, support_labels, queries, query_labels = self.getEpisodeData(support_sampler, query_sampler)
+
+        # 已修正：因为支持集和查询集的序列长度因为pack而长度不一致，需要分开
+        sup_seq_len = supports.size(1)
+        que_seq_len = queries.size(1)
+
+        query_labels = self.taskLabelNormalize(support_labels, query_labels)
+        support_labels = self.taskLabelNormalize(support_labels, support_labels)
+
+        self.LabelsCache = query_labels
+
+        if self.UseCuda:
+            supports = supports.cuda()
+            queries = queries.cuda()
+            support_labels = support_labels.cuda()
+            query_labels = query_labels.cuda()
+
+        # 重整数据结构，便于模型读取任务参数
+        supports = supports.view(n, k, sup_seq_len)
+        queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
+
+        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels, query_labels
 
 
 

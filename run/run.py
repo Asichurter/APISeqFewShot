@@ -41,6 +41,7 @@ from models.TCProtoNet import TCProtoNet
 from models.FEAT import FEAT
 from models.AFEAT import AFEAT
 from models.MatchNet import MatchNet
+from models.IMP import IMP
 
 ################################################
 #----------------------读取参数------------------
@@ -136,6 +137,12 @@ elif model_type == 'Reptile':
     val_task = ReptileEpisodeTask(N-k, n, N,
                                     dataset=val_dataset,
                                     expand=expand)
+elif model_type == 'IMP':
+    train_task = ImpEpisodeTask(k, qk, n, N, train_dataset,
+                                  cuda=True, expand=expand)
+    val_task = ImpEpisodeTask(k, qk, n, N, val_dataset,
+                                  cuda=True, expand=expand)
+
 else:
     train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand)
@@ -229,6 +236,9 @@ elif model_type == 'AFEAT':
 elif model_type == 'MatchNet':
     model = MatchNet(pretrained_matrix=word_matrix,
                      **modelParams)
+elif model_type == 'IMP':
+    model = IMP(pretrained_matrix=word_matrix,
+                     **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -306,6 +316,14 @@ with t.autograd.set_detect_anomaly(False):
                                                  scheduler,
                                                  train=True,
                                                  contrastive_factor=modelParams['contrastive_factor'])
+
+        elif model_type == 'IMP':
+            acc_val, loss_val_item = impProcedure(model,
+                                                  taskBatchSize,
+                                                  train_task,
+                                                  optimizer,
+                                                  scheduler,
+                                                  train=True)
 
         else:
 
@@ -389,6 +407,14 @@ with t.autograd.set_detect_anomaly(False):
                                                        None,
                                                        train=False,
                                                        contrastive_factor=modelParams['contrastive_factor'])
+
+            elif model_type == 'IMP':
+                validate_acc, validate_loss = impProcedure(model,
+                                                      ValEpisode,
+                                                      val_task,
+                                                      None,
+                                                      None,
+                                                      train=False)
 
             else:
 

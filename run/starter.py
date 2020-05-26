@@ -20,7 +20,7 @@ from config import generateConfigReport
 
 # 生成报告总结
 ################################################################
-# generateConfigReport(dataset='virushare-20-3gram', include_result=True)
+generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 ################################################################
 
 # 生成/还原 数据集分割文件

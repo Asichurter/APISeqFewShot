@@ -5,8 +5,8 @@
   "qk" : 5,
   "n": 5,
 
-  "version" : 95,
-  "modelName" : "FEAT",
+  "version" : 97,
+  "modelName" : "IMP",
 
   "trainingEpoch" : 25000,
 
