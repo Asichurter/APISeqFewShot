@@ -17,7 +17,7 @@ colors = ['black', #1
           'darkgray',  #2
           'gainsboro',  #3
           'rosybrown',  #4
-          'lightcoral',  #5
+          #'lightcoral',  #5
           "indianred",  #6
           'firebrick',  #7
           'maroon',  #8
@@ -32,8 +32,8 @@ colors = ['black', #1
           'gold',  #17
           'khaki',  #18
           'olive',  #19
-          'lightyellow',  #20
-          'yellow',  #21
+          #'lightyellow',  #20
+          #'yellow',  #21
           'olivedrab',  #22
           'yellowgreen',  #23
           'darkseagreen',  #24
@@ -43,10 +43,10 @@ colors = ['black', #1
           'mediumseagreen',  #28
           'aquamarine',  #29
           'turquoise',  #30
-          'lightseagreen',  #31
-          'lightcyan',  #32
+          #'lightseagreen',  #31
+          #'lightcyan',  #32
           'teal',  #33
-          'lightblue',  #34
+          #'lightblue',  #34
           'deepskyblue',  #35
           'steelblue',  #36
           'navy',  #37

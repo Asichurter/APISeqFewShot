@@ -42,6 +42,7 @@ from models.FEAT import FEAT
 from models.AFEAT import AFEAT
 from models.MatchNet import MatchNet
 from models.IMP import IMP
+from models.ImpIMP import ImpIMP
 
 ################################################
 #----------------------读取参数------------------
@@ -137,7 +138,7 @@ elif model_type == 'Reptile':
     val_task = ReptileEpisodeTask(N-k, n, N,
                                     dataset=val_dataset,
                                     expand=expand)
-elif model_type == 'IMP':
+elif model_type in ['IMP','ImpIMP']:
     train_task = ImpEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand)
     val_task = ImpEpisodeTask(k, qk, n, N, val_dataset,
@@ -239,6 +240,9 @@ elif model_type == 'MatchNet':
 elif model_type == 'IMP':
     model = IMP(pretrained_matrix=word_matrix,
                      **modelParams)
+elif model_type == 'ImpIMP':
+    model = ImpIMP(pretrained_matrix=word_matrix,
+                     **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -317,7 +321,7 @@ with t.autograd.set_detect_anomaly(False):
                                                  train=True,
                                                  contrastive_factor=modelParams['contrastive_factor'])
 
-        elif model_type == 'IMP':
+        elif model_type in ['IMP', 'ImpIMP']:
             acc_val, loss_val_item = impProcedure(model,
                                                   taskBatchSize,
                                                   train_task,
@@ -408,7 +412,7 @@ with t.autograd.set_detect_anomaly(False):
                                                        train=False,
                                                        contrastive_factor=modelParams['contrastive_factor'])
 
-            elif model_type == 'IMP':
+            elif model_type in ['IMP','ImpIMP']:
                 validate_acc, validate_loss = impProcedure(model,
                                                       ValEpisode,
                                                       val_task,

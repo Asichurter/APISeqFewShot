@@ -29,6 +29,7 @@ from models.AFEAT import AFEAT
 from models.FEAT import FEAT
 from models.MatchNet import MatchNet
 from models.IMP import IMP
+from models.ImpIMP import ImpIMP
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
@@ -82,7 +83,7 @@ expand = True if loss_func=='mse' else False
 if model_type in ADAPTED_MODELS:
     test_task = AdaptEpisodeTask(k, qk, n, N, test_dataset,
                                   cuda=True, expand=expand)
-elif model_type == 'IMP':
+elif model_type in ['IMP','ImpIMP']:
     test_task = ImpEpisodeTask(k, qk, n, N, test_dataset,
                                   cuda=True, expand=expand)
 else:
@@ -161,6 +162,9 @@ elif model_type == 'MatchNet':
 elif model_type == 'IMP':
     model = IMP(pretrained_matrix=word_matrix,
                      **modelParams)
+elif model_type == 'ImpIMP':
+    model = ImpIMP(pretrained_matrix=word_matrix,
+                     **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -217,7 +221,7 @@ with t.autograd.set_detect_anomaly(False):
                                                  train=False,
                                                  contrastive_factor=modelParams['contrastive_factor'])
 
-        elif model_type == 'IMP':
+        elif model_type in ['IMP','ImpIMP']:
             acc_val, loss_val_item = impProcedure(model,
                                                   1,
                                                   test_task,
