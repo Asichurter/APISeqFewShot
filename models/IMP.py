@@ -28,7 +28,7 @@ class IMP(nn.Module):
         self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
         self.Dim = (1+modelParams['bidirectional'])*modelParams['hidden_size']
-        self.NumClusterSteps = 2 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
+        self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
 
         self.Clusters = None
         self.ClusterLabels = None
@@ -194,6 +194,7 @@ class IMP(nn.Module):
                 idxs = t.nonzero(support_labels[0, i] == cluster_labels).squeeze(0)            # TODO: 取0？
                 # 计算与标签对应的类簇的距离(由于其他不对应的类簇的距离都是正无穷，求min时直接可忽略)
                 distances = self._compute_distances(protos[:, idxs, :], ex.data)
+                # print(distances.tolist(), lamda.item())
                 if t.min(distances) > lamda:
                     nClusters, protos, radii = self._add_cluster(nClusters, protos, radii,
                                                                        cluster_type='labeled', ex=ex.data)
@@ -233,7 +234,7 @@ class IMP(nn.Module):
             #     protos, radii, cluster_labels = self.delete_empty_clusters(protos, prob_all, radii, cluster_labels)
             # else:
             protos = protos.cuda()
-            # protos = self._compute_protos(support, prob_support)
+            protos = self._compute_protos(support, prob_support)
             protos, radii, cluster_labels = self.delete_empty_clusters(protos, prob_support, radii, cluster_labels)
 
         # 计算query的类簇logits

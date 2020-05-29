@@ -25,10 +25,11 @@ class ImpIMP(nn.Module):
         self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
                                      (1 + modelParams['bidirectional']) * modelParams['hidden_size']])
 
-        self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
+        # self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
         self.Dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
         self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
+        self.Temperature = 10
 
         self.Clusters = None
         self.ClusterLabels = None
@@ -58,10 +59,11 @@ class ImpIMP(nn.Module):
 
         d_radii = t.ones(bsize, 1).cuda()
 
-        if cluster_type == 'labeled':
-            d_radii = d_radii * t.exp(self.Sigma)
-        else:
-            d_radii = d_radii * t.exp(self.log_sigma_u)
+        # if cluster_type == 'labeled':
+        #     d_radii = d_radii * t.exp(self.Sigma)
+        #     # d_radii = d_radii * t.exp(self.Sigma)
+        # else:
+        #     d_radii = d_radii * t.exp(self.log_sigma_u)
 
         if ex is None:
             new_proto = self.base_distribution.data.cuda()
@@ -173,8 +175,7 @@ class ImpIMP(nn.Module):
 
         # make initial radii for labeled clusters
         bsize = support.size()[0]
-        radii = t.ones(bsize, nClusters).cuda() * t.exp(
-            self.Sigma)  # 初始半径由log_sigma_l初始化(该参数可学习)
+        radii = t.ones(bsize, nClusters).cuda()# * t.exp(self.Sigma)  # 初始半径由log_sigma_l初始化(该参数可学习)
 
         cluster_labels = t.arange(0, nClusters).cuda().long()
 
@@ -184,7 +185,7 @@ class ImpIMP(nn.Module):
         protos = self._compute_protos(support, prob_support)
 
         # estimate lamda
-        lamda = self.estimate_lambda(protos.data, False)
+        # lamda = self.estimate_lambda(protos.data, False)
 
         # loop for a given number of clustering steps
         for ii in range(self.NumClusterSteps):
@@ -201,6 +202,7 @@ class ImpIMP(nn.Module):
                 #****************************************************************************
 
                 distances = self._compute_distances(protos,ex)
+                # print(distances.tolist(), t.min(distances,dim=1).indices.item())
                 # 如果发现离自己最近的cluster不是自己的类的cluster，就直接增加一个cluster
                 if not t.any(t.min(distances,dim=1).indices==idxs).item():
 
@@ -349,8 +351,13 @@ def compute_logits_radii(cluster_centers, data, radii, prior_weight=1.):
     radii = t.unsqueeze(radii, 1)  # [B, 1, K]  K=类簇数量
     neg_dist = -t.sum((data - cluster_centers) ** 2, dim=3)  # [B, N, K]         # 每个样本到每个类簇的欧式距离平方
 
-    logits = neg_dist / 2.0 / (radii)  # ((x-μ)^2)/(2σ)
-    norm_constant = 0.5 * dim * (t.log(radii) + np.log(2 * np.pi))
+    #************************正态部分*************************************
+    # logits = neg_dist / 2.0 / (radii)  # ((x-μ)^2)/(2σ)
+    # norm_constant = 0.5 * dim * (t.log(radii) + np.log(2 * np.pi))
+    #
+    # logits = logits - norm_constant
+    # return logits
+    #*******************************************************************
 
-    logits = logits - norm_constant
-    return logits
+    # 直接使用平方欧氏距离
+    return neg_dist

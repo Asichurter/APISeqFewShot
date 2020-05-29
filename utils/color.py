@@ -15,7 +15,7 @@ def getRandomColor(num, more=False):
 
 colors = ['black', #1
           'darkgray',  #2
-          'gainsboro',  #3
+          #'gainsboro',  #3
           'rosybrown',  #4
           #'lightcoral',  #5
           "indianred",  #6
@@ -52,7 +52,7 @@ colors = ['black', #1
           'navy',  #37
           'blue',  #38
           'slateblue',  #39
-          'darkslateblue',  #40
+          #'darkslateblue',  #40
           'mediumpurple',  #41
           'blueviolet',  #42
           'plum',  #43

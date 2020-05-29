@@ -13,7 +13,9 @@ del_child_dirs = ['buffer', 'extracted', 'files', 'memory', 'network', 'logs', '
 
 shell_temp = 'rm -rf {path}'
 
-analyses_path = '/home/asichurter/datasets/JSONs/LargePE-Unfiltered-original/'
+# analyses_path = '/home/asichurter/datasets/JSONs/LargePE-Unfiltered-original/'
+analyses_path = '/home/asichurter/.cuckoo/storage/analyses/'
+
 
 for d in tqdm(os.listdir(analyses_path)):
     if d not in exception_dir:

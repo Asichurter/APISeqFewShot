@@ -13,16 +13,19 @@ from components.datasets import SeqFileDataset
 from utils.manager import PathManager, TrainingConfigManager
 from utils.training import batchSequenceWithoutPad
 from components.task import ImpEpisodeTask
+from utils.magic import magicSeed
 
 # ***************************************************************************
 dataset_name = 'virushare-20-3gram'
-dataset_subtype = 'validate'
+dataset_subtype = 'test'
 model = 'ImpIMP'
 version = 98
 N = 20
 plot_option = 'episode'#'entire'
 k, n, qk = 5, 5, 15
 figsize = (12,10)
+task_seed = magicSeed()
+sampling_seed = magicSeed()
 # ***************************************************************************
 
 
@@ -50,6 +53,8 @@ if model == 'IMP':
 elif model == 'ImpIMP':
     model = ImpIMP(word_matrix,
                    **modelParams)
+
+model.load_state_dict(state_dict)
 model = model.cuda()
 model.eval()
 
@@ -86,14 +91,15 @@ elif plot_option == 'episode':
     task = ImpEpisodeTask(k,qk,n,N,
                           dataset,expand=False)
 
-    support, query, *others = task.episode()
+    support, query, *others = task.episode(task_seed=task_seed,
+                                           sampling_seed=sampling_seed)
     support, query, acc = model(support, query, *others, if_cache_data=True)
 
     clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
 
-    reduction = PCA(n_components=2)
-    # reduction = TSNE(n_components=2)
+    # reduction = PCA(n_components=2)
+    reduction = TSNE(n_components=2)
     # reduction = MDS(n_components=2)
     # reduction = LocallyLinearEmbedding(n_components=2, n_neighbors=2)
 
@@ -112,7 +118,7 @@ elif plot_option == 'episode':
     plt.title(f'cluster_num={len(clusters)}')
     for i in range(n):
         plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
-        plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='^')
+        # plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
 
         class_clusters = clusters[cluster_labels==i]
         plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)

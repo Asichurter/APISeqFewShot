@@ -20,14 +20,14 @@ from config import generateConfigReport
 
 # 生成报告总结
 ################################################################
-generateConfigReport(dataset='virushare-20-3gram', include_result=True)
+# generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 ################################################################
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='virushare-10-3gram')
+# manager = PathManager(dataset='virushare-20-3gram')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_split_1.json')
+#                        dump_path=manager.DatasetBase()+'data/split_2.json')
 # revertDatasetSplit(dataset='virushare-10-3gram',
 #                    dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_split_1.json')
 ###############################################################
@@ -36,15 +36,15 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True)
 # 制作基于下标的数据集
 ################################################################
 # makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare_20/")
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare-20-3gram', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  num_per_class=20,
-#                  max_seq_len=200)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='virushare-20-3gram', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 num_per_class=20,
+                 max_seq_len=500)
 ################################################################
 
 # 统计序列长度分布
