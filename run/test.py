@@ -1,12 +1,12 @@
 
 import sys
-from config import appendProjectPath, saveConfigFile
 
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
 
-appendProjectPath(depth=1)
+# appendProjectPath(depth=1)
+sys.path.append('../')
 
 # 先添加路径再获取
 
