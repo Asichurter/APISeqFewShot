@@ -36,7 +36,9 @@ def saveConfigFile(folder_path, model):
 # 从数据集对应的doc文件夹中读取每一次运行的config和测试结果，整理到一
 # 个单独的JSON文件中以便浏览
 ###########################################################
-def generateConfigReport(dataset, include_result=False):
+def generateConfigReport(dataset,
+                         include_result=False,
+                         dump_path=None):
     mng = PathManager(dataset)
 
     report = {}
@@ -67,7 +69,8 @@ def generateConfigReport(dataset, include_result=False):
     for w in warnings:
         logging.warning(w)
 
-    dumpJson(report, mng.DatasetBase()+'summary.json', sort=True)
+    dump_path = mng.DatasetBase()+'summary.json' if dump_path is None else dump_path
+    dumpJson(report, dump_path, sort=True)
 
 ver_check_warning_template = '''
 \n\nYour current running version is equal to the last running 

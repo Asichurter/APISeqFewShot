@@ -72,7 +72,8 @@ model_cfg = TrainingConfigManager(test_path_manager.Doc()+'config.json')
 modelParams = model_cfg.modelParams()
 
 LRDecayIters, LRDecayGamma, optimizer_type,\
-weight_decay, loss_func, default_lr, lrs, taskBatchSize = model_cfg.trainingParams()
+weight_decay, loss_func, default_lr, lrs, \
+taskBatchSize, criteria = model_cfg.trainingParams()
 
 test_dataset = SeqFileDataset(test_path_manager.FileData(),
                                test_path_manager.FileSeqLen(),

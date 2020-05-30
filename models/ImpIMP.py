@@ -29,7 +29,6 @@ class ImpIMP(nn.Module):
         self.ALPHA = alpha
         self.Dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
         self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
-        self.Temperature = 10
 
         self.Clusters = None
         self.ClusterLabels = None
@@ -59,9 +58,9 @@ class ImpIMP(nn.Module):
 
         d_radii = t.ones(bsize, 1).cuda()
 
+        # TODO: 是否使用Sigma
         # if cluster_type == 'labeled':
         #     d_radii = d_radii * t.exp(self.Sigma)
-        #     # d_radii = d_radii * t.exp(self.Sigma)
         # else:
         #     d_radii = d_radii * t.exp(self.log_sigma_u)
 
@@ -175,7 +174,7 @@ class ImpIMP(nn.Module):
 
         # make initial radii for labeled clusters
         bsize = support.size()[0]
-        radii = t.ones(bsize, nClusters).cuda()# * t.exp(self.Sigma)  # 初始半径由log_sigma_l初始化(该参数可学习)
+        radii = t.ones(bsize, nClusters).cuda() # * t.exp(self.Sigma)  # 初始半径由log_sigma_l初始化(该参数可学习)
 
         cluster_labels = t.arange(0, nClusters).cuda().long()
 
@@ -193,7 +192,7 @@ class ImpIMP(nn.Module):
             # iterate over labeled examples to reassign first
             for i, ex in enumerate(support[0]):
                 # 找到样本label对应的cluster的index
-                idxs = t.nonzero(support_labels[0, i] == cluster_labels)[0]  # TODO: 取0？
+                idxs = t.nonzero(support_labels[0, i] == cluster_labels)[0] # TODO: 取0？
 
                 #****************************************************************************
                 # 计算与标签对应的类簇的距离(由于其他不对应的类簇的距离都是正无穷，求min时直接可忽略)
@@ -202,7 +201,6 @@ class ImpIMP(nn.Module):
                 #****************************************************************************
 
                 distances = self._compute_distances(protos,ex)
-                # print(distances.tolist(), t.min(distances,dim=1).indices.item())
                 # 如果发现离自己最近的cluster不是自己的类的cluster，就直接增加一个cluster
                 if not t.any(t.min(distances,dim=1).indices==idxs).item():
 
@@ -217,6 +215,7 @@ class ImpIMP(nn.Module):
                                                             support_targets)  # 样本属于每个类簇的概率
 
             nTrainClusters = nClusters
+            
             protos = protos.cuda()
             protos = self._compute_protos(support, prob_support)
             protos, radii, cluster_labels = self.delete_empty_clusters(protos, prob_support, radii, cluster_labels)
@@ -351,13 +350,13 @@ def compute_logits_radii(cluster_centers, data, radii, prior_weight=1.):
     radii = t.unsqueeze(radii, 1)  # [B, 1, K]  K=类簇数量
     neg_dist = -t.sum((data - cluster_centers) ** 2, dim=3)  # [B, N, K]         # 每个样本到每个类簇的欧式距离平方
 
-    #************************正态部分*************************************
+    # TODO: 是否使用Sigma
+    #*********************************************************************
     # logits = neg_dist / 2.0 / (radii)  # ((x-μ)^2)/(2σ)
     # norm_constant = 0.5 * dim * (t.log(radii) + np.log(2 * np.pi))
-    #
     # logits = logits - norm_constant
     # return logits
-    #*******************************************************************
+    #*********************************************************************
 
-    # 直接使用平方欧氏距离
-    return neg_dist
+    constant = 0.5*dim*np.log(2 * np.pi)
+    return neg_dist - constant

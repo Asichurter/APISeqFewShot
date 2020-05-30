@@ -273,6 +273,10 @@ class TrainingConfigManager:
     def __init__(self, cfg_path):
         self.Cfg = loadJson(cfg_path)
 
+        # for adapt
+        if 'criteria' not in self.Cfg:
+            self.Cfg['criteria'] = 'loss'
+
     def taskParams(self):               # for both train and test
         dataset = self.Cfg['dataset']
         try:
@@ -316,7 +320,8 @@ class TrainingConfigManager:
                self.Cfg['lossFunction'], \
                self.Cfg['defaultLr'], \
                self.Cfg['lrs'], \
-               self.Cfg['taskBatchSize']
+               self.Cfg['taskBatchSize'], \
+               self.Cfg['criteria']
 
     def gradRecParams(self):             # for train only
         return self.Cfg['recordGradient'], \

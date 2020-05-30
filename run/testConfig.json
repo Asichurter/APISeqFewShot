@@ -5,10 +5,10 @@
   "qk" : 5,
   "n": 5,
 
-  "version" : 98,
+  "version" : 102,
   "modelName" : "ImpIMP",
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 1000,
 
   "Ns" : {
           "cluster":20,
@@ -35,7 +35,6 @@
   "testSubdataset": "test",
 
   "description": [
-    "IMP训练时使用iter=1，测试时使用iter=1",
-    "分配cluster以后，cluster不重新计算"
+
   ]
 }

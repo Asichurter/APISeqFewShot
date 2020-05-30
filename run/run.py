@@ -62,7 +62,7 @@ weight_decay, \
 loss_func,\
 default_lr,\
 lrs, \
-taskBatchSize = cfg.trainingParams()
+taskBatchSize, criteria = cfg.trainingParams()
 
 modelParams = cfg.modelParams()
 
@@ -154,7 +154,7 @@ else:
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
                         train_report_iter=ValCycle,
-                        criteria='loss')
+                        criteria=criteria)
 
 if RecordGradient:
     types.append('line')

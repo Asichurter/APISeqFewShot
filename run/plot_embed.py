@@ -19,7 +19,7 @@ from utils.magic import magicSeed
 dataset_name = 'virushare-20-3gram'
 dataset_subtype = 'test'
 model = 'ImpIMP'
-version = 98
+version = 101
 N = 20
 plot_option = 'episode'#'entire'
 k, n, qk = 5, 5, 15
@@ -119,6 +119,18 @@ elif plot_option == 'episode':
     for i in range(n):
         plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
         # plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
+
+        class_clusters = clusters[cluster_labels==i]
+        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
+        plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
+
+    plt.show()
+
+    plt.figure(figsize=figsize)
+    plt.title(f'cluster_num={len(clusters)}')
+    for i in range(n):
+        plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
+        plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
 
         class_clusters = clusters[cluster_labels==i]
         plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
