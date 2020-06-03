@@ -72,8 +72,8 @@ class FEAT(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        support = self.EmbedDrop(self.EmbedNorm(support))
-        query = self.EmbedDrop(self.EmbedNorm(query))
+        support = self.EmbedDrop(support)
+        query = self.EmbedDrop(query)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)

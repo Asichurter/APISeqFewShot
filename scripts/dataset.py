@@ -161,17 +161,29 @@ def dumpDatasetSplitStruct(base_path, dump_path):
     dumpJson(dump, dump_path)
     print('-- Done --')
 
+
+##########################################################
+# 本函数用于删除原有数据集train，validate和test文件夹中的数据
+##########################################################
+def deleteDatasetSplit(dataset_base):
+    for typ in ['train','validate','test']:
+        print(typ)
+        os.system('rm -rf {path}/*'.format(path=dataset_base + typ))
+
 ##########################################################
 # 本函数用于将训练集，验证集和测试集的数据集分割详情根据保存的JSON文件
 # 还原到数据集分隔文件夹中。
-
-# 注意：调用本方法前需要先删除这些文件夹中的原有类文件夹
 ##########################################################
 def revertDatasetSplit(dataset, dump_path):
     man = PathManager(dataset)
     split_dump = loadJson(dump_path)
 
+    deleteDatasetSplit(man.DatasetBase())
+
     for typ in ['train', 'validate', 'test']:
+
+        # delete the existed split
+        # os.system('rm -rf {path}/*'.format(path=man.DatasetBase()+typ))
 
         print(typ)
         for folder in split_dump[typ]:

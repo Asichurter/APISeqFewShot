@@ -5,7 +5,8 @@ import torch as t
 import torch.nn.functional as F
 
 from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
-                                dumpDatasetSplitStruct, revertDatasetSplit
+                                dumpDatasetSplitStruct, revertDatasetSplit, \
+                                deleteDatasetSplit
 from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
@@ -28,11 +29,32 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 ###############################################################
 # manager = PathManager(dataset='virushare-20-3gram')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_2.json')
-# revertDatasetSplit(dataset='virushare-10-3gram',
-#                    dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_split_1.json')
+#                        dump_path=manager.DatasetBase()+'data/split_4.json')
+# revertDatasetSplit(dataset='virushare-20-3gram',
+#                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_2.json')
 ###############################################################
 
+
+# 分割数据集
+################################################################
+# man = PathManager(dataset='virushare-20-3gram')
+# deleteDatasetSplit(dataset_base=man.DatasetBase())
+# splitDatas(src=man.DatasetBase()+'all/',
+#            dest=man.DatasetBase()+'train/',
+#            ratio=-1,
+#            mode='c',
+#            is_dir=True)
+# splitDatas(src=man.DatasetBase()+'train/',
+#            dest=man.DatasetBase()+'validate/',
+#            ratio=20,
+#            mode='x',
+#            is_dir=True)
+# splitDatas(src=man.DatasetBase()+'train/',
+#            dest=man.DatasetBase()+'test/',
+#            ratio=20,
+#            mode='x',
+#            is_dir=True)
+################################################################
 
 # 制作基于下标的数据集
 ################################################################
@@ -45,7 +67,7 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 #                  seq_length_save_path=manager.FileSeqLen(),
 #                  data_save_path=manager.FileData(),
 #                  num_per_class=20,
-#                  max_seq_len=500)
+#                  max_seq_len=200)
 ################################################################
 
 # 统计序列长度分布
@@ -82,7 +104,7 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json')
+# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
@@ -90,27 +112,7 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 #                     mapping=mapping,
 #                     is_class_dir=False)
 # # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json')
-################################################################
-
-
-# 分割数据集
-################################################################
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
-#            ratio=-1,
-#            mode='c',
-#            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/temp/',
-#            ratio=110,
-#            mode='x',
-#            is_dir=True)
-# splitDatas(src='/home/asichurter/datasets/JSONs/virushare-10-3gram/train/',
-#            dest='/home/asichurter/datasets/JSONs/virushare-10-3gram/test/',
-#            ratio=35,
-#            mode='x',
-#            is_dir=True)
+# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json')
 ################################################################
 
 

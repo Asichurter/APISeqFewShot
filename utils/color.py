@@ -28,7 +28,7 @@ colors = ['black', #1
           'chocolate',  #13
           'sandybrown',  #14
           'bisque',  #15
-          'wheat',  #16
+          #'wheat',  #16
           'gold',  #17
           'khaki',  #18
           'olive',  #19

@@ -18,7 +18,7 @@ class ConvProtoNet(nn.Module):
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         #
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
@@ -59,11 +59,11 @@ class ConvProtoNet(nn.Module):
 
         # ------------------------------------------------------
         # shape: [batch, seq, dim]
-        support = self.Embedding(support)
-        query = self.Embedding(query)
+        support = self.EmbedDrop(self.Embedding(support))
+        query = self.EmbedDrop(self.Embedding(query))
 
-        support = self.EmbedDrop(self.EmbedNorm(support))
-        query = self.EmbedDrop(self.EmbedNorm(query))
+        # support = self.EmbedDrop(self.EmbedNorm(support))
+        # query = self.EmbedDrop(self.EmbedNorm(query))
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)

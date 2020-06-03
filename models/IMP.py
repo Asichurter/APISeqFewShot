@@ -34,7 +34,7 @@ class IMP(nn.Module):
         self.ClusterLabels = None
 
     def _embed(self, x, lens=None):
-        x = self.EmbedDrop(self.Embedding(x))
+        x = self.EmbedDrop(self.EmbedNorm(self.Embedding(x)))
         x = self.Encoder(x, lens)
         x = self.Decoder(x, lens)
         return x

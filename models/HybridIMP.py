@@ -7,10 +7,10 @@ from components.sequence.CNN import CNNEncoder1D
 from utils.training import extractTaskStructFromInput
 
 
-class ImpIMP(nn.Module):
+class HybridIMP(nn.Module):
 
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
-        super(ImpIMP, self).__init__()
+        super(HybridIMP, self).__init__()
 
         sigma = 1 if 'init_sigma' not in modelParams else modelParams['init_sigma']
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
@@ -191,7 +191,7 @@ class ImpIMP(nn.Module):
         protos = self._compute_protos(support, prob_support)
 
         # estimate lamda
-        # lamda = self.estimate_lambda(protos.data, False)
+        lamda = self.estimate_lambda(protos.data, False)
 
         # loop for a given number of clustering steps
         for ii in range(self.NumClusterSteps):
@@ -207,9 +207,12 @@ class ImpIMP(nn.Module):
                 # if t.min(distances) > lamda:
                 #****************************************************************************
 
-                distances = self._compute_distances(protos,ex)
-                # 如果发现离自己最近的cluster不是自己的类的cluster，就直接增加一个cluster
-                if not t.any(t.min(distances,dim=1).indices==idxs).item():
+                full_distances = self._compute_distances(protos,ex)
+                class_distances = self._compute_distances(protos[:, idxs, :], ex.data)
+
+                # 混合分类簇标准
+                if not t.any(t.min(full_distances,dim=1).indices==idxs).item() \
+                        or t.min(class_distances) > lamda:
 
                     nClusters, protos, radii = self._add_cluster(nClusters, protos, radii,
                                                                  cluster_type='labeled', ex=ex.data)

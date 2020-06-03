@@ -1,14 +1,14 @@
 {
   "dataset" :  "virushare-20-3gram",
 
-  "k" : 5, 
+  "k" : 5,
+  "n" : 5,
   "qk" : 5,
-  "n": 5,
 
-  "version" : 102,
-  "modelName" : "ImpIMP",
+  "version" : 122,
+  "modelName" : "HybridAttentionNet",
 
-  "trainingEpoch" : 1000,
+  "trainingEpoch" : 5000,
 
   "Ns" : {
           "cluster":20,

@@ -15,7 +15,7 @@ class TransformerEncoder(nn.Module):
                  embed_size,
                  hidden_size,
                  self_att_dim=128,
-                 head_size=8,
+                 head_size=4,
                  dropout=0.1,
                  **kwargs):
 
@@ -25,7 +25,7 @@ class TransformerEncoder(nn.Module):
         encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_size,
                                                    nhead=head_size,
                                                    dropout=dropout,
-                                                   dim_feedforward=256)
+                                                   dim_feedforward=128)
 
         self.Encoder = nn.TransformerEncoder(encoder_layer, num_layers)
 

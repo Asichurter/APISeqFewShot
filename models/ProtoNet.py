@@ -5,6 +5,7 @@ from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from components.reduction.max import StepMaxReduce
 from components.sequence.TCN import TemporalConvNet
+from components.sequence.transformer import TransformerEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -27,6 +28,7 @@ class ProtoNet(nn.Module):
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
         self.EmbedNorm = nn.LayerNorm(embed_size)
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
         #                             kernel_sizes=[3,3,3,3],
@@ -37,7 +39,7 @@ class ProtoNet(nn.Module):
         # self.Encoder = CNNEncoder1D(**kwargs)
 
         # self.Encoder = TransformerEncoder(embed_size=embed_size,
-        #                                   **kwargs)
+        #                                   **modelParams)
         # self.Encoder =  BiLstmEncoder(embed_size,  # 64
         #                               hidden_size=hidden,
         #                               layer_num=layer_num,
@@ -69,8 +71,8 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.Reduce = CNNEncoder1D([(1+modelParams['bidirectional'])*modelParams['hidden_size'],
-                                    (1+modelParams['bidirectional'])*modelParams['hidden_size']])
+        self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
+                                     (1+modelParams['bidirectional']) * modelParams['hidden_size']])
         # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
         #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()
@@ -87,11 +89,11 @@ class ProtoNet(nn.Module):
         support = support.view(n*k, sup_seq_len)
 
         # shape: [batch, seq, dim]
-        support = self.Embedding(support)
-        query = self.Embedding(query)
+        support = self.EmbedDrop(self.Embedding(support))
+        query = self.EmbedDrop(self.Embedding(query))
 
-        support = self.EmbedNorm(support)
-        query = self.EmbedNorm(query)
+        # support = self.EmbedNorm(support)
+        # query = self.EmbedNorm(query)
 
         # support = self.CNN(support)
         # query = self.CNN(query)
@@ -113,8 +115,8 @@ class ProtoNet(nn.Module):
         # support = avgOverHiddenStates(support, sup_len)
         # query = avgOverHiddenStates(query, que_len)
 
-        support = self.Reduce(support, sup_len)
-        query = self.Reduce(query, que_len)
+        support = self.Decoder(support, sup_len)
+        query = self.Decoder(query, que_len)
 
         # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
         # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)

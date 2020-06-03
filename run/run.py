@@ -1,13 +1,16 @@
 import os
 import sys
 import shutil
-from config import appendProjectPath, saveConfigFile, checkVersion
+
+sys.path.append('../')
+
+from config import saveConfigFile, checkVersion
 
 ################################################
 #----------------------设置系统基本信息------------------
 ################################################
 # appendProjectPath(depth=1)
-sys.path.append('../')
+
 
 # 先添加路径再获取
 from utils.manager import TrainingConfigManager
@@ -44,12 +47,14 @@ from models.AFEAT import AFEAT
 from models.MatchNet import MatchNet
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
+from models.HybridIMP import HybridIMP
 
 ################################################
 #----------------------读取参数------------------
 ################################################
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
+IMP_MODELS = ['IMP', 'ImpIMP', 'HybridIMP']
 
 data_folder = cfg.dataset()#'virushare_20_image'
 
@@ -139,7 +144,7 @@ elif model_type == 'Reptile':
     val_task = ReptileEpisodeTask(N-k, n, N,
                                     dataset=val_dataset,
                                     expand=expand)
-elif model_type in ['IMP','ImpIMP']:
+elif model_type in IMP_MODELS:
     train_task = ImpEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand)
     val_task = ImpEpisodeTask(k, qk, n, N, val_dataset,
@@ -244,6 +249,9 @@ elif model_type == 'IMP':
 elif model_type == 'ImpIMP':
     model = ImpIMP(pretrained_matrix=word_matrix,
                      **modelParams)
+elif model_type == 'HybridIMP':
+    model = HybridIMP(pretrained_matrix=word_matrix,
+                      **modelParams)
 # model = ImageProtoNet(in_channels=1)
 
 model = model.cuda()
@@ -272,7 +280,7 @@ elif optimizer_type == 'rmsprop':
     optimizer = t.optim.RMSprop(model.parameters(), lr=default_lr, weight_decay=weight_decay)
     # optimizer = RMSprop(parameters, momentum=0.9)
 elif optimizer_type == 'sgd':
-    optimizer = t.optim.SGD(parameters)
+    optimizer = t.optim.SGD(parameters,momentum=0.9,weight_decay=weight_decay)
 else:
     raise ValueError
 
@@ -322,7 +330,7 @@ with t.autograd.set_detect_anomaly(False):
                                                  train=True,
                                                  contrastive_factor=modelParams['contrastive_factor'])
 
-        elif model_type in ['IMP', 'ImpIMP']:
+        elif model_type in IMP_MODELS:
             acc_val, loss_val_item = impProcedure(model,
                                                   taskBatchSize,
                                                   train_task,
@@ -413,7 +421,7 @@ with t.autograd.set_detect_anomaly(False):
                                                        train=False,
                                                        contrastive_factor=modelParams['contrastive_factor'])
 
-            elif model_type in ['IMP','ImpIMP']:
+            elif model_type in IMP_MODELS:
                 validate_acc, validate_loss = impProcedure(model,
                                                       ValEpisode,
                                                       val_task,

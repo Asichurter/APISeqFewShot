@@ -30,8 +30,10 @@ from models.FEAT import FEAT
 from models.MatchNet import MatchNet
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
+from models.HybridIMP import HybridIMP
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
+IMP_MODELS = ['IMP', 'ImpIMP', 'HybridIMP']
 
 cfg = TrainingConfigManager('testConfig.json')
 datasetBasePath = cfg.systemParams()
@@ -84,7 +86,7 @@ expand = True if loss_func=='mse' else False
 if model_type in ADAPTED_MODELS:
     test_task = AdaptEpisodeTask(k, qk, n, N, test_dataset,
                                   cuda=True, expand=expand)
-elif model_type in ['IMP','ImpIMP']:
+elif model_type in IMP_MODELS:
     test_task = ImpEpisodeTask(k, qk, n, N, test_dataset,
                                   cuda=True, expand=expand)
 else:
@@ -99,7 +101,8 @@ stat = TestStatManager()
 
 printState('init model...')
 state_dict = t.load(test_path_manager.Model())
-
+# state_dict = t.load(test_path_manager.DatasetBase()+'models/IMP_v-2.0')
+# state_dict = t.load()
 
 if model_type in ADAPTED_MODELS:
     word_matrix = state_dict['Learner.Embedding.weight']
@@ -166,6 +169,9 @@ elif model_type == 'IMP':
 elif model_type == 'ImpIMP':
     model = ImpIMP(pretrained_matrix=word_matrix,
                      **modelParams)
+elif model_type == 'HybridIMP':
+    model = HybridIMP(pretrained_matrix=word_matrix,
+                      **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -222,7 +228,7 @@ with t.autograd.set_detect_anomaly(False):
                                                  train=False,
                                                  contrastive_factor=modelParams['contrastive_factor'])
 
-        elif model_type in ['IMP','ImpIMP']:
+        elif model_type in IMP_MODELS :
             acc_val, loss_val_item = impProcedure(model,
                                                   1,
                                                   test_task,

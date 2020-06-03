@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
 from components.modules import NTN
+from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from utils.training import dynamicRouting, \
                             extractTaskStructFromInput, \
@@ -21,7 +22,7 @@ class InductionNet(nn.Module):
                  ntn_hidden=100,
                  routing_iters=3,
                  word_cnt=None,
-                 **kwargs):
+                 **modelParams):
         super(InductionNet, self).__init__()
 
         self.Iters = routing_iters
@@ -32,14 +33,22 @@ class InductionNet(nn.Module):
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
+
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      hidden_size=hidden_size,
                                      layer_num=layer_num,
-                                     self_att_dim=self_att_dim)
+                                     self_att_dim=self_att_dim,
+                                     **modelParams)
 
-        self.Transformer = nn.Linear(hidden_size*2, hidden_size*2)
+        directions = 1 + modelParams['bidirectional']
 
-        self.NTN = NTN(hidden_size*2, hidden_size*2, ntn_hidden)
+        self.Decoder = CNNEncoder1D([hidden_size*directions,
+                                     hidden_size*directions])
+
+        self.Transformer = nn.Linear(hidden_size*directions, hidden_size*directions)
+
+        self.NTN = NTN(hidden_size*directions, hidden_size*directions, ntn_hidden)
 
 
     def forward(self, support, query, sup_len, que_len):
@@ -47,9 +56,11 @@ class InductionNet(nn.Module):
 
         support = support.view(n * k, sup_seq_len)
 
-        support, query = self.Embedding(support), self.Embedding(query)
+        support, query = self.EmbedDrop(self.Embedding(support)), \
+                         self.EmbedDrop(self.Embedding(query))
 
         support, query = self.Encoder(support, sup_len), self.Encoder(query, que_len)
+        support, query = self.Decoder(support, sup_len), self.Decoder(query, que_len)
 
         # 计算类的原型向量
         # shape: [n, k, d]

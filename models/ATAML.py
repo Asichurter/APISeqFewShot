@@ -19,7 +19,7 @@ def rename(name, token='-'):
     return name.replace('.',token)
 
 class BaseLearner(nn.Module):
-    def __init__(self, n, pretrained_matrix, embed_size, seq_len, **kwargs):
+    def __init__(self, n, pretrained_matrix, embed_size, seq_len, **modelParams):
         super(BaseLearner, self).__init__()
         # 需要adapt的参数名称
         self.adapted_keys = [
@@ -29,27 +29,29 @@ class BaseLearner(nn.Module):
                             'fc.weight',
                             'fc.bias']
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
-                                                      freeze=False,
                                                       padding_idx=0)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
+        self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        # self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
-        self.Encoder = TemporalConvNet(**kwargs)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)#CNNEncoder1D(**kwargs)
+        # self.Encoder = TemporalConvNet(**kwargs)
+        directions = 1 + modelParams['bidirectional']
 
-        self.Attention = nn.Linear(kwargs['num_channels'][-1], 1, bias=False)
+        self.Attention = nn.Linear(directions*modelParams['hidden_size'], 1, bias=False)
         # self.Attention = nn.Linear(2*kwargs['hidden_size'], 1, bias=False)
         # self.Attention = AttnReduction(input_dim=2*kwargs['hidden_size'])
 
         # out_size = kwargs['hidden_size']
         # self.fc = nn.Linear(seq_len, n)
-        self.fc = nn.Linear(kwargs['num_channels'][-1], n)
+        self.fc = nn.Linear(directions*modelParams['hidden_size'], n)
                                                     # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 
     def forward(self, x, lens, params=None):
         length = x.size(0)
         x = self.Embedding(x)
-        x = self.EmbedNorm(x)
+        x = self.EmbedDrop(x)
+        # x = self.EmbedNorm(x)
         x = self.Encoder(x, lens)
 
         # shape: [batch, seq, dim] => [batch, mem_step, dim]
@@ -109,8 +111,8 @@ class BaseLearner(nn.Module):
         return parameters
 
 class ATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, method='maml',
-                 adapt_iter=1, **kwargs):
+    def __init__(self, n, loss_fn, inner_lr=5e-2, method='maml',
+                 adapt_iter=2, **kwargs):
         super(ATAML, self).__init__()
 
         #######################################################
@@ -124,7 +126,7 @@ class ATAML(nn.Module):
 
         self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta
         self.LossFn = loss_fn
-        self.MetaLr = lr
+        self.MetaLr = inner_lr
         self.AdaptedPar = None
         self.Method = method
         self.AdaptIter = adapt_iter

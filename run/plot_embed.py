@@ -8,6 +8,7 @@ import numpy as np
 from utils.color import getRandomColor
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
+from models.HybridIMP import HybridIMP
 
 from components.datasets import SeqFileDataset
 from utils.manager import PathManager, TrainingConfigManager
@@ -18,8 +19,8 @@ from utils.magic import magicSeed
 # ***************************************************************************
 dataset_name = 'virushare-20-3gram'
 dataset_subtype = 'test'
-model = 'ImpIMP'
-version = 101
+model_name = 'IMP'
+version = 121
 N = 20
 plot_option = 'episode'#'entire'
 k, n, qk = 5, 5, 15
@@ -31,7 +32,7 @@ sampling_seed = magicSeed()
 
 path_man = PathManager(dataset=dataset_name,
                        d_type=dataset_subtype,
-                       model_name=model,
+                       model_name=model_name,
                        version=version)
 
 ################################################
@@ -42,17 +43,21 @@ model_cfg = TrainingConfigManager(path_man.Doc()+'config.json')
 
 modelParams = model_cfg.modelParams()
 
-dataset = SeqFileDataset(path_man.FileData(), path_man.FileSeqLen(), N=20)
+dataset = SeqFileDataset(path_man.FileData(), path_man.FileSeqLen(), N=N)
 
 state_dict = t.load(path_man.Model() + '_v%s.0' % version)
+# state_dict = t.load(path_man.DatasetBase()+'models/ProtoNet_v105.0')
 word_matrix = state_dict['Embedding.weight']
 
-if model == 'IMP':
+if model_name == 'IMP':
     model = IMP(word_matrix,
                 **modelParams)
-elif model == 'ImpIMP':
+elif model_name == 'ImpIMP':
     model = ImpIMP(word_matrix,
                    **modelParams)
+elif model_name == 'HybridIMP':
+    model = HybridIMP(word_matrix,
+                      **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()

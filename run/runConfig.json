@@ -5,8 +5,9 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 102,
-  "modelName" : "ImpIMP",
+  "version" : 122,
+  "modelName" : "HybridAttentionNet",
+
 
   "modelParams": {
     "embed_size": 300,
@@ -33,10 +34,10 @@
   "valCycle" : 100,
   "valEpisode" : 100,
 
-  "lrDecayIters" : 24000,
+  "lrDecayIters" : 15000,
   "lrDecayGamma" : 0.1,
-  "optimizer": "adam",
-  "weightDecay" : 1e-4,
+  "optimizer": "sgd",
+  "weightDecay" : 5e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
@@ -51,7 +52,7 @@
   "trainingVerbose" : false,
   "useVisdom" : true,
 
-  "trainingEpoch" : 50000,
+  "trainingEpoch" : 30000,
 
   "Ns" : {
           "cluster":20,
@@ -89,11 +90,11 @@
                 "训练类使用满编73个",
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "序列长度为200的3Gram(第2次分割)",
+                "训练周期减小到30000轮",
+                "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用单向多层的LSTM编码，使用1dCNN解码",
-                "初始所有参数使用默认值",
-                "使用平方欧氏距离和softmax计算分配系数"
+                "使用单向LSTM编码，使用1dCNN解码",
+                "不使用LayerNorm"
       ]
 }
