@@ -130,8 +130,10 @@ class BaseLearner(nn.Module):
         return parameters
 
 class PerLayerATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=3e-2, adapt_iter=3, **kwargs):
+    def __init__(self, n, loss_fn, lr=3e-2, adapt_iter=3, **modelParams):
         super(PerLayerATAML, self).__init__()
+
+        self.DataParallel = modelParams['data_parallel']
 
         #######################################################
         # For CNN only
@@ -142,7 +144,7 @@ class PerLayerATAML(nn.Module):
         # kwargs['pools'] = [None, None, None, None]
         #######################################################
 
-        self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta
+        self.Learner = BaseLearner(n, seq_len=50, **modelParams)   # 基学习器内部含有beta
         self.LossFn = loss_fn
         self.PreLayerLr = nn.Parameter(t.FloatTensor([lr]*adapt_iter))  # 每次adapt step具有不同的学习率
         self.AdaptIter = adapt_iter
@@ -150,6 +152,10 @@ class PerLayerATAML(nn.Module):
 
 
     def forward(self, support, query, sup_len, que_len, s_label):
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次

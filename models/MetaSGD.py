@@ -64,19 +64,21 @@ class BaseLearner(nn.Module):
         return cloned_state_dict
 
 class MetaSGD(nn.Module):
-    def __init__(self, n, loss_fn, lr=1e-3, **kwargs):
+    def __init__(self, n, loss_fn, lr=1e-3, **modelParams):
         super(MetaSGD, self).__init__()
+
+        self.DataParallel = modelParams['data_parallel']
 
         #######################################################
         # For CNN only
-        kwargs['dims'] = [kwargs['embed_size'], 64, 128, 256, 256]
-        kwargs['kernel_sizes'] = [3, 3, 3, 3]
-        kwargs['paddings'] = [1, 1, 1, 1]
-        kwargs['relus'] = [True, True, True, True]
-        kwargs['pools'] = ['max', 'max', 'max', 'ada']
+        modelParams['dims'] = [modelParams['embed_size'], 64, 128, 256, 256]
+        modelParams['kernel_sizes'] = [3, 3, 3, 3]
+        modelParams['paddings'] = [1, 1, 1, 1]
+        modelParams['relus'] = [True, True, True, True]
+        modelParams['pools'] = ['max', 'max', 'max', 'ada']
         #######################################################
 
-        self.Learner = BaseLearner(n, **kwargs)   # 基学习器内部含有beta
+        self.Learner = BaseLearner(n, **modelParams)   # 基学习器内部含有beta
         self.Alpha = nn.ParameterDict({
             rename(name):nn.Parameter(lr * t.ones_like(val, requires_grad=True))
             for name,val in self.Learner.named_parameters()

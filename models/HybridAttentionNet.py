@@ -33,6 +33,8 @@ class HAPNet(nn.Module):
                  **modelParams):
         super(HAPNet, self).__init__()
 
+        self.DataParallel = modelParams['data_parallel']
+
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
@@ -76,6 +78,10 @@ class HAPNet(nn.Module):
 
 
     def forward(self, support, query, sup_len, que_len):
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
 

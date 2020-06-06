@@ -18,11 +18,13 @@ from utils.training import getBatchSequenceFunc, batchSequenceWithoutPad
 # 调用accuracy计算得到正确率
 #########################################
 class EpisodeTask:
-    def __init__(self, k, qk, n, N, dataset, cuda=True, label_expand=False, d_type='long'):
+    def __init__(self, k, qk, n, N, dataset, cuda=True,
+                 label_expand=False, d_type='long', parallel=False):
         self.UseCuda = cuda
         self.Dataset = dataset
         self.Expand = label_expand
         self.DType = d_type
+        self.Parallel = parallel
 
         assert k + qk <= N, '支持集和查询集采样总数大于了类中样本总数!'
         self.Params = {'k': k, 'qk': qk, 'n': n, 'N': N}
@@ -125,8 +127,9 @@ class EpisodeTask:
 
 
 class ProtoEpisodeTask(EpisodeTask):
-    def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
-        super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)
+    def __init__(self, k, qk, n, N, dataset,
+                 cuda=True, expand=False, parallel=False):
+        super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
         k, qk, n, N = self.readParams()
@@ -147,6 +150,10 @@ class ProtoEpisodeTask(EpisodeTask):
             queries = queries.cuda()
             labels = labels.cuda()
 
+        if self.Parallel:
+            supports = supports.unsqueeze(0)
+            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+
         # 重整数据结构，便于模型读取任务参数
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
@@ -158,8 +165,9 @@ class ProtoEpisodeTask(EpisodeTask):
 # 区别在于会在模型输入时给出支持集的标签以产生任务损失
 #################################################
 class AdaptEpisodeTask(EpisodeTask):
-    def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
-        super(AdaptEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)
+    def __init__(self, k, qk, n, N, dataset,
+                 cuda=True, expand=False, parallel=False):
+        super(AdaptEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
         k, qk, n, N = self.readParams()
@@ -187,13 +195,19 @@ class AdaptEpisodeTask(EpisodeTask):
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-        return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels), \
-               query_labels
+        if self.Parallel:
+            supports = supports.unsqueeze(0)
+            support_labels = support_labels.unsqueeze(0)
+            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+
+        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, \
+               support_labels, query_labels
 
 
 class ImpEpisodeTask(EpisodeTask):
-    def __init__(self, k, qk, n, N, dataset, cuda=True, expand=False):
-        super(ImpEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand)
+    def __init__(self, k, qk, n, N, dataset,
+                 cuda=True, expand=False, parallel=False):
+        super(ImpEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
         k, qk, n, N = self.readParams()
@@ -221,13 +235,20 @@ class ImpEpisodeTask(EpisodeTask):
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels, query_labels
+        if self.Parallel:
+            supports = supports.unsqueeze(0)
+            support_labels = support_labels.unsqueeze(0)
+            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+
+        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, \
+               support_labels, query_labels
 
 
 
 class ReptileEpisodeTask(EpisodeTask):
-    def __init__(self, training_num, n, N, dataset, cuda=True, expand=False):
-        super(ReptileEpisodeTask, self).__init__(training_num, N-training_num, n, N, dataset, cuda, expand)
+    def __init__(self, training_num, n, N, dataset,
+                 cuda=True, expand=False, parallel=False):
+        super(ReptileEpisodeTask, self).__init__(training_num, N-training_num, n, N, dataset, cuda, expand, parallel)
 
     def getTaskSampler(self, label_space, isTrain, seed=None):
         task_seed = magicSeed() if seed is None else seed

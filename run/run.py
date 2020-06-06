@@ -134,27 +134,35 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 
 if model_type in ADAPTED_MODELS:
     train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                                  parallel=modelParams['data_parallel'])
     val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                                parallel=modelParams['data_parallel'])
 elif model_type == 'Reptile':
     train_task = ReptileEpisodeTask(N, n, N,
                                     dataset=train_dataset,
-                                    expand=expand)
+                                    expand=expand,
+                                    parallel=modelParams['data_parallel'])
     val_task = ReptileEpisodeTask(N-k, n, N,
                                     dataset=val_dataset,
-                                    expand=expand)
+                                    expand=expand,
+                                  parallel=modelParams['data_parallel'])
 elif model_type in IMP_MODELS:
     train_task = ImpEpisodeTask(k, qk, n, N, train_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                                parallel=modelParams['data_parallel'])
     val_task = ImpEpisodeTask(k, qk, n, N, val_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                              parallel=modelParams['data_parallel'])
 
 else:
     train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                                  parallel=modelParams['data_parallel'])
     val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
-                                  cuda=True, expand=expand)
+                                  cuda=True, expand=expand,
+                                parallel=modelParams['data_parallel'])
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
@@ -288,6 +296,10 @@ scheduler = t.optim.lr_scheduler.StepLR(optimizer,
                                         step_size=LRDecayIters,
                                          gamma=LRDecayGamma)
 
+
+if modelParams['data_parallel']:
+    model = t.nn.DataParallel(model,
+                              device_ids=modelParams["data_parallel_devices"])
 
 ################################################
 #----------------------训练------------------

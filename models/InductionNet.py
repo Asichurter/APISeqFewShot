@@ -25,6 +25,8 @@ class InductionNet(nn.Module):
                  **modelParams):
         super(InductionNet, self).__init__()
 
+        self.DataParallel = modelParams['data_parallel']
+
         self.Iters = routing_iters
 
         if pretrained_matrix is not None:
@@ -52,6 +54,10 @@ class InductionNet(nn.Module):
 
 
     def forward(self, support, query, sup_len, que_len):
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         support = support.view(n * k, sup_seq_len)

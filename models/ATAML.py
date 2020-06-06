@@ -112,8 +112,10 @@ class BaseLearner(nn.Module):
 
 class ATAML(nn.Module):
     def __init__(self, n, loss_fn, inner_lr=5e-2, method='maml',
-                 adapt_iter=2, **kwargs):
+                 adapt_iter=2, **modelParams):
         super(ATAML, self).__init__()
+
+        self.DataParallel = modelParams['data_parallel']
 
         #######################################################
         # For CNN only
@@ -124,7 +126,7 @@ class ATAML(nn.Module):
         # kwargs['pools'] = [None, None, None, None]
         #######################################################
 
-        self.Learner = BaseLearner(n, seq_len=50, **kwargs)   # 基学习器内部含有beta
+        self.Learner = BaseLearner(n, seq_len=50, **modelParams)   # 基学习器内部含有beta
         self.LossFn = loss_fn
         self.MetaLr = inner_lr
         self.AdaptedPar = None
@@ -134,6 +136,10 @@ class ATAML(nn.Module):
     def forward(self, support, query, sup_len, que_len, s_label,
                 adapt_iter=1):
         method = self.Method
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次

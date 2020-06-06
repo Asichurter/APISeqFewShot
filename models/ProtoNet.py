@@ -20,6 +20,7 @@ class ProtoNet(nn.Module):
         super(ProtoNet, self).__init__()
 
         self.DistTemp = modelParams['temperature'] if 'temperature' in modelParams else 1
+        self.DataParallel = modelParams['data_parallel']
 
         # 可训练的嵌入层
         if pretrained_matrix is not None:
@@ -83,6 +84,9 @@ class ProtoNet(nn.Module):
         #                            relus=[True,True])
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次

@@ -28,7 +28,10 @@
 
     "set_function": "transformer",
     "trans_dropout": 0.5,
-    "trans_head_nums": 1
+    "trans_head_nums": 1,
+
+    "data_parallel": false,
+    "data_parallel_devices": [0,1]
   },
 
   "valCycle" : 100,

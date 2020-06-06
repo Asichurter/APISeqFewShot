@@ -12,6 +12,8 @@ class ImpIMP(nn.Module):
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
         super(ImpIMP, self).__init__()
 
+        self.DataParellel = modelParams['data_parallel']
+
         sigma = 1 if 'init_sigma' not in modelParams else modelParams['init_sigma']
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
 
@@ -154,6 +156,14 @@ class ImpIMP(nn.Module):
 
     def forward(self, support, query, sup_len, que_len, support_labels, query_labels,
                 if_cache_data=False):
+
+        # 由于数据并行关系，为了保证支持集的完整性，
+        # 将support的batch维度置为1
+        if self.DataParellel:
+            support.squeeze(0)
+
+        # support shape: [n, k, seq]
+        # query shape: [qk, seq]
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         nClusters = n  # 初始类簇的数量等于类数量

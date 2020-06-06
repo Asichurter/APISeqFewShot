@@ -15,6 +15,8 @@ class ConvProtoNet(nn.Module):
                  **modelParams):
         super(ConvProtoNet, self).__init__()
 
+        self.DataParallel = modelParams['data_parallel']
+
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
@@ -52,6 +54,10 @@ class ConvProtoNet(nn.Module):
         )
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次

@@ -24,6 +24,8 @@ class FEAT(nn.Module):
 
         super(FEAT, self).__init__()
 
+        self.DataParallel = modelParams['data_parallel']
+
         self.Avg = feat_avg
         self.ContraFac = contrastive_factor
         self.DisTempr = modelParams['temperature'] if 'temperature' in modelParams else 1
@@ -60,6 +62,10 @@ class FEAT(nn.Module):
 
     def forward(self, support, query, sup_len, que_len,
                 metric='euc', return_unadapted=False):
+
+        if self.DataParellel:
+            support.squeeze(0)
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         qk_per_class = qk // n
