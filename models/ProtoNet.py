@@ -20,7 +20,7 @@ class ProtoNet(nn.Module):
         super(ProtoNet, self).__init__()
 
         self.DistTemp = modelParams['temperature'] if 'temperature' in modelParams else 1
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         # 可训练的嵌入层
         if pretrained_matrix is not None:
@@ -39,15 +39,15 @@ class ProtoNet(nn.Module):
         # self.Encoder = CNNEncoder1D(**modelParams)
         # self.Encoder = CNNEncoder1D(**kwargs)
 
-        self.Encoder = TransformerEncoder(embed_size=embed_size,
-                                          **modelParams)
+        # self.Encoder = TransformerEncoder(embed_size=embed_size,
+        #                                   **modelParams)
         # self.Encoder =  BiLstmEncoder(embed_size,  # 64
         #                               hidden_size=hidden,
         #                               layer_num=layer_num,
         #                               self_att_dim=self_att_dim,
         #                               useBN=False)
         # self.Encoder = TemporalConvNet(**modelParams)
-        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
 
         # self.Encoder = nn.ModuleList([
         #     BiLstmEncoder(embed_size,  # 64
@@ -83,6 +83,14 @@ class ProtoNet(nn.Module):
         #                            paddings=[(1,embed_size//4),(1,embed_size//8)],
         #                            relus=[True,True])
 
+
+    def _embed(self, x, lens):
+        x = self.EmbedDrop(self.Embedding(x))
+        x = self.Encoder(x, lens)
+        x = self.Decoder(x, lens)
+
+        return x
+
     def forward(self, support, query, sup_len, que_len, metric='euc'):
 
         if self.DataParallel:
@@ -94,38 +102,9 @@ class ProtoNet(nn.Module):
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
-        # shape: [batch, seq, dim]
-        support = self.EmbedDrop(self.Embedding(support))
-        query = self.EmbedDrop(self.Embedding(query))
+        support, query = self._embed(support, sup_len), \
+                         self._embed(query, que_len)
 
-        # support = self.EmbedNorm(support)
-        # query = self.EmbedNorm(query)
-
-        # support = self.CNN(support)
-        # query = self.CNN(query)
-
-        # # # pack以便输入到LSTM中
-        # support = pack_padded_sequence(support, sup_len, batch_first=True, enforce_sorted=False)
-        # query = pack_padded_sequence(query, que_len, batch_first=True, enforce_sorted=False)
-
-        # shape: [batch, dim]
-        support = self.Encoder(support, sup_len)
-        query = self.Encoder(query, que_len)
-        # for i in range(len(self.Encoder)):
-        #     support = self.EncoderNorm[i](self.Encoder[i](support, sup_len))
-        #     query = self.EncoderNorm[i](self.Encoder[i](query, que_len))
-
-        # support, sup_len = pad_packed_sequence(support, batch_first=True)
-        # query, que_len = pad_packed_sequence(query, batch_first=True)
-
-        # support = avgOverHiddenStates(support, sup_len)
-        # query = avgOverHiddenStates(query, que_len)
-
-        support = self.Decoder(support, sup_len)
-        query = self.Decoder(query, que_len)
-
-        # support, s_len = pad_packed_sequence(support, batch_first=True, enforce_sorted=False)
-        # query, q_len = pad_packed_sequence(query, batch_first=True, enforce_sorted=False)
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\
                                                (support.size(1),query.size(1))

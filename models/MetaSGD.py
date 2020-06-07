@@ -68,7 +68,7 @@ class MetaSGD(nn.Module):
     def __init__(self, n, loss_fn, lr=1e-3, **modelParams):
         super(MetaSGD, self).__init__()
 
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         #######################################################
         # For CNN only

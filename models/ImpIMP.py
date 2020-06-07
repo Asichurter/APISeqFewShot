@@ -13,7 +13,7 @@ class ImpIMP(nn.Module):
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
         super(ImpIMP, self).__init__()
 
-        self.DataParellel = modelParams['data_parallel']
+        self.DataParellel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         sigma = 1 if 'init_sigma' not in modelParams else modelParams['init_sigma']
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
@@ -22,10 +22,10 @@ class ImpIMP(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        # self.Encoder = BiLstmEncoder(input_size=embed_size,
-        #                              **modelParams)
-        self.Encoder = TransformerEncoder(embed_size=embed_size,
-                                          **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size,
+                                     **modelParams)
+        # self.Encoder = TransformerEncoder(embed_size=embed_size,
+        #                                   **modelParams)
 
         self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
                                      (1 + modelParams['bidirectional']) * modelParams['hidden_size']])

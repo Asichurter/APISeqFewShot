@@ -115,7 +115,7 @@ class ATAML(nn.Module):
                  adapt_iter=2, **modelParams):
         super(ATAML, self).__init__()
 
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         #######################################################
         # For CNN only

@@ -15,7 +15,7 @@ class MatchNet(nn.Module):
                  **modelParams):
         super(MatchNet, self).__init__()
 
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)

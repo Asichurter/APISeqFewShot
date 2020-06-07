@@ -5,6 +5,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE,MDS,LocallyLinearEmbedding
 import numpy as np
 
+from models.ProtoNet import ProtoNet
 from utils.color import getRandomColor
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
@@ -20,9 +21,9 @@ from utils.magic import magicSeed
 dataset_name = 'virushare-20-3gram'
 dataset_subtype = 'test'
 model_name = 'IMP'
-version = 121
+version = 109
 N = 20
-plot_option = 'episode'#'entire'
+plot_option = 'entire'#'entire'
 k, n, qk = 5, 5, 15
 figsize = (12,10)
 task_seed = magicSeed()
@@ -58,6 +59,9 @@ elif model_name == 'ImpIMP':
 elif model_name == 'HybridIMP':
     model = HybridIMP(word_matrix,
                       **modelParams)
+elif model_name == 'ProtoNet':
+    model = ProtoNet(word_matrix,
+                     **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
@@ -81,7 +85,26 @@ if plot_option == 'entire':
     datas = np.array(datas).reshape((class_count*N,-1))
     datas = reduction.fit_transform(datas)
 
-    colors = getRandomColor(class_count)
+    colors = ['darkgreen',
+ 'darkseagreen',
+ 'olive',
+ 'teal',
+ 'orangered',
+ 'yellowgreen',
+ 'steelblue',
+ 'gold',
+ 'magenta',
+ 'hotpink',
+ 'blueviolet',
+ 'red',
+ 'black',
+ 'bisque',
+ 'violet',
+ 'deepskyblue',
+ 'firebrick',
+ 'purple',
+ 'pink',
+ 'lime']#getRandomColor(class_count)
     datas = datas.reshape((class_count,N,2))
 
     plt.figure(figsize=figsize)

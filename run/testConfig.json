@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 122,
-  "modelName" : "HybridAttentionNet",
+  "version" : 123,
+  "modelName" : "ProtoNet",
 
   "trainingEpoch" : 5000,
 

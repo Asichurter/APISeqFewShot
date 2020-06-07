@@ -25,7 +25,7 @@ class InductionNet(nn.Module):
                  **modelParams):
         super(InductionNet, self).__init__()
 
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         self.Iters = routing_iters
 

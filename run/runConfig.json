@@ -5,9 +5,9 @@
   "n" : 5,
   "qk" : 5,
 
+
   "version" : 123,
   "modelName" : "ProtoNet",
-
 
   "modelParams": {
     "embed_size": 300,
@@ -17,7 +17,7 @@
     "num_layers" : 3,
     "self_att_dim" : null,
     "bidirectional": false,
-    "head_size": 8,
+    "head_size": 4,
     "max_seq_len": 200,
 
     "temperature": 1,
@@ -41,7 +41,7 @@
 
   "lrDecayIters" : 20000,
   "lrDecayGamma" : 0.1,
-  "optimizer": "sgd",
+  "optimizer": "adam",
   "weightDecay" : 5e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
@@ -55,7 +55,7 @@
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : false,
+  "useVisdom" : true,
 
   "trainingEpoch" : 80000,
 
@@ -99,7 +99,7 @@
                 "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用3层的8头transformer编码，使用1dCNN解码",
+                "使用3层的4头transformer编码，使用1dCNN解码",
                 "不使用LayerNorm"
       ]
 }

@@ -24,7 +24,7 @@ class FEAT(nn.Module):
 
         super(FEAT, self).__init__()
 
-        self.DataParallel = modelParams['data_parallel']
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         self.Avg = feat_avg
         self.ContraFac = contrastive_factor
