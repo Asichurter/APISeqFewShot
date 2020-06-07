@@ -246,7 +246,7 @@ with t.autograd.set_detect_anomaly(False):
                                                         train=False)
 
         # 记录任务batch的平均正确率和损失值
-        stat.record(acc_val, loss_val_item)
+        stat.record(acc_val, loss_val_item, total_step=TestingEpoch)
 
 desc = cfg.desc()
 desc.append('使用%s'%USED_SUB_DATASET)

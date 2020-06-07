@@ -39,15 +39,14 @@ class ProtoNet(nn.Module):
         # self.Encoder = CNNEncoder1D(**modelParams)
         # self.Encoder = CNNEncoder1D(**kwargs)
 
-        # self.Encoder = TransformerEncoder(embed_size=embed_size,
-        #                                   **modelParams)
+        self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
         # self.Encoder =  BiLstmEncoder(embed_size,  # 64
         #                               hidden_size=hidden,
         #                               layer_num=layer_num,
         #                               self_att_dim=self_att_dim,
         #                               useBN=False)
         # self.Encoder = TemporalConvNet(**modelParams)
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
 
         # self.Encoder = nn.ModuleList([
         #     BiLstmEncoder(embed_size,  # 64

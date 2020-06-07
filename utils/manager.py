@@ -229,16 +229,16 @@ class TestStatManager:
     def startTimer(self):
         self.TimeStamp = time()
 
-    def record(self, acc, loss):
+    def record(self, acc, loss, total_step=None):
 
         self.AccHist.append(acc)
         self.LossHist.append(loss)
         self.Iters += 1
 
         if self.Iters % self.Cycle == 0:
-            self.printStat()
+            self.printStat(total_step=total_step)
 
-    def printStat(self, final=False):
+    def printStat(self, final=False, total_step=None):
         now_stamp = time()
         length = len(self.AccHist) if final else self.Cycle
         cur_acc = np.mean(self.AccHist[-length:])
@@ -246,12 +246,25 @@ class TestStatManager:
         acc_interval = calBeliefeInterval(self.AccHist)
         loss_interval = calBeliefeInterval(self.LossHist)
 
+        consume_time = now_stamp-self.TimeStamp
+
+        if total_step is not None:
+            remaining_time = consume_time * (total_step - self.Iters) / self.Cycle
+            remaining_hour = remaining_time // 3600
+            remaining_min = (remaining_time % 3600) // 60
+            remaining_sec = (remaining_time % 60)
+        else:
+            remaining_time = None
+
+
         print('%d Epoch'%self.Iters)
         print('-'*50)
         print('Acc: %f'%cur_acc)
         print('Loss: %f'%cur_loss)
         if not final:
-            print('Time: %.2f'%(now_stamp-self.TimeStamp))
+            print('Time: %.2f'%(consume_time))
+            if remaining_time is not None:
+                print('time remains:  %02d:%02d:%02d' % (remaining_hour, remaining_min, remaining_sec))
             self.TimeStamp = now_stamp
         else:
             print('Acc 95%% interval: %f'%acc_interval)
