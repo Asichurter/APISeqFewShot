@@ -134,7 +134,8 @@ class TrainStatManager:
         self.TrainHist['loss'].append(loss)
         self.TrainIterCount += 1
 
-    def recordValidating(self, acc, loss, model):
+    def recordValidating(self, acc, loss, model,
+                 current_step=None, total_step=None):
         self.ValHist['accuracy'].append(acc)
         self.ValHist['loss'].append(loss)
 
@@ -154,9 +155,22 @@ class TrainStatManager:
         self.CurTimeStamp = time()
 
         record = self.getRecentRecord()
-        self.printOut(*record)
+        self.printOut(*record,
+                      current_step=current_step,
+                      total_step=total_step)
 
-    def printOut(self, average_train_acc, average_train_loss, recent_val_acc, recent_val_loss):
+    def printOut(self, average_train_acc, average_train_loss, recent_val_acc, recent_val_loss,
+                 current_step=None, total_step=None):
+        cycle_time = self.CurTimeStamp - self.PreTimeStamp
+
+        if current_step is not None and total_step is not None:
+            remaining_time = cycle_time * (total_step - current_step) / self.TrainReportIter
+            remaining_hour = remaining_time // 3600
+            remaining_min = (remaining_time%3600)//60
+            remaining_sec = (remaining_time%60)
+        else:
+            remaining_time = None
+
         print('***********************************')
         print('train acc: ', average_train_acc)
         print('train loss: ', average_train_loss)
@@ -166,7 +180,9 @@ class TrainStatManager:
         print('----------------------------------')
         print('best val %s:' % self.Criteria, self.BestVal)
         print('best epoch:', self.BestValEpoch)
-        print('time consuming:', self.CurTimeStamp - self.PreTimeStamp)
+        print('time consuming: ', cycle_time)
+        if remaining_time is not None:
+            print('time remains:  %02d:%02d:%02d'%(remaining_hour, remaining_min, remaining_sec))
         print('\n***********************************')
         print('\n\n%d -> %d epoches...' % (self.TrainIterCount, self.TrainIterCount + self.TrainReportIter))
 
@@ -197,6 +213,11 @@ class TrainStatManager:
         }
         dumpJson(res, self.StatSavePath+'stat.json')
 
+
+
+######################################################
+# 统计测试过程中的正确率和损失值，并且在合适的时机打印统计信息
+######################################################
 class TestStatManager:
     def __init__(self, report_cycle=100):
         self.AccHist = []
@@ -266,6 +287,10 @@ class TestStatManager:
         })
 
         dumpJson(results, path)
+
+
+
+
 
 
 class TrainingConfigManager:

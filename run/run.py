@@ -466,7 +466,9 @@ with t.autograd.set_detect_anomaly(False):
 
             stat.recordValidating(avg_validate_acc,
                                   avg_validate_loss,
-                                  model)
+                                  model,
+                                  epoch,
+                                  TrainingEpoch)
 
             train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
             if UseVisdom:
