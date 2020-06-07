@@ -16,16 +16,17 @@ def rename(name, token='-'):
     return name.replace('.',token)
 
 class BaseLearner(nn.Module):
-    def __init__(self, n, pretrained_matrix, embed_size, **kwargs):
+    def __init__(self, n, pretrained_matrix, embed_size, **modelParams):
         super(BaseLearner, self).__init__()
+
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix,
                                                       freeze=False,
                                                       padding_idx=0)
         # self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = CNNEncoder1D(**kwargs)#BiLstmEncoder(input_size=embed_size, **kwargs)
+        self.Encoder = CNNEncoder1D(**modelParams)#BiLstmEncoder(input_size=embed_size, **kwargs)
 
         # out_size = kwargs['hidden_size']
-        self.fc = nn.Linear(kwargs['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
+        self.fc = nn.Linear(modelParams['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 
     def forward(self, x, lens, params=None):
@@ -85,14 +86,21 @@ class MetaSGD(nn.Module):
         })      # 初始化alpha
         self.LossFn = loss_fn
 
-    def forward(self, support, query, sup_len, que_len, s_label):
+    def forward(self, support, query, sup_len, que_len, support_labels):
+
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
+            support_labels = support_labels[0]
+
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
 
         s_predict = self.Learner(support, sup_len)
-        loss = self.LossFn(s_predict, s_label)
+        loss = self.LossFn(s_predict, support_labels)
         self.Learner.zero_grad()        # 先清空基学习器梯度
         grads = t.autograd.grad(loss, self.Learner.parameters(), create_graph=True)
         adapted_state_dict = self.Learner.clone_state_dict()

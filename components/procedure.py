@@ -268,11 +268,12 @@ def impProcedure(model: IMP,
     acc_val = 0.
 
     for task_i in range(taskBatchSize):
+
         model_input = task.episode()
 
         predicts, epoch_loss = model(*model_input)
 
-        loss_val += epoch_loss
+        loss_val += epoch_loss.sum()
         predicts = predicts.cpu()
         acc_val += task.accuracy(predicts, is_labels=True)
 

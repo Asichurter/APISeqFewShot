@@ -133,12 +133,14 @@ class ATAML(nn.Module):
         self.Method = method
         self.AdaptIter = adapt_iter
 
-    def forward(self, support, query, sup_len, que_len, s_label,
+    def forward(self, support, query, sup_len, que_len, support_labels,
                 adapt_iter=1):
         method = self.Method
 
-        if self.DataParellel:
-            support.squeeze(0)
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
+            support_labels = support_labels[0]
 
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
@@ -160,7 +162,7 @@ class ATAML(nn.Module):
             adapted_pars = collectParamsFromStateDict(adapted_state_dict)
 
             s_predict = self.Learner(support, sup_len, params=adapted_state_dict)
-            loss = self.LossFn(s_predict, s_label)
+            loss = self.LossFn(s_predict, support_labels)
             grads = t.autograd.grad(loss, adapted_pars, create_graph=True)
 
             # 计算适应后的参数

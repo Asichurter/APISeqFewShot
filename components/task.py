@@ -19,11 +19,10 @@ from utils.training import getBatchSequenceFunc, batchSequenceWithoutPad
 #########################################
 class EpisodeTask:
     def __init__(self, k, qk, n, N, dataset, cuda=True,
-                 label_expand=False, d_type='long', parallel=False):
+                 label_expand=False, parallel=None):
         self.UseCuda = cuda
         self.Dataset = dataset
         self.Expand = label_expand
-        self.DType = d_type
         self.Parallel = parallel
 
         assert k + qk <= N, '支持集和查询集采样总数大于了类中样本总数!'
@@ -128,7 +127,7 @@ class EpisodeTask:
 
 class ProtoEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset,
-                 cuda=True, expand=False, parallel=False):
+                 cuda=True, expand=False, parallel=None):
         super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
@@ -150,15 +149,17 @@ class ProtoEpisodeTask(EpisodeTask):
             queries = queries.cuda()
             labels = labels.cuda()
 
-        if self.Parallel:
-            supports = supports.unsqueeze(0)
-            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+        if self.Parallel is not None:
+            supports = supports.repeat((len(self.Parallel),1,1,1))
+            self.SupSeqLenCache = [self.SupSeqLenCache]*len(self.Parallel)
 
         # 重整数据结构，便于模型读取任务参数
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-        return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache), labels
+        return (supports, queries,
+                t.LongTensor(self.SupSeqLenCache), t.LongTensor(self.QueSeqLenCache)), \
+               labels
 
 #################################################
 # 适用于使用支持集损失和SGD优化器进行adapt的模型的任务，
@@ -166,7 +167,7 @@ class ProtoEpisodeTask(EpisodeTask):
 #################################################
 class AdaptEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset,
-                 cuda=True, expand=False, parallel=False):
+                 cuda=True, expand=False, parallel=None):
         super(AdaptEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
@@ -195,18 +196,19 @@ class AdaptEpisodeTask(EpisodeTask):
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-        if self.Parallel:
-            supports = supports.unsqueeze(0)
-            support_labels = support_labels.unsqueeze(0)
-            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+        if self.Parallel is not None:
+            supports = supports.repeat((len(self.Parallel),1,1,1))
+            support_labels = support_labels.repeat((len(self.Parallel),1))
+            self.SupSeqLenCache = [self.SupSeqLenCache]*len(self.Parallel)
 
-        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, \
+        return supports, queries, \
+               t.LongTensor(self.SupSeqLenCache), t.LongTensor(self.QueSeqLenCache), \
                support_labels, query_labels
 
 
 class ImpEpisodeTask(EpisodeTask):
     def __init__(self, k, qk, n, N, dataset,
-                 cuda=True, expand=False, parallel=False):
+                 cuda=True, expand=False, parallel=None):
         super(ImpEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
     def episode(self, task_seed=None, sampling_seed=None):
@@ -235,19 +237,20 @@ class ImpEpisodeTask(EpisodeTask):
         supports = supports.view(n, k, sup_seq_len)
         queries = queries.view(n*qk, que_seq_len)      # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-        if self.Parallel:
-            supports = supports.unsqueeze(0)
-            support_labels = support_labels.unsqueeze(0)
-            self.SupSeqLenCache = self.SupSeqLenCache.unsqueeze(0)
+        if self.Parallel is not None:
+            supports = supports.repeat((len(self.Parallel),1,1,1))
+            support_labels = support_labels.repeat((len(self.Parallel),1))
+            self.SupSeqLenCache = [self.SupSeqLenCache]*len(self.Parallel)
 
-        return supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, \
+        return supports, queries, \
+               t.LongTensor(self.SupSeqLenCache), t.LongTensor(self.QueSeqLenCache), \
                support_labels, query_labels
 
 
 
 class ReptileEpisodeTask(EpisodeTask):
     def __init__(self, training_num, n, N, dataset,
-                 cuda=True, expand=False, parallel=False):
+                 cuda=True, expand=False, parallel=None):
         super(ReptileEpisodeTask, self).__init__(training_num, N-training_num, n, N, dataset, cuda, expand, parallel)
 
     def getTaskSampler(self, label_space, isTrain, seed=None):
@@ -315,7 +318,7 @@ class ReptileEpisodeTask(EpisodeTask):
 
             supports = supports.view(n * k, sup_seq_len)
 
-            return supports, None, self.SupSeqLenCache, None, support_labels
+            return supports, None, t.LongTensor(self.SupSeqLenCache), None, support_labels
 
         else:
             support_sampler, query_sampler = self.getTaskSampler(label_space, False, sampling_seed)
@@ -340,8 +343,9 @@ class ReptileEpisodeTask(EpisodeTask):
             supports = supports.view(n * k, sup_seq_len)
             queries = queries.view(n * qk, que_seq_len)  # 注意，此处的qk指每个类中的查询样本个数，并非查询集长度
 
-            return (supports, queries, self.SupSeqLenCache, self.QueSeqLenCache, support_labels), \
-                   query_labels
+            return (supports, queries,
+                    t.LongTensor(self.SupSeqLenCache), t.LongTensor(self.QueSeqLenCache),
+                    support_labels), query_labels
 
 
 

@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 122,
-  "modelName" : "HybridAttentionNet",
+  "version" : 123,
+  "modelName" : "ProtoNet",
 
 
   "modelParams": {
@@ -14,9 +14,11 @@
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 1,
+    "num_layers" : 3,
     "self_att_dim" : null,
     "bidirectional": false,
+    "head_size": 8,
+    "max_seq_len": 200,
 
     "temperature": 1,
     "cluster_num_step": 1,
@@ -31,13 +33,13 @@
     "trans_head_nums": 1,
 
     "data_parallel": false,
-    "data_parallel_devices": [0,1]
+    "data_parallel_devices": null
   },
 
   "valCycle" : 100,
-  "valEpisode" : 100,
+  "valEpisode" : 50,
 
-  "lrDecayIters" : 15000,
+  "lrDecayIters" : 20000,
   "lrDecayGamma" : 0.1,
   "optimizer": "sgd",
   "weightDecay" : 5e-4,
@@ -53,9 +55,9 @@
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : true,
+  "useVisdom" : false,
 
-  "trainingEpoch" : 30000,
+  "trainingEpoch" : 80000,
 
   "Ns" : {
           "cluster":20,
@@ -97,7 +99,7 @@
                 "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用单向LSTM编码，使用1dCNN解码",
+                "使用3层的8头transformer编码，使用1dCNN解码",
                 "不使用LayerNorm"
       ]
 }

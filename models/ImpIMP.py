@@ -4,6 +4,7 @@ import numpy as np
 
 from components.sequence.LSTM import BiLstmEncoder
 from components.sequence.CNN import CNNEncoder1D
+from components.sequence.transformer import TransformerEncoder
 from utils.training import extractTaskStructFromInput
 
 
@@ -21,8 +22,10 @@ class ImpIMP(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        self.Encoder = BiLstmEncoder(input_size=embed_size,
-                                     **modelParams)
+        # self.Encoder = BiLstmEncoder(input_size=embed_size,
+        #                              **modelParams)
+        self.Encoder = TransformerEncoder(embed_size=embed_size,
+                                          **modelParams)
 
         self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
                                      (1 + modelParams['bidirectional']) * modelParams['hidden_size']])
@@ -159,11 +162,16 @@ class ImpIMP(nn.Module):
 
         # 由于数据并行关系，为了保证支持集的完整性，
         # 将support的batch维度置为1
-        if self.DataParellel:
-            support.squeeze(0)
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
+            support_labels = support_labels[0]
 
         # support shape: [n, k, seq]
         # query shape: [qk, seq]
+        # print(f'sup={support.size()},que={query.size()},sup_len={sup_len.size()},que_len={que_len.size()},'
+        #       f'sup_lab={support_labels.size()},que_lab={query_labels.size()}')
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         nClusters = n  # 初始类簇的数量等于类数量

@@ -39,15 +39,15 @@ class ProtoNet(nn.Module):
         # self.Encoder = CNNEncoder1D(**modelParams)
         # self.Encoder = CNNEncoder1D(**kwargs)
 
-        # self.Encoder = TransformerEncoder(embed_size=embed_size,
-        #                                   **modelParams)
+        self.Encoder = TransformerEncoder(embed_size=embed_size,
+                                          **modelParams)
         # self.Encoder =  BiLstmEncoder(embed_size,  # 64
         #                               hidden_size=hidden,
         #                               layer_num=layer_num,
         #                               self_att_dim=self_att_dim,
         #                               useBN=False)
         # self.Encoder = TemporalConvNet(**modelParams)
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
 
         # self.Encoder = nn.ModuleList([
         #     BiLstmEncoder(embed_size,  # 64
@@ -84,8 +84,10 @@ class ProtoNet(nn.Module):
         #                            relus=[True,True])
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
-        if self.DataParellel:
-            support.squeeze(0)
+
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
 
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 

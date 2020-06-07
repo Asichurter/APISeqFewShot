@@ -151,8 +151,10 @@ class IMP(nn.Module):
     def forward(self, support, query, sup_len, que_len, support_labels, query_labels,
                 if_cache_data=False):
 
-        if self.DataParellel:
-            support.squeeze(0)
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
+            support_labels = support_labels[0]
 
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 

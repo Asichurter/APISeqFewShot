@@ -89,7 +89,7 @@
         },
 
         "Linux": {
-          "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+          "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
         }
       },
 

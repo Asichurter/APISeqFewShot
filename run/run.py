@@ -135,34 +135,34 @@ val_dataset = SeqFileDataset(val_path_manager.FileData(),
 if model_type in ADAPTED_MODELS:
     train_task = AdaptEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand,
-                                  parallel=modelParams['data_parallel'])
+                                  parallel=modelParams['data_parallel_devices'])
     val_task = AdaptEpisodeTask(k, qk, n, N, val_dataset,
                                   cuda=True, expand=expand,
-                                parallel=modelParams['data_parallel'])
+                                parallel=modelParams['data_parallel_devices'])
 elif model_type == 'Reptile':
     train_task = ReptileEpisodeTask(N, n, N,
                                     dataset=train_dataset,
                                     expand=expand,
-                                    parallel=modelParams['data_parallel'])
+                                    parallel=modelParams['data_parallel_devices'])
     val_task = ReptileEpisodeTask(N-k, n, N,
                                     dataset=val_dataset,
                                     expand=expand,
-                                  parallel=modelParams['data_parallel'])
+                                  parallel=modelParams['data_parallel_devices'])
 elif model_type in IMP_MODELS:
     train_task = ImpEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand,
-                                parallel=modelParams['data_parallel'])
+                                parallel=modelParams['data_parallel_devices'])
     val_task = ImpEpisodeTask(k, qk, n, N, val_dataset,
                                   cuda=True, expand=expand,
-                              parallel=modelParams['data_parallel'])
+                              parallel=modelParams['data_parallel_devices'])
 
 else:
     train_task = ProtoEpisodeTask(k, qk, n, N, train_dataset,
                                   cuda=True, expand=expand,
-                                  parallel=modelParams['data_parallel'])
+                                  parallel=modelParams['data_parallel_devices'])
     val_task = ProtoEpisodeTask(k, qk, n, N, val_dataset,
                                   cuda=True, expand=expand,
-                                parallel=modelParams['data_parallel'])
+                                parallel=modelParams['data_parallel_devices'])
 
 stat = TrainStatManager(model_save_path=train_path_manager.Model(),
                         stat_save_path=train_path_manager.Doc(),
@@ -312,7 +312,7 @@ printState('start training')
 stat.startTimer()
 
 # 检查版本号，以防止不小心覆盖version
-checkVersion(version)
+# checkVersion(version)
 # 保存配置文件到doc
 saveConfigFile(train_path_manager.Doc(), model_type)
 
@@ -399,6 +399,8 @@ with t.autograd.set_detect_anomaly(False):
             # model.eval()
             validate_acc = 0.
             validate_loss = 0.
+            
+            for test_i in range(ValEpisode):
             #
             # for i in range(ValEpisode):
             #     model_input, labels =val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
@@ -413,43 +415,51 @@ with t.autograd.set_detect_anomaly(False):
             #     validate_loss += loss_val.detach().item()
             #     validate_acc += val_task.accuracy(predicts)
 
-            if model_type == 'TCProtoNet':
-                validate_acc, validate_loss = penalQLossProcedure(model,
-                                                             ValEpisode,
-                                                             val_task,
-                                                             loss,
-                                                             None,
-                                                             None,
-                                                             train=False)
-
-            elif model_type == 'FEAT':
-                validate_acc, validate_loss = featProcedure(model,
-                                                       n, k, qk,
-                                                       ValEpisode,
-                                                       val_task,
-                                                       loss,
-                                                       None,
-                                                       None,
-                                                       train=False,
-                                                       contrastive_factor=modelParams['contrastive_factor'])
-
-            elif model_type in IMP_MODELS:
-                validate_acc, validate_loss = impProcedure(model,
-                                                      ValEpisode,
-                                                      val_task,
-                                                      None,
-                                                      None,
-                                                      train=False)
-
-            else:
-
-                validate_acc, validate_loss = queryLossProcedure(model,
-                                                            ValEpisode,
-                                                            val_task,
-                                                            loss,
-                                                            None,
-                                                            None,
-                                                            train=False)
+                if model_type == 'TCProtoNet':
+                    validate_acc_oneiter, validate_loss_oneiter = penalQLossProcedure(model,
+                                                                 1,
+                                                                 val_task,
+                                                                 loss,
+                                                                 None,
+                                                                 None,
+                                                                 train=False)
+                    validate_acc += validate_acc_oneiter
+                    validate_loss += validate_loss_oneiter
+    
+                elif model_type == 'FEAT':
+                    validate_acc_oneiter, validate_loss_oneiter = featProcedure(model,
+                                                           n, k, qk,
+                                                           1,
+                                                           val_task,
+                                                           loss,
+                                                           None,
+                                                           None,
+                                                           train=False,
+                                                           contrastive_factor=modelParams['contrastive_factor'])
+                    validate_acc += validate_acc_oneiter
+                    validate_loss += validate_loss_oneiter
+    
+                elif model_type in IMP_MODELS:
+                    validate_acc_oneiter, validate_loss_oneiter = impProcedure(model,
+                                                          1,
+                                                          val_task,
+                                                          None,
+                                                          None,
+                                                          train=False)
+                    validate_acc += validate_acc_oneiter
+                    validate_loss += validate_loss_oneiter
+    
+                else:
+    
+                    validate_acc_oneiter, validate_loss_oneiter = queryLossProcedure(model,
+                                                                1,
+                                                                val_task,
+                                                                loss,
+                                                                None,
+                                                                None,
+                                                                train=False)
+                    validate_acc += validate_acc_oneiter
+                    validate_loss += validate_loss_oneiter
 
             avg_validate_acc = validate_acc / ValEpisode
             avg_validate_loss = validate_loss / ValEpisode

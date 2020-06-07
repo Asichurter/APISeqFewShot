@@ -17,9 +17,12 @@ class TransformerEncoder(nn.Module):
                  self_att_dim=128,
                  head_size=4,
                  dropout=0.1,
+                 max_seq_len=200,
                  **kwargs):
 
         super(TransformerEncoder, self).__init__()
+
+        self.MaxSeqLen = max_seq_len
 
         self.ForwardTrans = nn.Linear(embed_size, hidden_size)
         encoder_layer = nn.TransformerEncoderLayer(d_model=hidden_size,
@@ -39,12 +42,12 @@ class TransformerEncoder(nn.Module):
         # shape: [seq, batch, dim]
         # 由于transformer要序列优先，因此对于batch优先的输入先进行转置
         x = x.transpose(0,1).contiguous()
-        max_len = int(max(lens))
+        max_len = self.MaxSeqLen#int(t.max(lens).item())
         mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
         x = self.PositionEncoding(x)
         # print('\n\nmax_len:', max_len)
-        # print('lens:', lens)
-        # print('x size:', x.size())
+        # print('lens:', lens, end=' ')
+        # print('x size:', x.size(), end=' ')
         # print('mask.size:', mask.size())
         x = self.Encoder(src=x,
                          src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中

@@ -12,6 +12,8 @@ class HybridIMP(nn.Module):
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
         super(HybridIMP, self).__init__()
 
+        self.DataParallel = modelParams['data_parallel']
+
         sigma = 1 if 'init_sigma' not in modelParams else modelParams['init_sigma']
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
 
@@ -154,6 +156,12 @@ class HybridIMP(nn.Module):
 
     def forward(self, support, query, sup_len, que_len, support_labels, query_labels,
                 if_cache_data=False):
+
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
+            support_labels = support_labels[0]
+
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
         nClusters = n  # 初始类簇的数量等于类数量

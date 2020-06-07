@@ -79,8 +79,9 @@ class HAPNet(nn.Module):
 
     def forward(self, support, query, sup_len, que_len):
 
-        if self.DataParellel:
-            support.squeeze(0)
+        if self.DataParallel:
+            support = support.squeeze(0)
+            sup_len = sup_len[0]
 
         n, k, qk, sup_seq_len, que_seq_len = extractTaskStructFromInput(support, query)
 
