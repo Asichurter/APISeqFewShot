@@ -9,7 +9,8 @@ from utils.error import Reporter
 
 def statNGram(parent_path, window=3,
               dict_save_path=None,          # NGram频率的保存
-              frequency_stairs=[]):         # 频率阶梯，必须从小到大排列，统计超过该频率需要的最少NGram个数
+              frequency_stairs=[],          # 频率阶梯，必须从小到大排列，统计超过该频率需要的最少NGram个数
+              class_dir=False):
 
     reporter = Reporter()
 
@@ -20,23 +21,29 @@ def statNGram(parent_path, window=3,
     for folder in tqdm(os.listdir(parent_path)):
         folder_path = parent_path + folder + '/'
 
-        try:
-            seq = loadJson(folder_path + folder + '.json')['apis']
+        if class_dir:
+            items = os.listdir(folder_path)
+        else:
+            items = [folder+'.json']
 
-            for i in range(len(seq)-window):
-                ngram = strlistToStr(seq[i:i+window])
+        for item in items:
+            try:
+                seq = loadJson(folder_path + item)['apis']
 
-                total_cnt += 1
-                if ngram not in ngram_dict:
-                    ngram_dict[ngram] = 1
-                else:
-                    ngram_dict[ngram] += 1
+                for i in range(len(seq)-window):
+                    ngram = strlistToStr(seq[i:i+window])
 
-            reporter.logSuccess()
+                    total_cnt += 1
+                    if ngram not in ngram_dict:
+                        ngram_dict[ngram] = 1
+                    else:
+                        ngram_dict[ngram] += 1
 
-        except Exception as e:
-            reporter.logError(entity=folder, msg=str(e))
-            continue
+                reporter.logSuccess()
+
+            except Exception as e:
+                reporter.logError(entity=folder, msg=str(e))
+                continue
 
     printState('Processing...')
 
@@ -63,6 +70,7 @@ def statNGram(parent_path, window=3,
 
     printBulletin('Total: %d NGrams'%len(ngram_dict))
 
+    reporter.report()
     return ngram_dict
 
 

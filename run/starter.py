@@ -21,8 +21,8 @@ from config import generateConfigReport
 
 # 生成报告总结
 ################################################################
-generateConfigReport(dataset='virushare-20-3gram', include_result=True,
-                     dump_path='../docs/virushare-20-3gram-summary.json')
+# generateConfigReport(dataset='virushare-20-3gram', include_result=True,
+#                      dump_path='../docs/virushare-20-3gram-summary.json')
 ################################################################
 
 # 生成/还原 数据集分割文件
@@ -30,8 +30,8 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 # manager = PathManager(dataset='virushare-20-3gram')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_4.json')
-# revertDatasetSplit(dataset='virushare-20-3gram',
-#                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_2.json')
+# revertDatasetSplit(dataset='virushare-20-h3gram',
+#                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_4.json')
 ###############################################################
 
 
@@ -58,9 +58,9 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 
 # 制作基于下标的数据集
 ################################################################
-# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare_20/")
+# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/")
 # for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare-20-3gram', d_type=d_type)
+#     manager = PathManager(dataset='virushare-20-h3gram', d_type=d_type)
 #
 #     makeDataFile(json_path=manager.Folder(),
 #                  w2idx_path=manager.WordIndexMap(),
@@ -131,20 +131,22 @@ generateConfigReport(dataset='virushare-20-3gram', include_result=True,
 # removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                     class_dir=False)
 #
-# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# man = PathManager(dataset='virushare-20-h3gram', d_type='all')
+# ngram_dict = statNGram(parent_path=man.Folder(),
 #                        window=3,
-#                        dict_save_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json',
-#                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95])
+#                        dict_save_path='/home/asichurter/datasets/reports/virushare-20_h3gram_api_set.json',
+#                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
+#                        class_dir=True)
 #
 # num = int(input('NGram >> '))
 # #
-# # d = loadJson('/home/asichurter/datasets/reports/virushare-10_3gram_api_freq.json')
-# #
-# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
+#
+# convertToNGramSeq(parent_path=man.Folder(),
 #                   window=3,
 #                   ngram_dict=ngram_dict,
 #                   ngram_max_num=num,
-#                   class_dir=False)
+#                   class_dir=True)
 ################################################################
 
 
