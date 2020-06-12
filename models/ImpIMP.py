@@ -13,7 +13,7 @@ class ImpIMP(nn.Module):
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
         super(ImpIMP, self).__init__()
 
-        self.DataParellel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
+        self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
         sigma = 1 if 'init_sigma' not in modelParams else modelParams['init_sigma']
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']

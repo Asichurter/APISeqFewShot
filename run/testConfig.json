@@ -1,12 +1,12 @@
 {
-  "dataset" :  "virushare-20-3gram",
+  "dataset" :  "virushare-20-h3gram",
 
   "k" : 5,
   "n" : 5,
   "qk" : 5,
 
-  "version" : 123,
-  "modelName" : "ProtoNet",
+  "version" : 130,
+  "modelName" : "ImpIMP",
 
   "trainingEpoch" : 5000,
 
@@ -14,6 +14,7 @@
           "cluster":20,
           "test":20,
           "virushare-20-3gram":20,
+          "virushare-20-h3gram": 20,
           "drebin_10":10,
           "miniImageNet":600,
           "virushare_20_image":20,
@@ -28,7 +29,7 @@
     },
 
     "Linux": {
-      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+      "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
     }
   },
 

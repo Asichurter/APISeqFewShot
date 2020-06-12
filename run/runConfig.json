@@ -3,18 +3,18 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
 
-  "version" : -1,
-  "modelName" : "ProtoNet",
+  "version" : 131,
+  "modelName" : "ImpIMP",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 3,
+    "num_layers" : 1,
     "self_att_dim" : null,
     "bidirectional": false,
     "head_size": 4,
@@ -41,28 +41,29 @@
 
   "lrDecayIters" : 20000,
   "lrDecayGamma" : 0.1,
-  "optimizer": "adam",
+  "optimizer": "sgd",
   "weightDecay" : 5e-4,
   "lossFunction": "nll",
   "defaultLr" : 1e-3,
   "lrs" : {
     "Embedding.weight_" : 1e-3
   },
-  "taskBatchSize": 2,
+  "taskBatchSize": 4,
   "criteria":  "loss",
 
   "recordGradient" : false,
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : true,
+  "useVisdom" : false,
 
-  "trainingEpoch" : 80000,
+  "trainingEpoch" : 50000,
 
   "Ns" : {
           "cluster":20,
           "test":20,
           "virushare-20-3gram":20,
+          "virushare-20-h3gram": 20,
           "drebin_10":10,
           "miniImageNet":600,
           "virushare_20_image":20,
@@ -87,19 +88,19 @@
     },
 
     "Linux": {
-      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+      "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
     }
   },
 
       "description": [
                 "训练类使用满编73个",
-                "使用任务batch=2",
+                "使用任务batch=8",
+                "qk恢复15",
                 "使用300维度的GloVe初始化",
-                "训练周期减小到30000轮",
                 "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用3层的4头transformer编码，使用1dCNN解码",
+                "使用1层单向LSTM编码，使用1dCNN解码",
                 "不使用LayerNorm"
       ]
 }
