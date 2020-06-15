@@ -90,3 +90,43 @@ class PositionalEncoding(nn.Module):
         x = x + pe
 
         return self.dropout(x)
+
+#############################################
+# 带有残差连接的多头注意力层，用于重新编码序列信息
+#############################################
+class MultiHeadAttention(nn.Module):
+
+    def __init__(self,
+                 mhatt_input_size,
+                 mhatt_dropout=0.5,
+                 mhatt_head_nums=1,
+                 max_seq_len=200,
+                 **kwargs):
+        super(MultiHeadAttention, self).__init__()
+
+        self.MaxSeqLen = max_seq_len
+        self.Transformer = nn.MultiheadAttention(embed_dim=mhatt_input_size,
+                                                 num_heads=mhatt_head_nums,
+                                                 dropout=mhatt_dropout)
+
+        self.fc = nn.Linear(mhatt_input_size, mhatt_input_size)
+        self.dropout = nn.Dropout(mhatt_dropout)
+        self.layernorm = nn.LayerNorm(mhatt_input_size)
+
+
+    def forward(self, x, lens=None):
+
+        # reshape to [seq, batch, dim]
+        x = x.transpose(0,1).contiguous()
+
+        max_len = self.MaxSeqLen#int(t.max(lens).item())
+        mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
+
+        # input as (query,key,value), namely self-attention
+        residual, _weights = self.Transformer(x,x,x,
+                                              key_padding_mask=mask)
+
+        residual = self.dropout(self.fc(residual))
+
+        return self.layernorm(residual + x).transpose(0,1).contiguous()
+

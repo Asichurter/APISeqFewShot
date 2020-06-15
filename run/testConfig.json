@@ -1,12 +1,12 @@
 {
-  "dataset" :  "virushare-20-h3gram",
+  "dataset" :  "virushare-20-3gram",
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
-  "version" : 130,
-  "modelName" : "ImpIMP",
+  "version" : 138,
+  "modelName" : "ProtoNet",
 
   "trainingEpoch" : 5000,
 

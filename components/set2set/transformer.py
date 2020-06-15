@@ -28,7 +28,7 @@ class TransformerSet(nn.Module):
         self.layernorm = nn.LayerNorm(trans_input_size)
 
 
-    def forward(self, x):
+    def forward(self, x, lens=None):
 
         # reshape to [seq, batch, dim]
         x = x.transpose(0,1).contiguous()

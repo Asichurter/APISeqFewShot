@@ -3,11 +3,11 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 15,
+  "qk" : 5,
 
 
-  "version" : 131,
-  "modelName" : "ImpIMP",
+  "version" : 138,
+  "modelName" : "ProtoNet",
 
   "modelParams": {
     "embed_size": 300,
@@ -16,7 +16,7 @@
     "hidden_size" : 128,
     "num_layers" : 1,
     "self_att_dim" : null,
-    "bidirectional": false,
+    "bidirectional": true,
     "head_size": 4,
     "max_seq_len": 200,
 
@@ -37,9 +37,9 @@
   },
 
   "valCycle" : 100,
-  "valEpisode" : 50,
+  "valEpisode" : 100,
 
-  "lrDecayIters" : 20000,
+  "lrDecayIters" : 14000,
   "lrDecayGamma" : 0.1,
   "optimizer": "sgd",
   "weightDecay" : 5e-4,
@@ -48,7 +48,7 @@
   "lrs" : {
     "Embedding.weight_" : 1e-3
   },
-  "taskBatchSize": 4,
+  "taskBatchSize": 2,
   "criteria":  "loss",
 
   "recordGradient" : false,
@@ -57,7 +57,7 @@
   "trainingVerbose" : false,
   "useVisdom" : false,
 
-  "trainingEpoch" : 50000,
+  "trainingEpoch" : 30000,
 
   "Ns" : {
           "cluster":20,
@@ -94,13 +94,13 @@
 
       "description": [
                 "训练类使用满编73个",
-                "使用任务batch=8",
-                "qk恢复15",
+                "使用任务batch=2",
                 "使用300维度的GloVe初始化",
                 "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层单向LSTM编码，使用1dCNN解码",
-                "不使用LayerNorm"
+                "使用1层双向LSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "在LSTM和1dCNN之间插入一个多头注意力编码"
       ]
 }

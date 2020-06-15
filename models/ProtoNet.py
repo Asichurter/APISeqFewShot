@@ -5,7 +5,7 @@ from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from components.reduction.max import StepMaxReduce
 from components.sequence.TCN import TemporalConvNet
-from components.sequence.transformer import TransformerEncoder
+from components.sequence.transformer import TransformerEncoder, MultiHeadAttention
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -31,7 +31,11 @@ class ProtoNet(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
+        hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
+
         self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        self.MiddleEncoder = MultiHeadAttention(mhatt_input_size=hidden_size,
+                                                **modelParams)
         # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 
         # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
@@ -72,8 +76,7 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
-                                     (1+modelParams['bidirectional']) * modelParams['hidden_size']])
+        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
         # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
         #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()
@@ -87,6 +90,8 @@ class ProtoNet(nn.Module):
     def _embed(self, x, lens):
         x = self.EmbedDrop(self.Embedding(x))
         x = self.Encoder(x, lens)
+        if self.MiddleEncoder is not None:
+            x = self.MiddleEncoder(x, lens)
         x = self.Decoder(x, lens)
 
         return x
