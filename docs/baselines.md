@@ -11,13 +11,15 @@
 
 1. common dynamic methods:
     
-    1. API frequency (with kNN, boosted-trees, RF etc.)
+    1. Histogram of API or NGram (with kNN, boosted-trees, RF etc.)
     
-    2. NGram frequency (with kNN, boosted-trees, RF etc.)
+    2. TF-IDF of API or NGram (with kNN, boosted-trees, RF etc.)
     
     3. Sequence Match Algorithm (LCS etc.)
     
     4. Markov Chain analysis (state transition)
+    
+    5. Association Mining Rules
 
 
 2. Few-Shot models

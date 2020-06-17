@@ -33,6 +33,9 @@ class EpisodeTask:
 
         self.LabelsCache = None
 
+        self.TaskSeedCache = None
+        self.SamplingSeedCache = None
+
     def readParams(self):
         params = self.Params
         k, qk, n, N = params['k'], params['qk'], params['n'], params['N']
@@ -41,6 +44,8 @@ class EpisodeTask:
 
     def getLabelSpace(self, seed=None):
         seed = magicSeed() if seed is None else seed
+        self.TaskSeedCache = seed
+
         rd.seed(seed)
         classes_list = [i for i in range(self.Dataset.ClassNum)]
         sampled_classes = rd.sample(classes_list, self.Params['n'])
@@ -49,13 +54,16 @@ class EpisodeTask:
         return sampled_classes
 
     def getTaskSampler(self, label_space, seed=None):
-        task_seed = magicSeed() if seed is None else seed
+        sampling_seed = magicSeed() if seed is None else seed
+
+        self.SamplingSeedCache = sampling_seed
+
         k, qk, n, N = self.readParams()
 
         # rd.seed(task_seed)
         # seed_for_each_class = rd.sample(magicList(), len(label_space))
         seed_for_each_class = randomList(num=len(label_space),
-                                         seed=task_seed,
+                                         seed=sampling_seed,
                                          allow_duplicate=True)  # rd.sample(magicList(), len(label_space))
 
         support_sampler = EpisodeSamlper(k, qk, N, seed_for_each_class,
