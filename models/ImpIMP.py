@@ -31,7 +31,7 @@ class ImpIMP(nn.Module):
                                      (1 + modelParams['bidirectional']) * modelParams['hidden_size']])
 
         # TODO: 使用Sigma
-        self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
+        self.Sigma = None#nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
         self.Dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
         self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
