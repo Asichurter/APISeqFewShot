@@ -295,7 +295,8 @@ def removeApiRedundance(json_path,
     reporter.report()
 
 def filterApiSequence(json_path,
-                      filterd_apis):
+                      api_list,
+                      keep_or_filter=True):      # 若为True则过滤列表中的API，若为False则保留列表中的API
 
     reporter = Reporter()
 
@@ -308,8 +309,9 @@ def filterApiSequence(json_path,
             new_api_seq = []
 
             for api_token in report['apis']:
-                # 只保留不在过滤列表中的API
-                if api_token not in filterd_apis:
+                # 若过滤，则api不在列表中
+                # 若保留，则api在列表中
+                if (api_token in api_list) ^ keep_or_filter:
                     new_api_seq.append(api_token)
 
             # 使用新api序列覆盖原api序列

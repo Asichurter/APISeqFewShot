@@ -13,8 +13,9 @@ import os
 import logging
 
 path = "/home/asichurter/.cuckoo/storage/analyses/"
+# path = "/home/asichurter/datasets/JSONs/LargePE-100-original/no-problem/"
 child_path = '/reports/report.json'
-config_path = "/home/asichurter/datasets/PEs/LargePE-Unfiltered/config.json"
+config_path = "/home/asichurter/datasets/PEs/LargePE-100/config.json"
 # hist_config_path = "/home/asichurter/malwares/virushare_20/histConfig.json"
 
 with open(config_path, 'r') as f:

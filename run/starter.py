@@ -16,6 +16,7 @@ from models.ProtoNet import IncepProtoNet
 from utils.matrix import batchDot
 # from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
+from extractors.TFIDF import getTFIDF
 
 from config import generateConfigReport
 
@@ -72,10 +73,10 @@ from config import generateConfigReport
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# apiStat('/home/asichurter/datasets/JSONs/jsons-3gram/',
 #         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         dump_report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',#None,#
-#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_set.json',#None
+#         dump_report_path='/home/asichurter/datasets/reports/virushare-20_3gram_api_report.json',#None,#
+#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json',#None
 #         class_dir=False)
 ################################################################
 
@@ -132,23 +133,30 @@ from config import generateConfigReport
 #                     class_dir=False)
 #
 # man = PathManager(dataset='virushare-20-h3gram', d_type='all')
-# ngram_dict = statNGram(parent_path=man.Folder(),
+# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                        window=3,
-#                        dict_save_path='/home/asichurter/datasets/reports/virushare-20_h3gram_api_set.json',
+#                        dict_save_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json',
 #                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
-#                        class_dir=True)
+#                        class_dir=False)
 #
 # num = int(input('NGram >> '))
 # #
 # d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
 #
-# convertToNGramSeq(parent_path=man.Folder(),
+# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
-#                   ngram_max_num=num,
-#                   class_dir=True)
+#                   ngram_max_num=None,
+#                   class_dir=False)
 ################################################################
 
+api_set = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
+dict_map = {k:i for i,k in enumerate(api_set)}
+dumpJson(dict_map, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json')
+top_k_apis = getTFIDF(dataset_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+                      dict_map_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json',
+                      is_class_dir=False,
+                      top_k=2000)
 
 # 转化数据集
 ################################################################
@@ -205,3 +213,45 @@ from config import generateConfigReport
 # z = batchDot(p, v, transpose=False)
 ################################################################
 
+# API名称规范化
+################################################################
+# mappingApiNormalize(path,
+#                     mapping={
+#                         "RegCreateKeyExA": "RegCreateKey",
+#                         "RegCreateKeyExW": "RegCreateKey",
+#                         "RegDeleteKeyA": "RegDeleteKey",
+#                         "RegDeleteKeyW": "RegDeleteKey",
+#                         "RegSetValueExA": "RegSetValue",
+#                         "RegSetValueExW": "RegSetValue",
+#                         "RegDeleteValueW": "RegDeleteValue",
+#                         "RegDeleteValueA": "RegDeleteValue",
+#                         "RegEnumValueW": "RegEnumValue",
+#                         "RegEnumValueA": "RegEnumValue",
+#                         "RegQueryValueExW": "RegQueryValue",
+#                         "RegQueryValueExA": "RegQueryValue",
+#                         "CreateProcessInternalW": "CreateProcess",
+#                         "NtCreateThreadEx": "NtCreateThread",
+#                         "CreateRemoteThread": "CreateRemoteThread",
+#                         "CreateThread": "CreateThread",
+#                         "NtTerminateProcess": "TerminateProcess",
+#                         "NtOpenProcess": "OpenProcess",
+#                         "InternetOpenUrlA": "InternetOpenUrl",
+#                         "InternetOpenUrlW": "InternetOpenUrl",
+#                         "InternetOpenW": "InternetOpen",
+#                         "InternetOpenA": "InternetOpen",
+#                         "InternetConnectW": "InternetConnect",
+#                         "InternetConnectA": "InternetConnect",
+#                         "HttpOpenRequestW": "HttpOpenRequest",
+#                         "HttpOpenRequestA": "HttpOpenRequest",
+#                         "HttpSendRequestA": "HttpSendRequest",
+#                         "HttpSendRequestW": "HttpSendRequest",
+#                         "ShellExecuteExW": "ShellExecute",
+#                         "LdrLoadDll": "LdrLoadDll",
+#                         "CopyFileW": "CopyFile",
+#                         "CopyFileA": "CopyFile",
+#                         "CopyFileExW": "CopyFile",
+#                         "NtCreateFile": "CreateFile",
+#                         "DeleteFileW": "DeleteFile",
+#                         "NtDeleteFile": "NtDeleteFile",
+#                     })
+################################################################

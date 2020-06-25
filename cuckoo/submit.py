@@ -19,7 +19,7 @@ import shutil
 import json
 
 pe_path = '/home/asichurter/datasets/PEs/cache/'
-config_path = '/home/asichurter/datasets/PEs/LargePE-Unfiltered/config.json'
+config_path = '/home/asichurter/datasets/PEs/LargePE-100/config.json'
 
 port = 1337
 token = 'kbU-z_aDD3CT4RCPE9ayMg'

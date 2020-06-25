@@ -20,8 +20,8 @@ from utils.magic import magicSeed
 # ***************************************************************************
 dataset_name = 'virushare-20-3gram'
 dataset_subtype = 'test'
-model_name = 'ImpIMP'
-version = 127
+model_name = 'IMP'
+version = 141
 N = 20
 plot_option = 'entire'#'entire'
 k, n, qk = 5, 5, 15
