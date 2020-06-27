@@ -10,21 +10,25 @@ from utils.file import loadJson, dumpJson
 # 根据序列数据集(ngram,api)，先统计元素的样本内频率，
 # 然后计算各个特征的TF-IDF值
 ##############################################
-def getTFIDF(dataset_path,
-                    dict_map_path,  # 将序列元素转化为一个实值的映射的路径，通常为wordMap.json
-                    is_class_dir=True,
-                    level='item',   # 在样本层次上上统计TFIDF还是类层次上
-                    top_k=2000):    # 取tf-idf值最高的k个api
+def calTFIDF(dataset_path,
+             dict_map_path,  # 将序列元素转化为一个实值的映射的路径，通常为wordMap.json
+             is_class_dir=True,
+             level='item',  # 在样本层次上上统计TFIDF还是类层次上
+             tfidf_dump_path=None,
+             top_k=2000):    # 取tf-idf值最高的k个api
 
     value_map = loadJson(dict_map_path)
     value_min = min(value_map.values())
     value_max = max(value_map.values())
     value_size = value_max - value_min + 1
 
-    frq_mat = []
+    frq_mat = None
     N = None
 
-    for folder in tqdm(os.listdir(dataset_path)):
+    for i,folder in enumerate(tqdm(os.listdir(dataset_path))):
+
+        # if i==1000:
+        #     return None
 
         if is_class_dir:
             items = os.listdir(dataset_path + folder + '/')
@@ -38,6 +42,9 @@ def getTFIDF(dataset_path,
             data = loadJson(dataset_path + folder + '/' + item)
             seqs = data['apis']
 
+            if len(seqs) < 10:
+                continue
+
             #　映射token为实值
             seqs = [value_map[s] for s in seqs]
 
@@ -46,7 +53,10 @@ def getTFIDF(dataset_path,
                                         bins=value_size,
                                         normed=True)
 
-            frq_mat.append(hist.tolist())
+            if frq_mat is None:
+                frq_mat = np.expand_dims(hist, axis=0)
+            else:
+                frq_mat = np.concatenate((frq_mat,np.expand_dims(hist, axis=0)), axis=0)
 
     frq_mat = np.array(frq_mat)
 
@@ -68,12 +78,16 @@ def getTFIDF(dataset_path,
 
     top_k_apis = [api_list[i] for i in top_k_idxes]
 
+    if tfidf_dump_path is not None:
+        api_tfidf = {api:val for api,val in zip(api_list,tfidf)}
+        dumpJson(api_tfidf, tfidf_dump_path)
+
     print("- Done -")
     return top_k_apis
     # return tfidf, transformer
 
 if __name__ == '__main__':
-    getTFIDF(dataset_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
-                                  dict_map_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/data/wordMap.json',
-                                  is_class_dir=True,
-                                  level='item')
+    calTFIDF(dataset_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
+             dict_map_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/data/wordMap.json',
+             is_class_dir=True,
+             level='item')

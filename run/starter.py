@@ -11,12 +11,12 @@ from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
-                                    collectJsonByClass, mappingApiNormalize
+                                    collectJsonByClass, mappingApiNormalize, filterApiSequence
 from models.ProtoNet import IncepProtoNet
 from utils.matrix import batchDot
 # from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
-from extractors.TFIDF import getTFIDF
+from extractors.TFIDF import calTFIDF
 
 from config import generateConfigReport
 
@@ -150,13 +150,21 @@ from config import generateConfigReport
 #                   class_dir=False)
 ################################################################
 
-api_set = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
-dict_map = {k:i for i,k in enumerate(api_set)}
-dumpJson(dict_map, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json')
-top_k_apis = getTFIDF(dataset_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-                      dict_map_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json',
-                      is_class_dir=False,
-                      top_k=2000)
+# api_set = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
+# dict_map = {k:i for i,k in enumerate(api_set)}
+# dumpJson(dict_map, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json')
+# top_k_apis = calTFIDF(dataset_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+#                       dict_map_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json',
+#                       is_class_dir=False,
+#                       tfidf_dump_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json',
+#                       top_k=2000)
+
+api_tfidf = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json')
+api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
+api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
+filterApiSequence(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+                  api_list=api_list,
+                  keep_or_filter=False)
 
 # 转化数据集
 ################################################################
