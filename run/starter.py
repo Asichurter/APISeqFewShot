@@ -11,7 +11,8 @@ from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
-                                    collectJsonByClass, mappingApiNormalize, filterApiSequence
+                                    collectJsonByClass, mappingApiNormalize, filterApiSequence, \
+                                    renameItemFolder
 from models.ProtoNet import IncepProtoNet
 from utils.matrix import batchDot
 # from scripts.embedding import *
@@ -71,12 +72,14 @@ from config import generateConfigReport
 #                  max_seq_len=200)
 ################################################################
 
+renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
+
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/asichurter/datasets/JSONs/jsons-3gram/',
+# apiStat('/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         dump_report_path='/home/asichurter/datasets/reports/virushare-20_3gram_api_report.json',#None,#
-#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json',#None
+#         dump_report_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json',#None
 #         class_dir=False)
 ################################################################
 
@@ -150,6 +153,10 @@ from config import generateConfigReport
 #                   class_dir=False)
 ################################################################
 
+
+
+# 计算tdidf并且根据该值过滤API
+ #################################################################
 # api_set = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
 # dict_map = {k:i for i,k in enumerate(api_set)}
 # dumpJson(dict_map, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json')
@@ -158,13 +165,13 @@ from config import generateConfigReport
 #                       is_class_dir=False,
 #                       tfidf_dump_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json',
 #                       top_k=2000)
-
-api_tfidf = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json')
-api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
-api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
-filterApiSequence(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-                  api_list=api_list,
-                  keep_or_filter=False)
+# api_tfidf = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json')
+# api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
+# api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
+# filterApiSequence(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+#                   api_list=api_list,
+#                   keep_or_filter=False)
+#################################################################
 
 # 转化数据集
 ################################################################

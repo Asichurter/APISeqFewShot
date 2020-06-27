@@ -415,6 +415,15 @@ def collectJsonByClass(pe_path,
     reporter.report()
 
 
+def renameItemFolder(json_path):
+
+    for folder in tqdm(os.listdir(json_path)):
+
+        report = loadJson(json_path + folder + '/report.json')
+        name = report['target']['file']['name']
+
+        os.rename(json_path + folder + '/report.json', json_path + folder + '/%s.json'%name)
+        os.rename(json_path+folder+'/', json_path+name+'/')
 
 
 if __name__ == '__main__':
