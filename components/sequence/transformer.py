@@ -99,7 +99,7 @@ class MultiHeadAttention(nn.Module):
     def __init__(self,
                  mhatt_input_size,
                  mhatt_dropout=0.5,
-                 mhatt_head_nums=1,
+                 mhatt_head_nums=4,
                  max_seq_len=200,
                  **kwargs):
         super(MultiHeadAttention, self).__init__()

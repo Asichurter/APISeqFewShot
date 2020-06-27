@@ -91,7 +91,8 @@ def apiStat(path,
             dump_report_path=None,      # 保存错误和警告报告信息的路径，JSON格式
             dump_apiset_path=None,      # 所有API的集合，JSON格式
             ratio_stairs = [],          # 统计序列长度百分比的阶梯
-            class_dir=False):           # 一个文件夹内是单类的所有样本还是单个样本
+            class_dir=False,
+            plot=False):           # 一个文件夹内是单类的所有样本还是单个样本
 
     reporter = Reporter()
 
@@ -151,8 +152,9 @@ def apiStat(path,
         ratio = (lengths < length_stair).sum() / len(lengths)
         printBulletin('Length within %d: %f' % (length_stair, ratio))
 
-    plt.hist(lengths, bins=1000, normed=True, range=(0,10000))
-    plt.show()
+    if plot:
+        plt.hist(lengths, bins=1000, normed=True, range=(0,10000))
+        plt.show()
 
     if dump_report_path is not None:
         reporter.dump(dump_report_path)

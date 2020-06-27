@@ -1,6 +1,7 @@
 import logging
 
 from components.modules import *
+from components.reduction.selfatt import AttnReduction
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from components.reduction.max import StepMaxReduce
@@ -34,8 +35,7 @@ class ProtoNet(nn.Module):
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
         self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
-        self.MiddleEncoder = MultiHeadAttention(mhatt_input_size=hidden_size,
-                                                **modelParams)
+        self.MiddleEncoder = MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
         # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 
         # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
@@ -70,13 +70,16 @@ class ProtoNet(nn.Module):
         #     nn.LayerNorm(2*hidden)
         # ])
 
+        self.Decoder = StepMaxReduce()
+
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size,
         #                                  hidden_size=hidden,
         #                                  num_layers=layer_num,
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
+        # self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
+        # self.Decoder = AttnReduction(input_dim=hidden_size, hidden_dim=hidden_size)
         # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
         #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()

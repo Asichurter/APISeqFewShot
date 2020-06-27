@@ -22,7 +22,7 @@ def calTFIDF(dataset_path,
     value_max = max(value_map.values())
     value_size = value_max - value_min + 1
 
-    frq_mat = None
+    frq_mat = []#None
     N = None
 
     for i,folder in enumerate(tqdm(os.listdir(dataset_path))):
@@ -53,10 +53,11 @@ def calTFIDF(dataset_path,
                                         bins=value_size,
                                         normed=True)
 
-            if frq_mat is None:
-                frq_mat = np.expand_dims(hist, axis=0)
-            else:
-                frq_mat = np.concatenate((frq_mat,np.expand_dims(hist, axis=0)), axis=0)
+            # if frq_mat is None:
+            #     frq_mat = np.expand_dims(hist, axis=0)
+            # else:
+            #     frq_mat = np.concatenate((frq_mat,np.expand_dims(hist, axis=0)), axis=0)
+            frq_mat.append(hist.tolist())
 
     frq_mat = np.array(frq_mat)
 

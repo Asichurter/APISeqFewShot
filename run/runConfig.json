@@ -2,11 +2,11 @@
   "dataset" :  "virushare-20-3gram",
 
   "k" : 5,
-  "n" : 10,
+  "n" : 5,
   "qk" : 5,
 
 
-  "version" : 143,
+  "version" : 148,
   "modelName" : "ImpIMP",
 
   "modelParams": {
@@ -17,7 +17,7 @@
     "num_layers" : 1,
     "self_att_dim" : null,
     "bidirectional": true,
-    "head_size": 4,
+    "mhatt_head_nums": 4,
     "max_seq_len": 200,
 
     "temperature": 1,
@@ -99,7 +99,7 @@
                 "序列长度为200的3Gram(第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层双向LSTM编码，使用1dCNN解码",
+                "使用1层双向LSTM编码，使用多头注意力和时域最大池化解码",
                 "不使用LayerNorm",
                 "不使用Sigma"
       ]

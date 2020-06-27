@@ -6,7 +6,7 @@
   "qk" : 15,
 
 
-  "version" : 143,
+  "version" : 148,
   "modelName" : "ImpIMP",
 
   "trainingEpoch" : 5000,
@@ -37,6 +37,5 @@
   "testSubdataset": "test",
 
   "description": [
-      "训练使用n=10,测试使用n=5"
   ]
 }

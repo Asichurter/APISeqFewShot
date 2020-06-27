@@ -31,7 +31,7 @@ class ImpIMP(nn.Module):
                                      (1 + modelParams['bidirectional']) * modelParams['hidden_size']])
 
         # TODO: 使用Sigma
-        self.Sigma = None#nn.Parameter(t.FloatTensor([sigma]))
+        self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
         self.Dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
         self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
@@ -153,7 +153,7 @@ class ImpIMP(nn.Module):
             class_logits[class_mask.repeat(logits.size(0), 1)] = logits[class_mask.repeat(logits.size(0), 1)].data.view(
                 -1)  # 只将logits标签为l为的样本的logit填入
             _, best_in_class = t.max(class_logits, dim=1)  # 对每个类的所有类簇，只选出距离最近的类簇填入，避免对其他类簇进行惩罚
-            weights[range(0, targets.size(0)), best_in_class] = 1.  # 同类只取
+            weights[range(0, targets.size(0)), best_in_class] = 1.  # 对每个样本，只取每个类内部logit值最大的一个原型参与loss计算
         loss = weighted_loss(logits, best_targets, weights)
         return loss.mean()
 
@@ -367,7 +367,7 @@ def compute_logits_radii(cluster_centers, data, radii, prior_weight=1, use_sigma
 
     # TODO: 是否使用Sigma
     #*********************************************************************
-    if use_sigma is not None:
+    if use_sigma:
         logits = neg_dist / 2.0 / (radii)  # ((x-μ)^2)/(2σ)
         norm_constant = 0.5 * dim * (t.log(radii) + np.log(2 * np.pi))
         logits = logits - norm_constant
@@ -376,4 +376,5 @@ def compute_logits_radii(cluster_centers, data, radii, prior_weight=1, use_sigma
 
     else:
     # constant = 0.5*dim*np.log(2 * np.pi)
-        return neg_dist/2.0
+        logits = neg_dist/2.0 - dim         # 修改常量值，试图增大logit值，从而增大loss值
+        return logits

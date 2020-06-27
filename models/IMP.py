@@ -2,8 +2,10 @@ import torch as t
 import torch.nn as nn
 import numpy as np
 
+from components.reduction.max import StepMaxReduce
 from components.sequence.LSTM import BiLstmEncoder
 from components.sequence.CNN import CNNEncoder1D
+from components.sequence.transformer import MultiHeadAttention
 from utils.training import extractTaskStructFromInput
 
 
@@ -21,11 +23,15 @@ class IMP(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
+        hidden_size = (1+modelParams['bidirectional'])*modelParams['hidden_size']
+
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
 
-        self.Decoder = CNNEncoder1D([(1+modelParams['bidirectional'])*modelParams['hidden_size'],
-                                    (1+modelParams['bidirectional'])*modelParams['hidden_size']])
+        self.MiddleEncoder = MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
+
+        self.Decoder = StepMaxReduce()
+        # self.Decoder = CNNEncoder1D([hidden_size, hidden_size])
 
         self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
@@ -38,6 +44,8 @@ class IMP(nn.Module):
     def _embed(self, x, lens=None):
         x = self.EmbedDrop(self.EmbedNorm(self.Embedding(x)))
         x = self.Encoder(x, lens)
+        if self.MiddleEncoder is not None:
+            x = self.MiddleEncoder(x, lens)
         x = self.Decoder(x, lens)
         return x
 
