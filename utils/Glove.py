@@ -89,7 +89,7 @@ def trainGloVe(seqs,
     print('Done')
 
 if __name__ == '__main__':
-    seqs = aggregateApiSequences("/home/asichurter/datasets/JSONs/virushare-20-h3gram/all/")
+    seqs = aggregateApiSequences("/home/omnisky/Asichurter/ApiData/LargePE-80/all/")
     trainGloVe(seqs,
                size=300,
                save_matrix_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/data/matrix.npy",

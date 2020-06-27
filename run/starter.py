@@ -72,14 +72,14 @@ from config import generateConfigReport
 #                  max_seq_len=200)
 ################################################################
 
-renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
+# renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# apiStat('/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
 #         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         dump_report_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_report.json',#None,#
-#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json',#None
+#         dump_report_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json',#None
 #         class_dir=False)
 ################################################################
 
@@ -87,36 +87,36 @@ renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
 
 # 统计满足数量规模的类别
 ################################################################
-# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
-#                     json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                     report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',
-#                     stat_stairs=[5,10,15,20],
-#                     count_dump_path='/home/asichurter/datasets/reports/virushare-10_3gram_scale_report.json')
+# statSatifiedClasses(pe_path='/home/omnisky/Asichurter/ApiData/LargePE-100-PE-dummy/',
+#                     json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+#                     report_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',
+#                     stat_stairs=[50, 60, 75, 80, 90, 100],
+#                     count_dump_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_scale_report.json')
 ################################################################
 
 # 按照已经知道的满足规模的类进行收集
 ################################################################
-# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/')
-# collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
-#                    json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                    dst_path='/home/asichurter/datasets/JSONs/virushare-10-3gram/all/',
-#                    report_path='/home/asichurter/datasets/reports/virushare-10_3gram_api_report.json',
-#                    num_per_class=10,
-#                    selected_classes=["winactivator", "gamevance", "ibryte", "zapchast", "xorer", "yakes", "palevo", "banbra", "installmonetizer", "menti", "convertad", "kovter", "dorifel", "upatre", "fakerean", "stegvob", "swizzor", "zlob", "sinowal", "pykspa", "lunam", "bancos", "mepaow", "darkkomet", "filetour", "sality", "simda", "browsefox", "brontok", "klone", "urelas", "dapato", "staget", "refroso", "vobfus", "ipamor", "delfinject", "bundlore", "scrinject", "imali", "startp", "ngrbot", "fakeie", "berbew", "blacole", "msposer", "soft32downloader", "bettersurf", "archsms", "dealply", "outbrowse", "psyme", "koutodoor", "dybalom", "softpulse", "wajam", "bladabindi", "chekafev", "patchload", "dlhelper", "cidox", "ramnit", "4shared", "badur", "fearso", "disfa", "pirminay", "faceliker", "mabezat", "geral", "autoit", "cycbot", "kykymber", "slugin", "cpllnk", "qqpass", "hotbar", "wapomi", "darbyen", "poison", "lmir", "viking", "multiplug", "gamehack", "hijacker", "domaiq", "kido", "boaxxe", "fujacks", "redir", "framer", "kolabc", "parite", "jyfi", "pasta", "scarsi", "fraudload", "virlock", "pcclient", "webprefix", "llac", "agentb", "fosniw", "cosmu", "fbjack", "nsanti", "softcnapp", "getnow", "1clickdownload", "zegost", "monder", "mudrop", "gator", "atraps", "inor", "socks", "wonka", "vundo", "xpaj", "softonic", "swisyn", "pakes", "nimda", "bamital", "opencandy", "farfli", "nilage", "downloadsponsor", "rbot", "downloadadmin", "egroupdial", "pioneer", "wabot", "rodecap", "antavmu", "beebone", "techsnab", "delbar", "crytex", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "tdss", "ldpinch", "icloader", "spyeye", "reconyc", "vilsel", "installerex", "turkojan", "downloadassistant", "sytro", "onlinegames", "delf", "sefnit", "rebhip", "hupigon", "winwebsec", "staser", "pullupdate", "relnek", "usteal", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "luder", "hlux", "scar", "karagany", "gamarue", "lollipop", "firseria", "daws", "loadmoney", "vtflooder", "mydoom", "acda", "extenbro", "decdec", "buzus", "black", "fraudrop", "loring", "xtrat", "chifrax", "ganelp", "midia", "amonetize", "installcore", "zusy", "nitol", "shipup", "gepys", "installbrain", "medfos", "zvuzona", "sohanad", "blacoleref", "urausy", "flystudio", "lineage", "crossrider", "refresh", "yoddos", "iframeref", "resur", "mikey", "shiz", "kelihos", "goredir", "instally", "toggle", "hidelink", "airinstaller", "megasearch", "malex", "hicrazyk", "simbot", "magania", "picsys", "conficker", "trymedia", "razy", "lipler", "ircbot", "hiloti", "vmprotbad", "qhost", "eorezo", "buterat", "barys", "dorkbot", "smartfortress", "renos", "fakefolder", "includer", "iframeinject", "bifrose", "bublik", "unruy", "directdownloader", "mira", "kuluoz", "c99shell", "fareit", "mediaget", "windef", "vittalia", "neshta"])
+# makeDatasetDirStruct(base_path='/home/omnisky/Asichurter/ApiData/LargePE-80/')
+# collectJsonByClass(pe_path='/home/omnisky/Asichurter/ApiData/LargePE-100-PE-dummy/',
+#                    json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+#                    dst_path='/home/omnisky/Asichurter/ApiData/LargePE-80/all/',
+#                    report_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',
+#                    num_per_class=80,
+#                    selected_classes=["Backdoor.Win32.Ceckno", "Backdoor.Win32.Popwin", "Trojan-Downloader.Win32.Suurch", "Trojan-PSW.Win32.VB", "Backdoor.Win32.Hupigon", "Trojan-Spy.Win32.Iespy", "Backdoor.Win32.Singu", "Trojan-Downloader.Win32.Zanoza", "Backdoor.Win32.BO2K", "Trojan.Win32.Delf", "Backdoor.Win32.Prorat", "Email-Worm.Win32.Warezov", "Trojan-Downloader.Win32.VB", "Virus.Win32.VB", "Virus.Win32.Xorer", "Trojan-PSW.Win32.Delf", "Trojan-Proxy.Win32.Puma", "Backdoor.Win32.Ciadoor", "Trojan-Proxy.Win32.Pixoliz", "Trojan-Downloader.Win32.Agent", "Worm.Win32.VB", "Trojan-PSW.Win32.QQPass", "Backdoor.Win32.Agent", "Backdoor.Win32.Rukap", "Trojan-Spy.Win32.BZub", "Trojan-Dropper.Win32.Delf", "Trojan.Win32.Chinaad", "Backdoor.Win32.Cakl", "Trojan-GameThief.Win32.Nilage", "Trojan-Clicker.Win32.Small", "Trojan.Win32.Buzus", "HackTool.Win32.VB", "Backdoor.Win32.BlackHole", "Trojan.Win32.CDur", "Trojan.Win32.VB", "Trojan.Win32.Obfuscated", "Trojan-Banker.Win32.Banker", "Backdoor.Win32.SdBot", "Trojan-GameThief.Win32.OnLineGames", "Trojan-Banker.Win32.Banbra", "Trojan-Downloader.Win32.Wintrim", "Trojan-GameThief.Win32.Tibia", "Trojan-Spy.Win32.Pophot", "Trojan-Downloader.Win32.Adload", "Trojan-PSW.Win32.Agent", "Trojan-PSW.Win32.OnLineGames", "Trojan-Dropper.Win32.FriJoiner", "Trojan-PSW.Win32.Gamec", "Trojan-Dropper.Win32.VB", "Trojan-Downloader.Win32.Zlob", "Trojan.Win32.Diamin", "Backdoor.Win32.Rbot", "Net-Worm.Win32.Kolabc", "Backdoor.Win32.Bifrose", "Trojan.Win32.BHO", "Trojan-Spy.Win32.Agent", "Trojan.Win32.Slefdel", "Trojan-Downloader.Win32.Swizzor", "Backdoor.Win32.Httpbot", "Trojan-PSW.Win32.Lmir", "Trojan.Win32.Regrun", "Trojan-PSW.Win32.Maran", "Trojan-Spy.Win32.FlyStudio", "Worm.Win32.Downloader", "Trojan.Win32.Monder", "Rootkit.Win32.Vanti", "Backdoor.Win32.Prosti", "Trojan-Clicker.Win32.Delf", "Trojan-Spy.Win32.Delf", "Rootkit.Win32.Podnuha", "Net-Worm.Win32.Kolab", "Worm.Win32.Viking", "Worm.Win32.AutoRun", "Backdoor.Win32.Sinowal", "Trojan.Win32.Monderb", "Trojan-PSW.Win32.Nilage", "Trojan-PSW.Win32.WOW", "Trojan-Proxy.Win32.Agent", "Trojan-PSW.Win32.QQShou", "Trojan-PSW.Win32.QQRob", "Trojan.Win32.Midgare", "Trojan-Downloader.Win32.Winlagons", "Trojan-Spy.Win32.KeyLogger", "Trojan-Downloader.Win32.Small", "Trojan-GameThief.Win32.WOW", "Trojan-Spy.Win32.Flux", "Backdoor.Win32.Frauder", "Trojan-GameThief.Win32.Lmir", "Trojan.Win32.Zapchast", "Trojan-Spy.Win32.Banbra", "Backdoor.Win32.Small", "Trojan-Clicker.Win32.VB", "Trojan.Win32.Vapsup", "Trojan.Win32.KillAV", "Trojan-Spy.Win32.Ayolog", "Backdoor.Win32.Shark", "Worm.Win32.Runfer", "Backdoor.Win32.Delf", "Trojan-Spy.Win32.Banker", "Trojan-Clicker.Win32.Agent", "Trojan.Win32.Qhost"])
 ################################################################
 
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json')
-# apis = apiSet['api_set']
-# mapping = {name:str(i) for i,name in enumerate(apis)}
-# apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                     mapping=mapping,
-#                     is_class_dir=False)
-# # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-20_3gram_api_set.json')
+apiSet = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
+apis = apiSet['api_set']
+mapping = {name:str(i) for i,name in enumerate(apis)}
+apiSet['api_map'] = mapping
+mappingApiNormalize(json_path='/home/omnisky/Asichurter/ApiData/LargePE-80/all/',
+                    mapping=mapping,
+                    is_class_dir=True)
+# save back the api mapping
+dumpJson(apiSet, '/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
 ################################################################
 
 
@@ -132,21 +132,24 @@ renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
 
 # 统计ngram
 ################################################################
-# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# print('Removing Redundance...')
+# removeApiRedundance(json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
 #                     class_dir=False)
 #
-# man = PathManager(dataset='virushare-20-h3gram', d_type='all')
-# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# # man = PathManager(dataset='virushare-20-h3gram', d_type='all')
+# print('Stating NGram...')
+# ngram_dict = statNGram(parent_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
 #                        window=3,
-#                        dict_save_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json',
+#                        dict_save_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_api_set.json',
 #                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
 #                        class_dir=False)
-#
-# num = int(input('NGram >> '))
 # #
-# d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
-#
-# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# # num = int(input('NGram >> '))
+# # #
+# # d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
+# #
+# print('Converting NGram...')
+# convertToNGramSeq(parent_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
 #                   ngram_max_num=None,
@@ -157,18 +160,20 @@ renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
 
 # 计算tdidf并且根据该值过滤API
  #################################################################
-# api_set = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
+# api_set = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_api_set.json')
 # dict_map = {k:i for i,k in enumerate(api_set)}
-# dumpJson(dict_map, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json')
-# top_k_apis = calTFIDF(dataset_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                       dict_map_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_dictmap.json',
+# dumpJson(dict_map, '/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_dictmap.json')
+# top_k_apis = calTFIDF(dataset_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+#                       dict_map_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_dictmap.json',
 #                       is_class_dir=False,
-#                       tfidf_dump_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json',
+#                       tfidf_dump_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_val.json',
 #                       top_k=2000)
-# api_tfidf = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_val.json')
+# api_tfidf = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_val.json')
+# print('Sorting...')
 # api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
 # api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
-# filterApiSequence(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# print('Filtering...')
+# filterApiSequence(json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
 #                   api_list=api_list,
 #                   keep_or_filter=False)
 #################################################################
