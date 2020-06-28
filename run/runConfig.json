@@ -1,20 +1,20 @@
 {
-  "dataset" :  "virushare-20-3gram",
+  "dataset" :  "LargePE-80",
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
 
-  "version" : 148,
-  "modelName" : "ImpIMP",
+  "version" : 149,
+  "modelName" : "ProtoNet",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 1,
+    "num_layers" : 3,
     "self_att_dim" : null,
     "bidirectional": true,
     "mhatt_head_nums": 4,
@@ -39,7 +39,7 @@
   "valCycle" : 100,
   "valEpisode" : 100,
 
-  "lrDecayIters" : 14000,
+  "lrDecayIters" : 15000,
   "lrDecayGamma" : 0.1,
   "optimizer": "sgd",
   "weightDecay" : 5e-4,
@@ -57,7 +57,7 @@
   "trainingVerbose" : false,
   "useVisdom" : false,
 
-  "trainingEpoch" : 30000,
+  "trainingEpoch" : 50000,
 
   "Ns" : {
           "cluster":20,
@@ -68,8 +68,9 @@
           "miniImageNet":600,
           "virushare_20_image":20,
           "virushare-10-seq": 10,
-          "virushare-10-3gram": 10
-          },
+          "virushare-10-3gram": 10,
+          "LargePE-80":80
+  },
 
   "plot" : {
     "types" : ["line", "line"],
@@ -93,13 +94,12 @@
   },
 
       "description": [
-                "训练类使用满编73个",
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "序列长度为200的3Gram(第4次分割)",
+                "序列长度为200的3Gram(LargePE第1次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层双向LSTM编码，使用多头注意力和时域最大池化解码",
+                "使用3层双向LSTM编码，使用1dCNN解码",
                 "不使用LayerNorm",
                 "不使用Sigma"
       ]

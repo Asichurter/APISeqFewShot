@@ -92,6 +92,6 @@ if __name__ == '__main__':
     seqs = aggregateApiSequences("/home/omnisky/Asichurter/ApiData/LargePE-80/all/")
     trainGloVe(seqs,
                size=300,
-               save_matrix_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/data/matrix.npy",
-               save_word2index_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/data/wordMap.json"
+               save_matrix_path="/home/omnisky/Asichurter/ApiData/LargePE-80/data/matrix.npy",
+               save_word2index_path="/home/omnisky/Asichurter/ApiData/LargePE-80/data/wordMap.json"
                )

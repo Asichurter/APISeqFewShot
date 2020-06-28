@@ -110,7 +110,7 @@ def apiStat(path,
 
         if class_dir:
             items = os.listdir(path + folder + '/')
-            items = list(map(lambda x: x.split('.')[0], items))         # 每个文件都支取其名，不取其扩展名
+            items = list(map(lambda x: '.'.join(x.split('.')[:-1]), items))         # 每个文件都支取其名，不取其扩展名
 
         else:                               # 如果是单个序列一个文件夹，其名称与文件夹相同
             items = [folder]

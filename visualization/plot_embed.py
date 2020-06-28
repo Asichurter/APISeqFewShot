@@ -18,13 +18,13 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***************************************************************************
-dataset_name = 'virushare-20-3gram'
+dataset_name = 'LargePE-80'
 dataset_subtype = 'test'
-model_name = 'IMP'
-version = 141
-N = 20
+model_name = 'ProtoNet'
+version = 149
+N = 80
 plot_option = 'entire'#'entire'
-k, n, qk = 5, 5, 15
+k, n, qk = 5, 5, 75
 figsize = (12,10)
 task_seed = magicSeed()
 sampling_seed = magicSeed()

@@ -1,13 +1,13 @@
 {
-  "dataset" :  "virushare-20-3gram",
+  "dataset" :  "LargePE-80",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
 
-  "version" : 148,
-  "modelName" : "ImpIMP",
+  "version" : 149,
+  "modelName" : "ProtoNet",
 
   "trainingEpoch" : 5000,
 
@@ -20,8 +20,9 @@
           "miniImageNet":600,
           "virushare_20_image":20,
           "virushare-10-seq": 10,
-          "virushare-10-3gram": 10
-          },
+          "virushare-10-3gram": 10,
+          "LargePE-80":80
+  },
 
   "platform" : {
 

@@ -39,21 +39,22 @@ from config import generateConfigReport
 
 # 分割数据集
 ################################################################
-# man = PathManager(dataset='virushare-20-3gram')
-# deleteDatasetSplit(dataset_base=man.DatasetBase())
-# splitDatas(src=man.DatasetBase()+'all/',
-#            dest=man.DatasetBase()+'train/',
+# base = '/home/omnisky/Asichurter/ApiData/LargePE-80/'
+# # man = PathManager(dataset='virushare-20-3gram')
+# # deleteDatasetSplit(dataset_base=man.DatasetBase())
+# splitDatas(src=base+'all/',
+#            dest=base+'train/',
 #            ratio=-1,
 #            mode='c',
 #            is_dir=True)
-# splitDatas(src=man.DatasetBase()+'train/',
-#            dest=man.DatasetBase()+'validate/',
-#            ratio=20,
+# splitDatas(src=base+'train/',
+#            dest=base+'validate/',
+#            ratio=15,
 #            mode='x',
 #            is_dir=True)
-# splitDatas(src=man.DatasetBase()+'train/',
-#            dest=man.DatasetBase()+'test/',
-#            ratio=20,
+# splitDatas(src=base+'train/',
+#            dest=base+'test/',
+#            ratio=15,
 #            mode='x',
 #            is_dir=True)
 ################################################################
@@ -61,15 +62,15 @@ from config import generateConfigReport
 # 制作基于下标的数据集
 ################################################################
 # makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/")
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare-20-h3gram', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  num_per_class=20,
-#                  max_seq_len=200)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='LargePE-80', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 num_per_class=80,
+                 max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
@@ -108,15 +109,15 @@ from config import generateConfigReport
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-apiSet = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
-apis = apiSet['api_set']
-mapping = {name:str(i) for i,name in enumerate(apis)}
-apiSet['api_map'] = mapping
-mappingApiNormalize(json_path='/home/omnisky/Asichurter/ApiData/LargePE-80/all/',
-                    mapping=mapping,
-                    is_class_dir=True)
-# save back the api mapping
-dumpJson(apiSet, '/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
+# apiSet = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
+# apis = apiSet['api_set']
+# mapping = {name:str(i) for i,name in enumerate(apis)}
+# apiSet['api_map'] = mapping
+# mappingApiNormalize(json_path='/home/omnisky/Asichurter/ApiData/LargePE-80/all/',
+#                     mapping=mapping,
+#                     is_class_dir=True)
+# # save back the api mapping
+# dumpJson(apiSet, '/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json')
 ################################################################
 
 
