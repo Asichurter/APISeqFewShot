@@ -3,7 +3,7 @@ import sys
 import shutil
 
 sys.path.append('../')
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 from config import saveConfigFile, checkVersion
 

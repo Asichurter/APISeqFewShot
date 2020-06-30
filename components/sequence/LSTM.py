@@ -10,6 +10,9 @@ from components.reduction.selfatt import AttnReduction
 # 双向LTSM并支持自注意力的序列解码器。返回一个
 # 由双向序列隐藏态自注意力对齐得到的编码向量。
 #########################################
+from utils.training import getMaskFromLens
+
+
 class BiLstmEncoder(nn.Module):
     def __init__(self, input_size=None,
                  hidden_size=128,
@@ -149,5 +152,112 @@ class BiLstmEncoder(nn.Module):
             # return h[-1].transpose(0,1).contiguous().view(batch_size, self.Encoder.hidden_size*num_directions)
 
 
-if __name__ == '__main__':
-    m = BiLstmEncoder(1)
+class BiLstmCellEncoder(nn.Module):
+
+    def __init__(self, input_size,
+                 hidden_size=128,
+                 num_layers=1,
+                 bidirectional=True,
+                 self_att_dim=64,
+                 **kwargs):
+        super(BiLstmCellEncoder, self).__init__()
+
+        self.Bidirectional = bidirectional
+        self.HiddenSize = hidden_size
+
+        layers = [BiLstmCellLayer(input_size=input_size if i==0 else hidden_size,
+                                  hidden_size=hidden_size,
+                                  bidirectional=bidirectional)
+                  for i in range(num_layers)]
+
+        self.LstmCells = nn.Sequential(*layers)
+
+        # self.SelfAttention = SelfAttention(input_size=hidden_size*2 if bidirectional else hidden_size,
+        #                                    hidden_size=self_att_dim,
+        #                                    pack=False)
+
+
+    def forward(self, x, lens=None):
+        bacth_size = x.size(0)
+        seq_len = x.size(1)
+        hidden_size = self.HiddenSize
+        directions = self.Bidirectional + 1
+
+        if self.Bidirectional:
+            f_h, b_h = self.LstmCells({'input':(x,x),
+                                       'lens':lens})[0]
+            x = t.cat((f_h, b_h), dim=2)
+            x = x.view(bacth_size, seq_len, hidden_size*directions)
+        else:
+            x = self.LstmCells(x)[0]
+
+        # x = self.SelfAttention(x)
+        return x
+
+
+class BiLstmCellLayer(nn.Module):
+    def __init__(self,
+                 input_size,
+                 hidden_size,
+                 bidirectional=True):
+
+        super(BiLstmCellLayer, self).__init__()
+
+        self.Bidirectional = bidirectional
+
+        self.ForwardCell = nn.LSTMCell(input_size=input_size,
+                                  hidden_size=hidden_size)
+
+        if bidirectional:
+            self.BackwardCell = nn.LSTMCell(input_size=input_size,
+                                  hidden_size=hidden_size)
+        else:
+            self.BackwardCell = None
+
+    def forward(self, input_dict):
+        assert not self.Bidirectional or type(input_dict['input'])==tuple, \
+            '双向LSTM单元的输入必须是正向和反向两个输入'
+
+        if self.Bidirectional:
+            forward_x = input_dict['input'][0]
+            backward_x = input_dict['input'][1]
+        else:
+            forward_x = input_dict['input']
+
+        lens = input_dict['lens']
+
+        # input shape: [batch, seq, dim]
+        num_directions = 2 if self.Bidirectional else 1
+        batch_size = forward_x.size(0)
+        seq_len = forward_x.size(1)
+        hidden_dim = self.ForwardCell.hidden_size
+
+        forward_hidden_states = t.empty((batch_size, seq_len, hidden_dim)).cuda()
+        if self.Bidirectional:
+            backward_hidden_states = t.empty((batch_size, seq_len, hidden_dim)).cuda()
+
+        # 定义初始状态为0向量
+        f_h_x, f_c_x = t.zeros((batch_size, hidden_dim)).cuda(), t.zeros((batch_size, hidden_dim)).cuda()
+        if num_directions > 1:
+            b_h_x, b_c_x = t.zeros((batch_size, hidden_dim)).cuda(), t.zeros((batch_size, hidden_dim)).cuda()
+
+        for i in range(seq_len):
+            f_h_x, f_c_x = self.ForwardCell(forward_x[:,i,:], (f_h_x, f_c_x))
+            forward_hidden_states[:,i,:] = f_h_x
+
+            if num_directions > 1:
+                b_h_x, b_c_x = self.BackwardCell(backward_x[:,seq_len-1-i,:], (b_h_x, b_c_x))
+                # 反向的序列需要将隐藏层放置在首位使得与正向隐藏态对齐
+                backward_hidden_states[:,seq_len-1-i,:] = b_h_x
+
+        if lens is not None:
+            mask = getMaskFromLens(lens).unsqueeze(-1).expand_as(forward_hidden_states)
+            forward_hidden_states.masked_fill_(mask, 0)
+
+            if self.Bidirectional:
+                backward_hidden_states.masked_fill_(mask, 0)
+
+        if self.Bidirectional:
+            return (forward_hidden_states, backward_hidden_states), lens
+        else:
+            return forward_hidden_states, lens

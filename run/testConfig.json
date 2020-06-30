@@ -1,13 +1,13 @@
 {
-  "dataset" :  "LargePE-80",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
 
-  "version" : 149,
-  "modelName" : "ProtoNet",
+  "version" : 162,
+  "modelName" : "IMP",
 
   "trainingEpoch" : 5000,
 
@@ -21,7 +21,8 @@
           "virushare_20_image":20,
           "virushare-10-seq": 10,
           "virushare-10-3gram": 10,
-          "LargePE-80":80
+          "LargePE-80":80,
+          "virushare-20-3gram-tfidf": 20
   },
 
   "platform" : {
@@ -30,8 +31,11 @@
       "datasetBasePath" : "D:/peimages/JSONs/"
     },
 
-    "Linux": {
+    "Linux-Backup": {
       "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
+    },
+    "Linux": {
+      "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
     }
   },
 

@@ -262,7 +262,7 @@ class ImpIMP(nn.Module):
         if if_cache_data:
             self.Clusters = protos
             self.ClusterLabels = cluster_labels
-            return support, query, y_pred#(y_pred == query_labels).sum().item() / query.size(1)
+            return support, query, (y_pred == query_labels).sum().item() / query.size(1)#y_pred#
 
         return y_pred, loss
 

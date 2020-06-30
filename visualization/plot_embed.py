@@ -18,10 +18,11 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***************************************************************************
-dataset_name = 'LargePE-80'
+data_dataset_name = 'LargePE-80'
+model_dataset_name = 'LargePE-80'
 dataset_subtype = 'test'
-model_name = 'ProtoNet'
-version = 149
+model_name = 'IMP'
+version = 155
 N = 80
 plot_option = 'entire'#'entire'
 k, n, qk = 5, 5, 75
@@ -31,22 +32,23 @@ sampling_seed = magicSeed()
 # ***************************************************************************
 
 
-path_man = PathManager(dataset=dataset_name,
-                       d_type=dataset_subtype,
-                       model_name=model_name,
-                       version=version)
+data_path_man = PathManager(dataset=data_dataset_name,
+                           d_type=dataset_subtype)
+model_path_man = PathManager(dataset=model_dataset_name,
+                             version=version,
+                             model_name=model_name)
 
 ################################################
 #----------------------读取模型参数------------------
 ################################################
 
-model_cfg = TrainingConfigManager(path_man.Doc()+'config.json')
+model_cfg = TrainingConfigManager(model_path_man.Doc()+'config.json')
 
 modelParams = model_cfg.modelParams()
 
-dataset = SeqFileDataset(path_man.FileData(), path_man.FileSeqLen(), N=N)
+dataset = SeqFileDataset(data_path_man.FileData(), data_path_man.FileSeqLen(), N=N)
 
-state_dict = t.load(path_man.Model() + '_v%s.0' % version)
+state_dict = t.load(model_path_man.Model() + '_v%s.0' % version)
 # state_dict = t.load(path_man.DatasetBase()+'models/ProtoNet_v105.0')
 word_matrix = state_dict['Embedding.weight']
 
@@ -71,6 +73,7 @@ if plot_option == 'entire':
     dataloader = DataLoader(dataset, batch_size=N, collate_fn=batchSequenceWithoutPad)
 
     datas = []
+    original_input = []
     # reduction = PCA(n_components=2)
     reduction = TSNE(n_components=2)
 
@@ -78,6 +81,7 @@ if plot_option == 'entire':
 
     for x,_,lens in dataloader:
         class_count += 1
+        original_input.append(x.tolist())
         x = x.cuda()
         x = model._embed(x, lens).cpu().view(N,-1).detach().numpy()
         datas.append(x)
@@ -119,9 +123,9 @@ elif plot_option == 'episode':
     task = ImpEpisodeTask(k,qk,n,N,
                           dataset,expand=False)
 
-    support, query, *others = task.episode(task_seed=task_seed,
+    support_, query_, *others = task.episode(task_seed=task_seed,
                                            sampling_seed=sampling_seed)
-    support, query, acc = model(support, query, *others, if_cache_data=True)
+    support, query, acc = model(support_, query_, *others, if_cache_data=True)
 
     clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
