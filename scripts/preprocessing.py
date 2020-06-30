@@ -328,6 +328,8 @@ def removeRepeatedSubSeq(json_path,
 
     for folder in tqdm(os.listdir(json_path)):
 
+        print(folder)
+
         if is_class_dir:
             items = os.listdir(json_path+folder+'/')
         else:
@@ -344,7 +346,7 @@ def removeRepeatedSubSeq(json_path,
                 seq_index = 0
 
                 while seq_index < len(apis):
-                    print(seq_index)
+                    # print(seq_index)
                     for i in range(1,max_sub_seq_len+1):
                         apis, flag_ = removePattern(apis, seq_index, i)
                         # 一旦移除了重复子序列,检测的子序列长度应该从1重新开始
@@ -367,7 +369,7 @@ def removeRepeatedSubSeq(json_path,
             except Exception as e:
                 reporter.logError(folder, str(e))
 
-        reporter.report()
+    reporter.report()
 
 
 def filterApiSequence(json_path,
@@ -542,7 +544,7 @@ if __name__ == '__main__':
             -> stat_classes -> collect
     '''
 
-    removeRepeatedSubSeq(json_path='/home/asichurter/桌面/test/',
+    removeRepeatedSubSeq(json_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-rmsub/all/',
                          max_sub_seq_len=5,
                          is_class_dir=True)
 
