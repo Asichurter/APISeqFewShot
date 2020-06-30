@@ -296,6 +296,80 @@ def removeApiRedundance(json_path,
 
     reporter.report()
 
+#####################################################
+# 本函数主要用于移除API中重复出现的API子序列,以移除执行循环时
+# 循环论数不同带来的差异
+#####################################################
+def removeRepeatedSubSeq(json_path,
+                         max_sub_seq_len=5,         # 待检测的最长子重复序列的最大长度
+                         is_class_dir=False):
+
+    ##############################################
+    # 以一个锚点r_base_idx开始,以指定的长度r_pat_len移除
+    # r_seq中的重复子序列
+    ##############################################
+    def removePattern(r_seq, r_base_idx, r_pat_len):
+        candidate_pat = r_seq[r_base_idx:r_base_idx+r_pat_len]
+        r_idx = r_base_idx + r_pat_len          # 起始检测位置从下一个子序列开始
+        flag = False
+        while r_idx+r_pat_len < len(r_seq):
+            temp = r_seq[r_idx:r_idx+r_pat_len]
+            if temp == candidate_pat:
+                # 移除匹配到的子串
+                r_seq = r_seq[:r_idx]+r_seq[r_idx+r_pat_len:]
+                flag = True
+            #　如果没有匹配到子串，则将当前下标移动到下一个位置去
+            else:
+                break
+
+        return r_seq, flag
+
+    reporter = Reporter()
+
+    for folder in tqdm(os.listdir(json_path)):
+
+        if is_class_dir:
+            items = os.listdir(json_path+folder+'/')
+        else:
+            items = [folder+'.json']
+
+        for item in items:
+
+            item_path = json_path + folder + '/' + item
+
+            try:
+                report = loadJson(item_path)
+                apis = report['apis']
+
+                seq_index = 0
+
+                while seq_index < len(apis):
+                    print(seq_index)
+                    for i in range(1,max_sub_seq_len+1):
+                        apis, flag_ = removePattern(apis, seq_index, i)
+                        # 一旦移除了重复子序列,检测的子序列长度应该从1重新开始
+                        if flag_:
+                            break
+
+                    # 如果子序列匹配成功,则锚点前进移除的模式长度
+                    if flag_:
+                        seq_index += i
+                    #　如果子序列匹配失败，则只移动一个长度位置
+                    else:
+                        seq_index += 1
+
+                # 使用新api序列覆盖原api序列
+                report['apis'] = apis
+                dumpJson(report, item_path)
+
+                reporter.logSuccess()
+
+            except Exception as e:
+                reporter.logError(folder, str(e))
+
+        reporter.report()
+
+
 def filterApiSequence(json_path,
                       api_list,
                       keep_or_filter=True):      # 若为True则过滤列表中的API，若为False则保留列表中的API
@@ -417,6 +491,9 @@ def collectJsonByClass(pe_path,
     reporter.report()
 
 
+#####################################################
+# 将个体文件夹和其中的报告命名为样本的名称
+#####################################################
 def renameItemFolder(json_path):
 
     for folder in tqdm(os.listdir(json_path)):
@@ -427,6 +504,35 @@ def renameItemFolder(json_path):
         os.rename(json_path + folder + '/report.json', json_path + folder + '/%s.json'%name)
         os.rename(json_path+folder+'/', json_path+name+'/')
 
+#####################################################
+# 制作包含原PE文件的占位文件结构,以便在按类分类样本时使用
+#####################################################
+def makePEDummy(pe_path, dst_path):
+
+    for folder in tqdm(os.listdir(pe_path)):
+        if os.path.exists(dst_path+folder+'/'):
+            raise RuntimeError('%s已经存在!'%folder)
+        else:
+            os.mkdir(dst_path+folder+'/')
+
+        for item in os.listdir(pe_path+folder+'/'):
+            with open(dst_path+folder+'/'+item, 'w') as f:
+                pass
+
+#####################################################
+# 根据已有的PE文件,移除不存在对应PE文件的JSON扫描文件
+#####################################################
+def removeNotExistItem(index_path, item_path):
+    indexed_items = os.listdir(index_path)
+
+    for item in tqdm(os.listdir(item_path)):
+        item_name = item.split('.')[0]
+        if item_name not in indexed_items:
+            os.remove(item_path+item)
+
+    item_amount = len(os.listdir(item_path))
+    print('After removing, %d items remain'%item_amount)
+
 
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='all')
@@ -435,6 +541,13 @@ if __name__ == '__main__':
     调用顺序：extract -> mapping -> removeRedundance -> (ngram) -> apiStat 
             -> stat_classes -> collect
     '''
+
+    removeRepeatedSubSeq(json_path='/home/asichurter/桌面/test/',
+                         max_sub_seq_len=5,
+                         is_class_dir=True)
+
+    # removeNotExistItem(index_path='/home/asichurter/datasets/PEs/wudi/unziped/',
+    #                    item_path='/home/asichurter/datasets/PEs/wudi/result/')
 
     # extractApiFromJson()
 
