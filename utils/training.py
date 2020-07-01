@@ -127,13 +127,13 @@ def protoDisAdapter(support, query, qk, n, dim, dis_type='euc', **kwargs):
 # 根据提供的长度信息，返回一个长度以后的PAD位置的mask
 # 掩码。PAD位置会被置位True，其余位置被置于False
 ################################################
-def getMaskFromLens(lens):
+def getMaskFromLens(lens, max_seq_len=200):
     if type(lens) == list:
         lens = t.LongTensor(lens)
 
-    max_idx = max(lens)
+    # max_idx = max(lens)
     batch_size = len(lens)
-    idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
+    idx_matrix = t.arange(0, max_seq_len, 1).repeat((batch_size, 1))
     len_mask = lens.unsqueeze(1)
     mask = idx_matrix.ge(len_mask).cuda()
 

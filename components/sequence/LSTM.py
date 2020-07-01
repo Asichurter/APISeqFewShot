@@ -159,6 +159,7 @@ class BiLstmCellEncoder(nn.Module):
                  num_layers=1,
                  bidirectional=True,
                  self_att_dim=64,
+                 max_seq_len=200,
                  **kwargs):
         super(BiLstmCellEncoder, self).__init__()
 
@@ -167,7 +168,8 @@ class BiLstmCellEncoder(nn.Module):
 
         layers = [BiLstmCellLayer(input_size=input_size if i==0 else hidden_size,
                                   hidden_size=hidden_size,
-                                  bidirectional=bidirectional)
+                                  bidirectional=bidirectional,
+                                  max_seq_len=max_seq_len)
                   for i in range(num_layers)]
 
         self.LstmCells = nn.Sequential(*layers)
@@ -199,11 +201,13 @@ class BiLstmCellLayer(nn.Module):
     def __init__(self,
                  input_size,
                  hidden_size,
-                 bidirectional=True):
+                 bidirectional=True,
+                 max_seq_len=200):
 
         super(BiLstmCellLayer, self).__init__()
 
         self.Bidirectional = bidirectional
+        self.MaxSeqLen = max_seq_len
 
         self.ForwardCell = nn.LSTMCell(input_size=input_size,
                                   hidden_size=hidden_size)
@@ -251,7 +255,7 @@ class BiLstmCellLayer(nn.Module):
                 backward_hidden_states[:,seq_len-1-i,:] = b_h_x
 
         if lens is not None:
-            mask = getMaskFromLens(lens).unsqueeze(-1).expand_as(forward_hidden_states)
+            mask = getMaskFromLens(lens, self.MaxSeqLen).unsqueeze(-1).expand_as(forward_hidden_states)
             forward_hidden_states.masked_fill_(mask, 0)
 
             if self.Bidirectional:

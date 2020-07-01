@@ -54,6 +54,12 @@ version = cfg.version()
 TestingEpoch = cfg.epoch()
 USED_SUB_DATASET = cfg.subDataset()
 
+print('*'*50)
+print('Model Name: %s'%model_type)
+print('Used dataset: %s'%data_folder)
+print('Version: %d'%version)
+print('*'*50)
+
 
 ################################################
 #----------------------定义数据------------------

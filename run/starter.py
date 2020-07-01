@@ -32,7 +32,7 @@ from config import generateConfigReport
 # manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_1.json')
-# revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
+# revertDatasetSplit(dataset='virushare-20-3gram-rmsub',
 #                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_4.json')
 ###############################################################
 
@@ -40,8 +40,8 @@ from config import generateConfigReport
 # 分割数据集
 ################################################################
 # base = '/home/omnisky/Asichurter/ApiData/LargePE-80/'
-# man = PathManager(dataset='virushare-20-3gram-tfidf')
-# # deleteDatasetSplit(dataset_base=man.DatasetBase())
+# man = PathManager(dataset='virushare-20-3gram-rmsub')
+# deleteDatasetSplit(dataset_base=man.DatasetBase())
 # splitDatas(src=man.DatasetBase()+'all/',
 #            dest=man.DatasetBase()+'train/',
 #            ratio=-1,
@@ -62,15 +62,15 @@ from config import generateConfigReport
 # 制作基于下标的数据集
 ################################################################
 # makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/")
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare-20-3gram-tfidf', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  num_per_class=20,
-#                  max_seq_len=200)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='virushare-20-3gram-rmsub', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 num_per_class=20,
+                 max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')

@@ -93,6 +93,12 @@ legends = cfg.plotParams()
 
 TrainingEpoch = cfg.epoch()
 
+print('*'*50)
+print('Model Name: %s'%model_type)
+print('Used dataset: %s'%data_folder)
+print('Version: %d'%version)
+print('*'*50)
+
 ################################################
 #----------------------定义数据------------------
 ################################################
@@ -197,6 +203,7 @@ else:
 ################################################
 
 printState('init model...')
+
 # model = CNNLstmProtoNet()
 # model = IncepProtoNet(channels=[1, 32, 1],
 #                       depth=3)
