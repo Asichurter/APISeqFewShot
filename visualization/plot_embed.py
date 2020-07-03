@@ -18,13 +18,13 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***************************************************************************
-data_dataset_name = 'virushare-20-3gram-tfidf'
-model_dataset_name = 'virushare-20-3gram-tfidf'
-dataset_subtype = 'validate'
+data_dataset_name = 'virushare-20-3gram-tfrmsub'
+model_dataset_name = 'virushare-20-3gram-tfrmsub'
+dataset_subtype = 'test'
 model_name = 'ImpIMP'
-version = 164
+version = 171
 N = 20
-plot_option = 'entire'#'entire'
+plot_option = 'episode'#'entire'
 k, n, qk = 5, 5, 15
 figsize = (12,10)
 task_seed = magicSeed()

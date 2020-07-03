@@ -1,12 +1,12 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "virushare-20-3gram-tfrmsub",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
 
-  "version" : 164,
+  "version" : 171,
   "modelName" : "ImpIMP",
 
   "trainingEpoch" : 5000,
@@ -23,19 +23,19 @@
           "virushare-10-3gram": 10,
           "LargePE-80":80,
           "virushare-20-3gram-tfidf": 20,
-          "virushare-20-3gram-rmsub": 20
+          "virushare-20-3gram-rmsub": 20,
+          "virushare-20-3gram-tfrmsub": 20
   },
 
-  "platform" : {
-
+  "platform-node" : {
     "Windows": {
       "datasetBasePath" : "D:/peimages/JSONs/"
     },
 
-    "Linux-Backup": {
+    "wpen": {
       "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
     },
-    "Linux": {
+    "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
     }
   },

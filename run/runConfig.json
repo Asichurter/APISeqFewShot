@@ -1,13 +1,13 @@
 {
-  "dataset" :  "virushare-20-3gram-rmsub",
+  "dataset" :  "virushare-20-3gram-tfrmsub",
 
   "k" : 5,
   "n" : 5,
-  "qk" : 15,
+  "qk" : 5,
 
 
-  "version" : 164,
-  "modelName" : "ImpIMP",
+  "version" : 173,
+  "modelName" : "ProtoNet",
 
   "modelParams": {
     "embed_size": 300,
@@ -56,7 +56,7 @@
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : true,
+  "useVisdom" : false,
 
   "trainingEpoch" : 30000,
 
@@ -72,7 +72,8 @@
           "virushare-10-3gram": 10,
           "LargePE-80":80,
           "virushare-20-3gram-tfidf": 20,
-          "virushare-20-3gram-rmsub": 20
+          "virushare-20-3gram-rmsub": 20,
+          "virushare-20-3gram-tfrmsub": 20
   },
 
   "plot" : {
@@ -86,15 +87,15 @@
     ]
   },
 
-  "platform" : {
+  "platform-node" : {
     "Windows": {
       "datasetBasePath" : "D:/peimages/JSONs/"
     },
 
-    "Linux": {
+    "wpen": {
       "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
     },
-    "Linux-Backup": {
+    "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
     }
   },
@@ -102,8 +103,8 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "qk改回15",
-                "序列长度为200移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "qk改为5",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用1层双向LSTM编码(cell-based)，使用1dCNN解码",

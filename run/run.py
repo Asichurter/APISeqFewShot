@@ -5,7 +5,7 @@ import shutil
 sys.path.append('../')
 # os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-from config import saveConfigFile, checkVersion
+from config import saveConfigFile, checkVersion, saveRunVersionConfig
 
 ################################################
 #----------------------设置系统基本信息------------------
@@ -323,6 +323,11 @@ stat.startTimer()
 # checkVersion(version)
 # 保存配置文件到doc
 saveConfigFile(train_path_manager.Doc(), model_type)
+saveRunVersionConfig(cur_v=version, dataset=data_folder, model=model_type,
+                     cfg={'k': k,
+                          'n': n,
+                          'qk': qk,
+                          'desc': cfg.desc()})
 
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TrainingEpoch):

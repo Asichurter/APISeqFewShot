@@ -255,5 +255,9 @@ acc作为criteria
 # 6.2 
 
 - LayerNorm非常吃显存(seq=200时要占据接近1G现存)
+
+# 7.1
+
+- LSTM cell 的最终性能表现好于LSTM,可能是mask的原因
   
   

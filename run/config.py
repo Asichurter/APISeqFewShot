@@ -2,6 +2,7 @@ import sys
 import os
 import shutil
 import logging
+import time
 
 from tqdm import tqdm
 
@@ -99,4 +100,19 @@ def checkVersion(cur_v):
     else:
         ver_cfg['lastRunVersion'] = cur_v
         dumpJson(ver_cfg, 'version.json')
+
+
+###########################################################
+# 将运行时的配置,如版本,数据集,模型,模型参数,运行时间等保存到文件中
+###########################################################
+def saveRunVersionConfig(cur_v, dataset, model, cfg):
+    cfg_pack = {'__version': cur_v,
+                '_model': model,
+                '_dataset': dataset,
+                'config': cfg,
+                '_time': time.asctime()}
+    ver_cfg = loadJson('version.json')
+    ver_cfg[str(cur_v)] = cfg_pack
+
+    dumpJson(ver_cfg,'version.json',sort=True)
 

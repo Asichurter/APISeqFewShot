@@ -20,7 +20,7 @@ class IMP(nn.Module):
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
 
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, padding_idx=0)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         hidden_size = (1+modelParams['bidirectional'])*modelParams['hidden_size']
@@ -46,7 +46,7 @@ class IMP(nn.Module):
         self.ClusterLabels = None
 
     def _embed(self, x, lens=None):
-        x = self.EmbedDrop(self.EmbedNorm(self.Embedding(x)))
+        x = self.EmbedDrop(self.Embedding(x))
         x = self.Encoder(x, lens)
         if self.MiddleEncoder is not None:
             x = self.MiddleEncoder(x, lens)

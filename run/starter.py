@@ -32,7 +32,7 @@ from config import generateConfigReport
 # manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_1.json')
-# revertDatasetSplit(dataset='virushare-20-3gram-rmsub',
+# revertDatasetSplit(dataset='virushare-20-3gram-tfrmsub',
 #                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_4.json')
 ###############################################################
 
@@ -61,9 +61,9 @@ from config import generateConfigReport
 
 # 制作基于下标的数据集
 ################################################################
-# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-h3gram/")
+# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-3gram-tfrmsub/")
 for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-20-3gram-rmsub', d_type=d_type)
+    manager = PathManager(dataset='virushare-20-3gram-tfrmsub', d_type=d_type)
 
     makeDataFile(json_path=manager.Folder(),
                  w2idx_path=manager.WordIndexMap(),

@@ -186,12 +186,14 @@ class BiLstmCellEncoder(nn.Module):
         directions = self.Bidirectional + 1
 
         if self.Bidirectional:
+            # 由于sequential只能接受一个positional input,因此将输入打包为字典
             f_h, b_h = self.LstmCells({'input':(x,x),
-                                       'lens':lens})[0]
+                                       'lens':lens})['input']
             x = t.cat((f_h, b_h), dim=2)
             x = x.view(bacth_size, seq_len, hidden_size*directions)
         else:
-            x = self.LstmCells(x)[0]
+            x = self.LstmCells({'input':x,
+                                'lens':lens})['input']
 
         # x = self.SelfAttention(x)
         return x
@@ -231,7 +233,7 @@ class BiLstmCellLayer(nn.Module):
         lens = input_dict['lens']
 
         # input shape: [batch, seq, dim]
-        num_directions = 2 if self.Bidirectional else 1
+        num_directions = self.Bidirectional + 1
         batch_size = forward_x.size(0)
         seq_len = forward_x.size(1)
         hidden_dim = self.ForwardCell.hidden_size
@@ -262,6 +264,8 @@ class BiLstmCellLayer(nn.Module):
                 backward_hidden_states.masked_fill_(mask, 0)
 
         if self.Bidirectional:
-            return (forward_hidden_states, backward_hidden_states), lens
+            return {'input': (forward_hidden_states, backward_hidden_states),
+                    'lens': lens}
         else:
-            return forward_hidden_states, lens
+            return {'input': forward_hidden_states,
+                    'lens':lens}

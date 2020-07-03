@@ -2,7 +2,7 @@ import torch as t
 import torch.nn as nn
 import numpy as np
 
-from components.sequence.LSTM import BiLstmEncoder
+from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.transformer import TransformerEncoder
 from utils.training import extractTaskStructFromInput
@@ -22,8 +22,9 @@ class ImpIMP(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        self.Encoder = BiLstmEncoder(input_size=embed_size,
-                                     **modelParams)
+        # self.Encoder = BiLstmEncoder(input_size=embed_size,
+        #                              **modelParams)
+        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
         # self.Encoder = TransformerEncoder(embed_size=embed_size,
         #                                   **modelParams)
 

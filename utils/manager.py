@@ -1,7 +1,7 @@
 import numpy as np
 from time import time
 import torch as t
-from platform import uname
+import platform
 import json
 
 from utils.file import loadJson, dumpJson
@@ -380,8 +380,8 @@ class TrainingConfigManager:
         return self.Cfg['trainingEpoch']
 
     def systemParams(self):                 # for both train and test
-        system = uname().system
-        return self.Cfg['platform'][system]["datasetBasePath"]
+        system_node = platform.node()
+        return self.Cfg['platform-node'][system_node]["datasetBasePath"]
 
     def version(self):                      # for both train and test
         return self.Cfg['version']
