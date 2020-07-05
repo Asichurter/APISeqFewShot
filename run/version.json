@@ -1,23 +1,134 @@
 {
-    "171": {
-        "__version": 171,
-        "_dataset": "virushare-20-3gram-tfrmsub",
+    "-1": {
+        "__version": -1,
+        "_dataset": "LargePE-50-vt",
         "_model": "ImpIMP",
-        "_time": "Fri Jul  3 22:27:18 2020",
+        "_time": "Sat Jul  4 22:02:41 2020",
         "config": {
             "desc": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "qk改为5",
-                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层双向LSTM编码(cell-based)，使用1dCNN解码",
-                "不使用LayerNorm"
+                "使用3层BiLSTM和多头注意力编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
             ],
             "k": 5,
             "n": 5,
-            "qk": 5
+            "qk": 15
+        }
+    },
+    "171": {
+        "__version": 171,
+        "_dataset": "virushare-20-3gram-tfrmsub",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul  4 17:44:34 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为150使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层双向LSTM编码(cell-based,添加了ReLU)，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "175": {
+        "__version": 175,
+        "_dataset": "virushare-20-3gram-tfrmsub",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul  4 15:23:11 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层双向LSTM编码(cell-based)，使用最大时域池化解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "177": {
+        "__version": 177,
+        "_dataset": "LargePE-50-vt",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul  4 21:32:03 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用3层transformer，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "178": {
+        "__version": 178,
+        "_dataset": "LargePE-50-vt",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul  4 22:12:12 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用3层BiLSTM和多头注意力编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "179": {
+        "__version": 179,
+        "_dataset": "virushare-20-3gram-tfrmsub",
+        "_model": "ImpIMP",
+        "_time": "Sun Jul  5 00:46:39 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用3层transformer和多头注意力编码，使用时域最大池化解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
         }
     }
 }

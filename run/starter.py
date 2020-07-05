@@ -3,6 +3,7 @@
 import numpy as np
 import torch as t
 import torch.nn.functional as F
+import os
 
 from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
                                 dumpDatasetSplitStruct, revertDatasetSplit, \
@@ -40,7 +41,7 @@ from config import generateConfigReport
 # 分割数据集
 ################################################################
 # base = '/home/omnisky/Asichurter/ApiData/LargePE-80/'
-# man = PathManager(dataset='virushare-20-3gram-rmsub')
+# man = PathManager(dataset='LargePE-50-vt')
 # deleteDatasetSplit(dataset_base=man.DatasetBase())
 # splitDatas(src=man.DatasetBase()+'all/',
 #            dest=man.DatasetBase()+'train/',
@@ -49,19 +50,19 @@ from config import generateConfigReport
 #            is_dir=True)
 # splitDatas(src=man.DatasetBase()+'train/',
 #            dest=man.DatasetBase()+'validate/',
-#            ratio=20,
+#            ratio=10,
 #            mode='x',
 #            is_dir=True)
 # splitDatas(src=man.DatasetBase()+'train/',
 #            dest=man.DatasetBase()+'test/',
-#            ratio=20,
+#            ratio=10,
 #            mode='x',
 #            is_dir=True)
 ################################################################
 
 # 制作基于下标的数据集
 ################################################################
-# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-20-3gram-tfrmsub/")
+# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/LargePE-50-vt/")
 for d_type in ['train', 'validate', 'test']:
     manager = PathManager(dataset='virushare-20-3gram-tfrmsub', d_type=d_type)
 
@@ -77,11 +78,11 @@ for d_type in ['train', 'validate', 'test']:
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
-#         ratio_stairs=[500, 1000, 2000, 4000, 5000, 10000, 20000, 50000],
-#         dump_report_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',#None,#
-#         dump_apiset_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json',#None
-#         class_dir=False)
+# apiStat('/home/asichurter/datasets/JSONs/virushare-20-3gram-tfrmsub/all/',
+#         ratio_stairs=[50, 100, 200, 400, 500, 1000, 2000, 5000],
+#         dump_report_path=None,#'/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path=None,#'/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json',#None
+#         class_dir=True)
 ################################################################
 
 
@@ -276,3 +277,12 @@ for d_type in ['train', 'validate', 'test']:
 #                         "NtDeleteFile": "NtDeleteFile",
 #                     })
 ################################################################
+
+json_path = '/home/asichurter/datasets/JSONs/virushare-20-3gram/all/'
+pe_path = '/home/asichurter/datasets/PEs/virushare_20/all/'
+
+for folder in os.listdir(json_path):
+    for item in os.listdir(json_path+folder+'/'):
+        item = item[:-5]
+        if not os.path.exists(pe_path+folder+'/'+item):
+            print(folder+'/'+item, 'not exists in pe path!')

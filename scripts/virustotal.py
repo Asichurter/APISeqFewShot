@@ -30,7 +30,8 @@ def collectPEasExistingDataset(json_path,
             shutil.copy(pe_path+folder+'/'+pe_item_name,
                         dst_path+pe_item_name)
 
-def vtScan(folder_path, json_save_path, scan_num=20000):
+def vtScan(folder_path, json_save_path, scan_num=20000,
+           timeout=600):
     scan_params = {'apikey': apikey}
 
     start_index = len(os.listdir(json_save_path))
@@ -52,7 +53,7 @@ def vtScan(folder_path, json_save_path, scan_num=20000):
         try:
             print('scanning...')
             response = requests.post(scan_url, files=files_cfg, params=scan_params,
-                                     timeout=60)
+                                     timeout=timeout)
         except Exception as e:
             print(f, ': api request exceeds!', ' error:', str(e))
             print('waiting...')
@@ -63,7 +64,7 @@ def vtScan(folder_path, json_save_path, scan_num=20000):
         report_params = {'apikey': apikey, 'resource': scan_info['md5']}
         try:
             print('fetching report...')
-            report = requests.get(report_url, params=report_params, timeout=60)
+            report = requests.get(report_url, params=report_params, timeout=timeout)
             report = report.json()  # ['scans']
         except BaseException as e:
             print(f, ': api request exceeds!', ' error:', str(e))
@@ -86,10 +87,10 @@ def vtScan(folder_path, json_save_path, scan_num=20000):
         time.sleep(1)
 
 if __name__ == '__main__':
-    # collectPEasExistingDataset(json_path='/home/asichurter/datasets/JSONs/LargePE-80/all/',
-    #                            pe_path='/home/asichurter/datasets/PEs/LargePE-100/data_folders/',
-    #                            dst_path='/home/asichurter/datasets/JSONs/LargePE-80-all-temp/',
-    #                            is_class_dir=True)
-    vtScan(folder_path='/home/asichurter/datasets/PEs/temp/',
-           json_save_path='/home/asichurter/datasets/JSONs/temp/')
+    collectPEasExistingDataset(json_path='/home/asichurter/datasets/JSONs/LargePE-80/all/',
+                               pe_path='/home/asichurter/datasets/PEs/LargePE-100/data_folders/',
+                               dst_path='/home/asichurter/datasets/JSONs/LargePE-80-all-temp/',
+                               is_class_dir=True)
+    # vtScan(folder_path='/home/asichurter/datasets/PEs/temp/',
+    #        json_save_path='/home/asichurter/datasets/JSONs/temp/')
 

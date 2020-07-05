@@ -3,21 +3,21 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
 
-  "version" : 173,
-  "modelName" : "ProtoNet",
+  "version" : 179,
+  "modelName" : "ImpIMP",
 
   "modelParams": {
     "embed_size": 300,
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 1,
+    "num_layers" : 3,
     "head_size": 8,
     "self_att_dim" : null,
-    "bidirectional": true,
+    "bidirectional": false,
     "mhatt_head_nums": 4,
     "max_seq_len": 200,
 
@@ -56,7 +56,7 @@
   "gradientUpdateCycle" : 1000,
 
   "trainingVerbose" : false,
-  "useVisdom" : false,
+  "useVisdom" : true,
 
   "trainingEpoch" : 30000,
 
@@ -73,7 +73,8 @@
           "LargePE-80":80,
           "virushare-20-3gram-tfidf": 20,
           "virushare-20-3gram-rmsub": 20,
-          "virushare-20-3gram-tfrmsub": 20
+          "virushare-20-3gram-tfrmsub": 20,
+          "LargePE-50-vt": 50
   },
 
   "plot" : {
@@ -103,11 +104,12 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "qk改为5",
+                "qk改为15",
                 "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层双向LSTM编码(cell-based)，使用1dCNN解码",
-                "不使用LayerNorm"
+                "使用3层transformer和多头注意力编码，使用时域最大池化解码",
+                "不使用LayerNorm",
+                "使用Sigma"
       ]
 }

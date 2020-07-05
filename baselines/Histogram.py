@@ -194,21 +194,21 @@ def doClassification(train_data, train_label, test_data, test_label,
 
 
 if __name__ == '__main__':
-    # getHist(src_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/all/',
-    #         dst_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-hist/all/',
-    #         dict_map_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/wordMap.json',
+    # getHist(src_path='/home/asichurter/datasets/JSONs/LargePE-50-vt/all/',
+    #         dst_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/all/',
+    #         dict_map_path='/home/asichurter/datasets/JSONs/LargePE-50-vt/data/wordMap.json',
     #         is_class_dir=True)
-    # makeClasswiseHistDataset(json_folder_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-hist/all/',
-    #                          dst_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-hist/all/data.npy')
+    # makeClasswiseHistDataset(json_folder_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/all/',
+    #                          dst_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/data.npy')
 
     iteration = 1000            # 测试轮数
     n = 5                      # 分类类数量女
-    test_num_per_class = 10     # 每一个类中测试样本的数量
+    test_num_per_class = 15     # 每一个类中测试样本的数量
     reduction_n_comp = 0.9      # 保留0.9方差
     knn_k = 1                   # kNN的近邻数量
 
     print('Loading data...')
-    mat = np.load('/home/asichurter/datasets/JSONs/virushare-20-3gram-hist/all/data.npy')
+    mat = np.load('/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/data.npy')
     mat = reduceMatrixDim(mat, reduction_n_comp)
 
     train_num_per_class = mat.shape[1] - test_num_per_class

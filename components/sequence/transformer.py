@@ -49,8 +49,15 @@ class TransformerEncoder(nn.Module):
         # print('lens:', lens, end=' ')
         # print('x size:', x.size(), end=' ')
         # print('mask.size:', mask.size())
-        x = self.Encoder(src=x,
-                         src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
+        try:
+            x = self.Encoder(src=x,
+                             src_key_padding_mask=mask)          # TODO:根据lens长度信息构建mask输入到transformer中
+        except AssertionError as e:
+            print('*'*50)
+            print('input size:', x.size())
+            print('mask size:', mask.size())
+            print('*'*50)
+
         x = x.transpose(0,1).contiguous()
 
         if self.Attention is not None:
@@ -123,8 +130,16 @@ class MultiHeadAttention(nn.Module):
         mask = t.Tensor([[0 if i < j else 1 for i in range(int(max_len))] for j in lens]).bool().cuda()
 
         # input as (query,key,value), namely self-attention
-        residual, _weights = self.Transformer(x,x,x,
-                                              key_padding_mask=mask)
+
+        try:
+            residual, _weights = self.Transformer(x,x,x,
+                                                  key_padding_mask=mask)
+        except AssertionError as e:
+            print('*'*50)
+            print('mask shape:', mask.size())
+            print('input shape:', x.size())
+            print('*' * 50)
+            assert False, '多头注意力掩码尺寸断言失败: %s'%str(e)
 
         residual = self.dropout(self.fc(residual))
 

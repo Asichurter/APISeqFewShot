@@ -145,11 +145,15 @@ class TrainStatManager:
                 self.BestVal = loss
                 t.save(model.state_dict(), self.ModelSavePath)
 
-        else:
+        elif self.Criteria == 'accuracy':
             if acc > self.BestVal:
                 self.BestValEpoch = self.TrainIterCount
                 self.BestVal = acc
                 t.save(model.state_dict(), self.ModelSavePath)
+        # 当criteria为None时,无条件保存最新的模型(取消提前终止)
+        elif self.Criteria is None:
+            t.save(model.state_dict(), self.ModelSavePath)
+
 
         self.PreTimeStamp = self.CurTimeStamp
         self.CurTimeStamp = time()

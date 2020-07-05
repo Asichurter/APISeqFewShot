@@ -23,6 +23,7 @@ class BiLstmEncoder(nn.Module):
                  sequential=False,
                  bidirectional=True,
                  return_last_state=False,
+                 max_seq_len=200,
                  **kwargs):
 
         super(BiLstmEncoder, self).__init__()
@@ -31,6 +32,7 @@ class BiLstmEncoder(nn.Module):
         self.UseBN = useBN
         self.Sequential = sequential
         self.RetLastSat = return_last_state
+        self.MaxSeqLen = max_seq_len
 
         self.Encoder = nn.LSTM(input_size=input_size,  # GRU
                                hidden_size=hidden_size,
@@ -69,8 +71,15 @@ class BiLstmEncoder(nn.Module):
             # 由于使用了CNN进行解码，因此还是可以返回整个序列
             out, lens = pad_packed_sequence(out, batch_first=True)
 
+
             if self.RetLastSat:
                 out = out[:,-1,:].squeeze()
+
+            # 如果序列中没有长度等于最大长度的元素,则使用原生pad时会产生尺寸错误
+            if out.size(1) != self.MaxSeqLen:
+                pad_size = self.MaxSeqLen-out.size(1)
+                zero_paddings = t.zeros((out.size(0),pad_size,out.size(2))).cuda()
+                out = t.cat((out,zero_paddings),dim=1)
 
         if self.Sequential:
             return out, lens
@@ -160,6 +169,7 @@ class BiLstmCellEncoder(nn.Module):
                  bidirectional=True,
                  self_att_dim=64,
                  max_seq_len=200,
+                 nonlineary=False,
                  **kwargs):
         super(BiLstmCellEncoder, self).__init__()
 
@@ -169,7 +179,8 @@ class BiLstmCellEncoder(nn.Module):
         layers = [BiLstmCellLayer(input_size=input_size if i==0 else hidden_size,
                                   hidden_size=hidden_size,
                                   bidirectional=bidirectional,
-                                  max_seq_len=max_seq_len)
+                                  max_seq_len=max_seq_len,
+                                  nonlineary=nonlineary)
                   for i in range(num_layers)]
 
         self.LstmCells = nn.Sequential(*layers)
@@ -204,7 +215,8 @@ class BiLstmCellLayer(nn.Module):
                  input_size,
                  hidden_size,
                  bidirectional=True,
-                 max_seq_len=200):
+                 max_seq_len=200,
+                 nonlineary=None):
 
         super(BiLstmCellLayer, self).__init__()
 
@@ -219,6 +231,11 @@ class BiLstmCellLayer(nn.Module):
                                   hidden_size=hidden_size)
         else:
             self.BackwardCell = None
+
+        if nonlineary:
+            self.Nonlineary = nn.ReLU()
+        else:
+            self.Nonlineary = nn.Identity()
 
     def forward(self, input_dict):
         assert not self.Bidirectional or type(input_dict['input'])==tuple, \
@@ -264,8 +281,11 @@ class BiLstmCellLayer(nn.Module):
                 backward_hidden_states.masked_fill_(mask, 0)
 
         if self.Bidirectional:
+            forward_hidden_states = self.Nonlineary(forward_hidden_states)
+            backward_hidden_states = self.Nonlineary(backward_hidden_states)
             return {'input': (forward_hidden_states, backward_hidden_states),
                     'lens': lens}
         else:
+            forward_hidden_states = self.Nonlineary(forward_hidden_states)
             return {'input': forward_hidden_states,
                     'lens':lens}

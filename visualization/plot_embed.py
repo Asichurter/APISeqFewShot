@@ -18,14 +18,14 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***************************************************************************
-data_dataset_name = 'virushare-20-3gram-tfrmsub'
-model_dataset_name = 'virushare-20-3gram-tfrmsub'
+data_dataset_name = 'LargePE-50-vt'
+model_dataset_name = 'LargePE-50-vt'
 dataset_subtype = 'test'
 model_name = 'ImpIMP'
-version = 171
-N = 20
+version = 177
+N = 50
 plot_option = 'episode'#'entire'
-k, n, qk = 5, 5, 15
+k, n, qk = 5, 5, 45
 figsize = (12,10)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
@@ -127,7 +127,7 @@ elif plot_option == 'episode':
                                            sampling_seed=sampling_seed)
     support, query, acc = model(support_, query_, *others, if_cache_data=True)
 
-    clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
+    clusters, cluster_lab_ls = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
 
     # reduction = PCA(n_components=2)
