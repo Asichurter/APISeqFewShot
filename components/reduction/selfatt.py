@@ -6,11 +6,14 @@ from utils.training import getMaskFromLens
 
 
 class AttnReduction(nn.Module):
-    def __init__(self, input_dim, hidden_dim=256):
+    def __init__(self, input_dim, hidden_dim=256, max_seq_len=200,
+                 **kwargs):
         super(AttnReduction, self).__init__()
 
-        self.IntAtt = nn.Linear(input_dim, hidden_dim, bias=False)
-        self.ExtAtt = nn.Linear(hidden_dim, 1, bias=False)
+        self.MaxSeqLen = max_seq_len
+
+        self.IntAtt = nn.Linear(input_dim, input_dim, bias=False)
+        self.ExtAtt = nn.Linear(input_dim, 1, bias=False)
 
     def forward(self, x, lens=None):
         if isinstance(x, t.nn.utils.rnn.PackedSequence):
@@ -29,7 +32,7 @@ class AttnReduction(nn.Module):
             # idx_matrix = t.arange(0, max_idx, 1).repeat((batch_size, 1))
             # len_mask = lens.unsqueeze(1)
             # mask = idx_matrix.ge(len_mask).cuda()
-            mask = getMaskFromLens(lens)
+            mask = getMaskFromLens(lens,self.MaxSeqLen)
             att_weight.masked_fill_(mask, float('-inf'))
 
         att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))

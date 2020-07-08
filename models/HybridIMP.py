@@ -2,7 +2,7 @@ import torch as t
 import torch.nn as nn
 import numpy as np
 
-from components.sequence.LSTM import BiLstmEncoder
+from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from components.sequence.CNN import CNNEncoder1D
 from utils.training import extractTaskStructFromInput
 
@@ -21,16 +21,16 @@ class HybridIMP(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        self.Encoder = BiLstmEncoder(input_size=embed_size,
-                                     **modelParams)
+        hidden_dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
-        self.Decoder = CNNEncoder1D([(1 + modelParams['bidirectional']) * modelParams['hidden_size'],
-                                     (1 + modelParams['bidirectional']) * modelParams['hidden_size']])
+        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+
+        self.Decoder = CNNEncoder1D([hidden_dim, hidden_dim])
 
         # TODO: 使用Sigma
         self.Sigma = nn.Parameter(t.FloatTensor([sigma]))
         self.ALPHA = alpha
-        self.Dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
+        self.Dim = hidden_dim
         self.NumClusterSteps = 1 if 'cluster_num_step' not in modelParams else modelParams['cluster_num_step']
 
         self.Clusters = None

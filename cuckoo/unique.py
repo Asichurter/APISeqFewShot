@@ -9,12 +9,12 @@ from tqdm import tqdm
 
 rmv_temp = 'rm -rf {path}'
 
-json_path = '/home/asichurter/datasets/JSONs/LargePE-100-original/'
+json_path = '/home/asichurter/datasets/JSONs/virushare-20-3gram-incre/'
 
 item_list = []
 
 for folder in tqdm(os.listdir(json_path)):
-    with open(json_path+folder+'/reports/report.json') as f:
+    with open(json_path+folder+'/report.json') as f:
         report = json.load(f)
         name = report['target']['file']['name']
         if name in item_list:

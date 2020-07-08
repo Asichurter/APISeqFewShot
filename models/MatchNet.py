@@ -2,7 +2,7 @@ import logging
 
 from components.modules import *
 from components.sequence.CNN import CNNEncoder1D
-from components.sequence.LSTM import BiLstmEncoder
+from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -22,10 +22,12 @@ class MatchNet(nn.Module):
         self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
-        self.Decoder = CNNEncoder1D([modelParams['hidden_size'],
-                                     modelParams['hidden_size']])
+        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+
+        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
 
     def forward(self, support, query, sup_len, que_len, metric='euc'):
 
@@ -42,8 +44,8 @@ class MatchNet(nn.Module):
         support = self.Embedding(support)
         query = self.Embedding(query)
 
-        support = self.EmbedDrop(self.EmbedNorm(support))
-        query = self.EmbedDrop(self.EmbedNorm(query))
+        support = self.EmbedDrop(support)
+        query = self.EmbedDrop(query)
 
         # shape: [batch, dim]
         support = self.Encoder(support, sup_len)

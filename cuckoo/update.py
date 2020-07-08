@@ -15,7 +15,7 @@ import logging
 path = "/home/asichurter/.cuckoo/storage/analyses/"
 # path = "/home/asichurter/datasets/JSONs/LargePE-100-original/no-problem/"
 child_path = '/reports/report.json'
-config_path = "/home/asichurter/datasets/PEs/LargePE-100/config.json"
+config_path = "/home/asichurter/datasets/PEs/virushare-20-after-increm/config.json"
 # hist_config_path = "/home/asichurter/malwares/virushare_20/histConfig.json"
 
 with open(config_path, 'r') as f:
@@ -42,11 +42,11 @@ for i, task_id in enumerate(os.listdir(path)):
                 report = json.load(json_f)
                 file_name = report['target']['file']['name']
 
-                print('api length: ' + str(len(report['api'])))
+                print('api length: ' + str(len(report['apis'])))
                 print('------------------------------------------------')
 
-                if len(report['api']) < 10:
-                    warnings.append('task_id=%s has length of %d'%(task_id, len(report['api'])))
+                if len(report['apis']) < 10:
+                    warnings.append('task_id=%s has length of %d'%(task_id, len(report['apis'])))
 
                 # identical file appears twice in the pass, ignore and warn
                 if file_name in current_cfgs:

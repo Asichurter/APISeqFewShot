@@ -77,6 +77,31 @@ def extractApiFromJson(path):
 
     reporter.report()
 
+
+######################################################
+# 将Cuckoo分析后并且cleanup过的文件夹和内部文件的名称命名为
+#　file的名称
+######################################################
+def renameCuckooFolders(json_path):
+    reporter = Reporter()
+
+    for folder in tqdm(os.listdir(json_path)):
+        try:
+            report = loadJson(json_path+folder+'/report.json')
+            name = report['target']['file']['name']
+
+            os.rename(json_path+folder+'/report.json', json_path+folder+'/%s.json'%name)
+            os.rename(json_path+folder, json_path+name)
+
+            reporter.logSuccess()
+
+        except Exception as e:
+            reporter.logError(entity=folder, msg=str(e))
+            continue
+
+    reporter.report()
+
+
 #####################################################
 # 本函数用于统计Cuckoo报告中的api的长度和所有api，将长度为0
 # 或者过短的api调用分别作为错误和警告统计，并绘制分布图。警告和
@@ -142,7 +167,7 @@ def apiStat(path,
 
     printBulletin('Max Length: %d' % max_)
     printBulletin('Min Length: %d' % min_)
-    printBulletin('API set（%d in total） %s' % (len(api_set), str(api_set)))
+    printBulletin('API set（%d in total)' % len(api_set))
 
     reporter.report()
 
@@ -212,7 +237,9 @@ def statApiFrequency(json_path,
 # 本函数用于将一些非标准的别名或者同一调用的多种类型映射为标准
 # 的api名称
 #####################################################
-def mappingApiNormalize(json_path, mapping, is_class_dir=False):
+def mappingApiNormalize(json_path, mapping,
+                        dump_mapping_path=None,
+                        is_class_dir=False):
     reporter = Reporter()
 
     for folder in tqdm(os.listdir(json_path)):
@@ -234,6 +261,9 @@ def mappingApiNormalize(json_path, mapping, is_class_dir=False):
 
             except Exception as e:
                 reporter.logError(item, str(e))
+
+    if dump_mapping_path is not None:
+        dumpJson(mapping, dump_mapping_path)
 
     reporter.report()
 
@@ -536,17 +566,53 @@ def removeNotExistItem(index_path, item_path):
     print('After removing, %d items remain'%item_amount)
 
 
+def moveJsonToGroup(src_path,
+                    pe_map_path,
+                    dst_path):
+
+    item_group_mapper = {
+        item: group for group in os.listdir(pe_map_path) for item in os.listdir(pe_map_path+group+'/')
+    }
+
+    for folder in tqdm(os.listdir(src_path)):
+        group = item_group_mapper[folder]
+        shutil.copy(src_path+folder+'/'+folder+'.json',
+                    dst_path+group+'/'+folder+'.json')
+
+
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='all')
 
     '''
     调用顺序：extract -> mapping -> removeRedundance -> (ngram) -> apiStat 
             -> stat_classes -> collect
+            
     '''
 
-    removeRepeatedSubSeq(json_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-rmsub/all/',
-                         max_sub_seq_len=5,
-                         is_class_dir=True)
+    # 根据PE的划分,从json数据集中选出选中的文件收集到文件夹中
+    #----------------------------------------------------------------
+    # src_path = '/home/asichurter/datasets/JSONs/jsons - 副本/'
+    # json_list_path = '/home/asichurter/datasets/PEs/virushare-20-after-increm/all/'
+    # dst_path = '/home/asichurter/datasets/JSONs/virushare-50-original/'
+    #
+    # item_list = []
+    # for folder in os.listdir(json_list_path):
+    #     item_list += os.listdir(json_list_path+folder+'/')
+    #
+    # for folder in tqdm(os.listdir(src_path)):
+    #     if folder in item_list:
+    #         os.mkdir(dst_path+folder+'/')
+    #         shutil.copy(src_path+folder+'/'+folder+'.json',
+    #                     dst_path+folder+'/'+folder+'.json')
+    #----------------------------------------------------------------
+
+
+
+    # renameCuckooFolders(json_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-incre/')
+
+    # removeRepeatedSubSeq(json_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-rmsub/all/',
+    #                      max_sub_seq_len=5,
+    #                      is_class_dir=True)
 
     # removeNotExistItem(index_path='/home/asichurter/datasets/PEs/wudi/unziped/',
     #                    item_path='/home/asichurter/datasets/PEs/wudi/result/')
@@ -555,9 +621,9 @@ if __name__ == '__main__':
 
     # extractApiFromJson(path)
 
-    # apiStat('D:/peimages/PEs/virushare_20/jsons/',
-    #          dump_report_path='D:/peimages/PEs/virushare_20/json_w_e_report.json',
-    #          dump_apiset_path='D:/peimages/PEs/virushare_20/api_set.json',
+    # apiStat('/home/asichurter/datasets/JSONs/virushare-50-original/',
+    #          dump_report_path=None,#'D:/peimages/PEs/virushare_20/json_w_e_report.json',
+    #          dump_apiset_path='/home/asichurter/datasets/reports/test.json',
     #         ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
     #         class_dir=False)
 
@@ -566,7 +632,9 @@ if __name__ == '__main__':
 
 
 
-    # mappingApiNormalize(path,
+    # mappingApiNormalize('/home/asichurter/datasets/JSONs/virushare-50-original/',
+    #                     dump_mapping_path='/home/asichurter/datasets/reports/virushare-50-api_mapping.json',
+    #                     is_class_dir=False,
     #                       mapping={
     #                           "RegCreateKeyExA" : "RegCreateKey",
     #                           "RegCreateKeyExW" : "RegCreateKey",
@@ -578,14 +646,14 @@ if __name__ == '__main__':
     #                           "RegDeleteValueA" : "RegDeleteValue",
     #                           "RegEnumValueW" : "RegEnumValue",
     #                           "RegEnumValueA" : "RegEnumValue",
+    #                           'RegOpenKeyExA': 'RegOpenKeyEx',
+    #                           'RegOpenKeyExW': 'RegOpenKeyEx',
+    #                           'RegQueryInfoKeyA': 'RegQueryInfoKey',
+    #                           'RegQueryInfoKeyW': 'RegQueryInfoKey',
     #                           "RegQueryValueExW" : "RegQueryValue",
     #                           "RegQueryValueExA" : "RegQueryValue",
     #                           "CreateProcessInternalW" : "CreateProcess",
     #                           "NtCreateThreadEx" : "NtCreateThread",
-    #                           "CreateRemoteThread" : "CreateRemoteThread",
-    #                           "CreateThread" : "CreateThread",
-    #                           "NtTerminateProcess": "TerminateProcess",
-    #                           "NtOpenProcess" : "OpenProcess",
     #                           "InternetOpenUrlA" : "InternetOpenUrl",
     #                           "InternetOpenUrlW" : "InternetOpenUrl",
     #                           "InternetOpenW" : "InternetOpen",
@@ -597,13 +665,62 @@ if __name__ == '__main__':
     #                           "HttpSendRequestA" : "HttpSendRequest",
     #                           "HttpSendRequestW" : "HttpSendRequest",
     #                           "ShellExecuteExW" : "ShellExecute",
-    #                           "LdrLoadDll" : "LdrLoadDll",
     #                           "CopyFileW" : "CopyFile",
     #                           "CopyFileA" : "CopyFile",
     #                           "CopyFileExW" : "CopyFile",
-    #                           "NtCreateFile" : "CreateFile",
-    #                           "DeleteFileW" : "DeleteFile",
-    #                           "NtDeleteFile" : "NtDeleteFile",
+    #                           'CoCreateInstanceEx': 'CoCreateInstance',
+    #                           'CryptAcquireContextA': 'CryptAcquireContext',
+    #                           'CryptAcquireContextW': 'CryptAcquireContext',
+    #                           'DeleteUrlCacheEntryA': 'DeleteUrlCacheEntry',
+    #                           'DeleteUrlCacheEntryW': 'DeleteUrlCacheEntry',
+    #                           'DrawTextExA': 'DrawTextEx',
+    #                           'DrawTextExW': 'DrawTextEx',
+    #                           'FindResourceExA': 'FindResource',
+    #                           'FindResourceExW': 'FindResource',
+    #                           'FindResourceW': 'FindResource',
+    #                           'FindWindowA': 'FindWindow',
+    #                           'FindWindowExA': 'FindWindow',
+    #                           'FindWindowExW': 'FindWindow',
+    #                           'FindWindowW': 'FindWindow',
+    #                           'GetComputerNameA': 'GetComputerName',
+    #                           'GetComputerNameW': 'GetComputerName',
+    #                           'GetDiskFreeSpaceExW': 'GetDiskFreeSpace',
+    #                           'GetDiskFreeSpaceW': 'GetDiskFreeSpace',
+    #                           'GetFileAttributesExW': 'GetFileAttributes',
+    #                           'GetFileAttributesW': 'GetFileAttributes',
+    #                           'GetFileInformationByHandleEx':  'GetFileInformationByHandle',
+    #                           'GetFileVersionInfoSizeExW': 'GetFileVersionInfoSize',
+    #                           'GetFileVersionInfoSizeW': 'GetFileVersionInfoSize',
+    #                           'GetFileVersionInfoExW':  'GetFileVersionInfo',
+    #                           'GetFileVersionInfoW':  'GetFileVersionInfo',
+    #                           'GetSystemDirectoryA': 'GetSystemDirectory',
+    #                           'GetSystemDirectoryW': 'GetSystemDirectory',
+    #                           'GetSystemWindowsDirectoryA': 'GetSystemWindowsDirectory',
+    #                           'GetSystemWindowsDirectoryW': 'GetSystemWindowsDirectory',
+    #                           'GetUserNameExA': 'GetUserNameEx',
+    #                           'GetUserNameExW': 'GetUserNameEx',
+    #                           'GlobalMemoryStatusEx':  'GlobalMemoryStatus',
+    #                           'HttpQueryInfoA': 'HttpQueryInfo',
+    #                           'InternetCrackUrlA': 'InternetCrackUrl',
+    #                           'InternetCrackUrlW': 'InternetCrackUrl',
+    #                           'InternetGetConnectedStateExA':  'InternetGetConnectedState',
+    #                           'InternetQueryOptionA': 'InternetQueryOption',
+    #                           'LoadStringA': 'LoadString',
+    #                           'LoadStringW': 'LoadString',
+    #                           'NtOpenKeyEx': 'NtOpenKey',
+    #                           'OpenSCManagerA': 'OpenSCManager',
+    #                           'OpenSCManagerW': 'OpenSCManager',
+    #                           'OpenServiceA': 'OpenService',
+    #                           'OpenServiceW': 'OpenService',
+    #                           'RemoveDirectoryA': 'RemoveDirectory',
+    #                           'RemoveDirectoryW': 'RemoveDirectory',
+    #                           'SetFilePointerEx':  'SetFilePointer',
+    #                           'SetWindowsHookExA': 'SetWindowsHook',
+    #                           'SetWindowsHookExW': 'SetWindowsHook',
+    #                           'StartServiceA': 'StartService',
+    #                           'StartServiceW': 'StartService',
+    #                           'WriteConsoleA': 'WriteConsole',
+    #                           'WriteConsoleW': 'WriteConsole',
     #                       })
 
     # removeApiRedundance('D:/peimages/PEs/virushare_20/jsons/',
@@ -714,7 +831,7 @@ if __name__ == '__main__':
     #                                     ################################################################
 # statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
 #                     json_path='/home/asichurter/datasets/JSONs/jsons-3gram/',
-    "loadmoney",
+#     "loadmoney",
     #                                         "loring",
     #                                         "lunam",
     #                                         "mepaow",

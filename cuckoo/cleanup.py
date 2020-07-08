@@ -13,9 +13,10 @@ exception_dir = ['latest']
 rmv_temp = 'rm -rf {path}'
 mv_temp = 'mv {path}/reports/report.json {path}/report.json && rm -rf {path}/reports'
 
-analyses_path = '/home/asichurter/datasets/JSONs/LargePE-100-original/'
+analyses_path = '/home/asichurter/datasets/JSONs/virushare-20-3gram-incre/'
 # analyses_path = '/home/asichurter/codes/test/'
 
+rename = True
 
 for d in tqdm(os.listdir(analyses_path)):
     if d not in exception_dir:

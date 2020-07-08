@@ -41,7 +41,7 @@ from config import generateConfigReport
 # 分割数据集
 ################################################################
 # base = '/home/omnisky/Asichurter/ApiData/LargePE-80/'
-# man = PathManager(dataset='LargePE-50-vt')
+# man = PathManager(dataset='virushare-45')
 # deleteDatasetSplit(dataset_base=man.DatasetBase())
 # splitDatas(src=man.DatasetBase()+'all/',
 #            dest=man.DatasetBase()+'train/',
@@ -63,62 +63,61 @@ from config import generateConfigReport
 # 制作基于下标的数据集
 ################################################################
 # makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/LargePE-50-vt/")
-for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-20-3gram-tfrmsub', d_type=d_type)
-
-    makeDataFile(json_path=manager.Folder(),
-                 w2idx_path=manager.WordIndexMap(),
-                 seq_length_save_path=manager.FileSeqLen(),
-                 data_save_path=manager.FileData(),
-                 num_per_class=20,
-                 max_seq_len=200)
+# for d_type in ['train', 'validate', 'test']:
+#     manager = PathManager(dataset='virushare-45', d_type=d_type)
+#
+#     makeDataFile(json_path=manager.Folder(),
+#                  w2idx_path=manager.WordIndexMap(),
+#                  seq_length_save_path=manager.FileSeqLen(),
+#                  data_save_path=manager.FileData(),
+#                  num_per_class=45,
+#                  max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/asichurter/datasets/JSONs/virushare-20-3gram-tfrmsub/all/',
+# apiStat('/home/omnisky/Asichurter/ApiData/virushare-50-original/',
 #         ratio_stairs=[50, 100, 200, 400, 500, 1000, 2000, 5000],
-#         dump_report_path=None,#'/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_report.json',#None,#
-#         dump_apiset_path=None,#'/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_set.json',#None
-#         class_dir=True)
+#         dump_report_path='/home/asichurter/datasets/report/virushare-50-original_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path='/home/asichurter/datasets/report/virushare-50-original_3gram_tfidf_api_set.json',#None
+#         class_dir=False)
 ################################################################
 
 
 
 # 统计满足数量规模的类别
 ################################################################
-# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
-#                     json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                     report_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_report.json',
-#                     stat_stairs=[20],
-#                     count_dump_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_scale_report.json')
+# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare-20-after-increm/all/',
+#                     json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
+#                     report_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_report.json',
+#                     stat_stairs=[20,30,40,45,50],
+#                     count_dump_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_scale_report.json')
 ################################################################
 
 # 按照已经知道的满足规模的类进行收集
 ################################################################
-# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-tfidf/')
-# collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
-#                    json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                    dst_path='/home/asichurter/datasets/JSONs/virushare-20-3gram-tfidf/all/',
-#                    report_path='/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_report.json',
-#                    num_per_class=20,
-#                    selected_classes=["gamevance", "ibryte", "zapchast", "xorer", "installmonetizer", "kovter", "pykspa", "lunam", "darkkomet", "browsefox", "urelas", "refroso", "ipamor", "bundlore", "scrinject", "startp", "fakeie", "blacole", "msposer", "soft32downloader", "bettersurf", "dealply", "outbrowse", "psyme", "softpulse", "wajam", "patchload", "dlhelper", "cidox", "4shared", "badur", "fearso", "pirminay", "faceliker", "autoit", "kykymber", "cpllnk", "qqpass", "darbyen", "hijacker", "domaiq", "kido", "fujacks", "redir", "jyfi", "scarsi", "webprefix", "llac", "fosniw", "fbjack", "softcnapp", "getnow", "1clickdownload", "zegost", "gator", "inor", "wonka", "softonic", "nimda", "downloadsponsor", "downloadadmin", "egroupdial", "wabot", "antavmu", "delbar", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "icloader", "reconyc", "vilsel", "installerex", "downloadassistant", "sytro", "sefnit", "staser", "pullupdate", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "firseria", "loadmoney", "vtflooder", "mydoom", "acda", "extenbro", "decdec", "black", "loring", "xtrat", "midia", "nitol", "linkury", "shipup", "gepys", "zvuzona", "urausy", "lineage", "refresh", "yoddos", "iframeref", "mikey", "goredir", "instally", "toggle", "hidelink", "airinstaller", "hicrazyk", "simbot", "conficker", "trymedia", "lipler", "ircbot", "hiloti", "qhost", "buterat", "includer", "iframeinject", "unruy", "directdownloader", "c99shell", "windef", "vittalia"])
+# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-45/')
+# collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare-20-after-increm/all/',
+#                    json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
+#                    dst_path='/home/asichurter/datasets/JSONs/virushare-45/all/',
+#                    report_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_report.json',
+#                    num_per_class=45,
+#                    selected_classes=["ibryte", "zapchast", "darkkomet", "urelas", "refroso", "bundlore", "scrinject", "blacole", "soft32downloader", "bettersurf", "outbrowse", "patchload", "4shared", "fearso", "faceliker", "autoit", "kykymber", "qqpass", "domaiq", "fujacks", "redir", "webprefix", "llac", "fbjack", "gator", "softonic", "nimda", "downloadadmin", "egroupdial", "banload", "zbot", "icloader", "vilsel", "installerex", "sytro", "zeroaccess", "somoto", "linkular", "fsysna", "firseria", "loadmoney", "mydoom", "extenbro", "black", "loring", "xtrat", "shipup", "gepys", "urausy", "lineage", "iframeref", "toggle", "hidelink", "airinstaller", "hicrazyk", "simbot", "lipler", "ircbot", "qhost", "directdownloader", "c99shell"])
 ################################################################
-
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
+# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_set.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
 #                     mapping=mapping,
 #                     is_class_dir=False)
 # # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-20_3gram_tfidf_api_set.json')
+# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_set.json')
 ################################################################
 
 
@@ -135,14 +134,14 @@ for d_type in ['train', 'validate', 'test']:
 # 统计ngram
 ################################################################
 # print('Removing Redundance...')
-# removeApiRedundance(json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+# removeApiRedundance(json_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
 #                     class_dir=False)
 #
-# # man = PathManager(dataset='virushare-20-h3gram', d_type='all')
+# man = PathManager(dataset='virushare-50-original', d_type='all')
 # print('Stating NGram...')
-# ngram_dict = statNGram(parent_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+# ngram_dict = statNGram(parent_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
 #                        window=3,
-#                        dict_save_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_api_set.json',
+#                        dict_save_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_api_set.json',
 #                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
 #                        class_dir=False)
 # #
@@ -151,7 +150,7 @@ for d_type in ['train', 'validate', 'test']:
 # # d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
 # #
 # print('Converting NGram...')
-# convertToNGramSeq(parent_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+# convertToNGramSeq(parent_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
 #                   ngram_max_num=None,
@@ -162,20 +161,20 @@ for d_type in ['train', 'validate', 'test']:
 
 # 计算tdidf并且根据该值过滤API
  #################################################################
-# api_set = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_api_set.json')
+# api_set = loadJson('/home/omnisky/Asichurter/report/virushare-50-original_3gram_api_set.json')['api_set']
 # dict_map = {k:i for i,k in enumerate(api_set)}
-# dumpJson(dict_map, '/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_dictmap.json')
-# top_k_apis = calTFIDF(dataset_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
-#                       dict_map_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_dictmap.json',
+# dumpJson(dict_map, '/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_dictmap.json')
+# top_k_apis = calTFIDF(dataset_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
+#                       dict_map_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_dictmap.json',
 #                       is_class_dir=False,
-#                       tfidf_dump_path='/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_val.json',
+#                       tfidf_dump_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_val.json',
 #                       top_k=2000)
-# api_tfidf = loadJson('/home/omnisky/Asichurter/report/LargePE-100_3gram_tfidf_api_val.json')
+# api_tfidf = loadJson('/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_val.json')
 # print('Sorting...')
 # api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
 # api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
 # print('Filtering...')
-# filterApiSequence(json_path='/home/omnisky/Asichurter/ApiData/LargePE-100-original/',
+# filterApiSequence(json_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
 #                   api_list=api_list,
 #                   keep_or_filter=False)
 #################################################################
@@ -278,11 +277,11 @@ for d_type in ['train', 'validate', 'test']:
 #                     })
 ################################################################
 
-json_path = '/home/asichurter/datasets/JSONs/virushare-20-3gram/all/'
-pe_path = '/home/asichurter/datasets/PEs/virushare_20/all/'
-
-for folder in os.listdir(json_path):
-    for item in os.listdir(json_path+folder+'/'):
-        item = item[:-5]
-        if not os.path.exists(pe_path+folder+'/'+item):
-            print(folder+'/'+item, 'not exists in pe path!')
+# json_path = '/home/asichurter/datasets/JSONs/virushare-20-3gram/all/'
+# pe_path = '/home/asichurter/datasets/PEs/virushare_20/all/'
+#
+# for folder in os.listdir(json_path):
+#     for item in os.listdir(json_path+folder+'/'):
+#         item = item[:-5]
+#         if not os.path.exists(pe_path+folder+'/'+item):
+#             print(folder+'/'+item, 'not exists in pe path!')

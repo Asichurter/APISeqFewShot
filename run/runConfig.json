@@ -1,12 +1,11 @@
 {
-  "dataset" :  "virushare-20-3gram-tfrmsub",
+  "dataset" :  "virushare-45",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
-
-  "version" : 179,
+  "version" : 187,
   "modelName" : "ImpIMP",
 
   "modelParams": {
@@ -14,10 +13,10 @@
     "usePretrained": true,
 
     "hidden_size" : 128,
-    "num_layers" : 3,
+    "num_layers" : 1,
     "head_size": 8,
     "self_att_dim" : null,
-    "bidirectional": false,
+    "bidirectional": true,
     "mhatt_head_nums": 4,
     "max_seq_len": 200,
 
@@ -74,7 +73,8 @@
           "virushare-20-3gram-tfidf": 20,
           "virushare-20-3gram-rmsub": 20,
           "virushare-20-3gram-tfrmsub": 20,
-          "LargePE-50-vt": 50
+          "LargePE-50-vt": 50,
+          "virushare-45": 45
   },
 
   "plot" : {
@@ -104,12 +104,12 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "qk改为15",
-                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "qk改为5",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用3层transformer和多头注意力编码，使用时域最大池化解码",
+                "使用1层BiLSTM-cell编码，使用自注意力解码",
                 "不使用LayerNorm",
-                "使用Sigma"
+                "使用Sigma,初始设置为0.1"
       ]
 }

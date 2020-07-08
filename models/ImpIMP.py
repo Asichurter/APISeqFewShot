@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 from components.reduction.max import StepMaxReduce
+from components.reduction.selfatt import AttnReduction
 from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.transformer import TransformerEncoder, MultiHeadAttention
@@ -26,12 +27,13 @@ class ImpIMP(nn.Module):
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
         # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
-        # self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
-        self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
+        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 
-        self.MiddleEncoder = MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
+        self.MiddleEncoder = None#MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
 
-        self.Decoder = StepMaxReduce()#CNNEncoder1D([hidden_size,hidden_size])
+        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
+        # self.Decoder = AttnReduction(input_dim=hidden_size, **modelParams)
         # self.Decoder = StepMaxReduce()
 
         # TODO: 使用Sigma

@@ -89,9 +89,9 @@ def trainGloVe(seqs,
     print('Done')
 
 if __name__ == '__main__':
-    seqs = aggregateApiSequences("/home/asichurter/datasets/JSONs/LargePE-50-vt/all/")
+    seqs = aggregateApiSequences("/home/asichurter/datasets/JSONs/virushare-45/all/")
     trainGloVe(seqs,
                size=300,
-               save_matrix_path="/home/asichurter/datasets/JSONs/LargePE-50-vt/data/matrix.npy",
-               save_word2index_path="/home/asichurter/datasets/JSONs/LargePE-50-vt/data/wordMap.json"
+               save_matrix_path="/home/asichurter/datasets/JSONs/virushare-45/data/matrix.npy",
+               save_word2index_path="/home/asichurter/datasets/JSONs/virushare-45/data/wordMap.json"
                )
