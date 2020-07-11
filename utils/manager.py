@@ -34,6 +34,8 @@ class PathManager:
     FileDataPathTemp = '%s/data/%s/data.npy'
     # 文件数据对应的长度表路径
     FileSeqLenPathTemp = '%s/data/%s/seqLength.json'
+    # 文件夹类下标到文件夹名的映射
+    FileIdx2ClsPathTemp = '%s/data/%s/idxMapping.json'
     DocTemp = '%s/doc/%d/'
 
     def __init__(self, dataset, model_name=None, d_type='all',
@@ -57,6 +59,7 @@ class PathManager:
 
         self.FileDataPath = self.ParentPath + self.FileDataPathTemp % (dataset, d_type)
         self.FileSeqLenPath = self.ParentPath + self.FileSeqLenPathTemp % (dataset, d_type)
+        self.FileIdx2ClsPath = self.ParentPath + self.FileIdx2ClsPathTemp % (dataset, d_type)
 
         self.ModelPath = self.ParentPath + self.ModelPathTemp % (dataset, model_name)
         self.DocPath = self.ParentPath + self.DocTemp % (dataset, version)
@@ -82,7 +85,13 @@ class PathManager:
         else:
             return self.FileSeqLenPath
 
-    def Model(self):
+    def FileIdx2Cls(self):
+        if self.DataType == 'all':
+            raise ValueError('在数据分割为all时，不允许访问FileSeqLen')
+        else:
+            return self.FileIdx2ClsPath
+
+    def Model(self, type='best'):
         return self.ModelPath
 
     def Doc(self):

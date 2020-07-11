@@ -1,12 +1,12 @@
 {
-  "dataset" :  "virushare-45",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
-  "version" : 187,
-  "modelName" : "ImpIMP",
+  "version" : -1,
+  "modelName" :  "ProtoNet",
 
   "modelParams": {
     "embed_size": 300,
@@ -74,7 +74,8 @@
           "virushare-20-3gram-rmsub": 20,
           "virushare-20-3gram-tfrmsub": 20,
           "LargePE-50-vt": 50,
-          "virushare-45": 45
+          "virushare-45": 45,
+          "virushare-45-rmsub": 45
   },
 
   "plot" : {
@@ -104,12 +105,12 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "qk改为5",
-                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层BiLSTM-cell编码，使用自注意力解码",
+                "使用1层BiLSTM编码，使用1dCNN解码",
                 "不使用LayerNorm",
-                "使用Sigma,初始设置为0.1"
+                "使用Sigma"
       ]
 }

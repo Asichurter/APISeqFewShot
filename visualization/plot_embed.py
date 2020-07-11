@@ -18,15 +18,15 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***************************************************************************
-data_dataset_name = 'LargePE-50-vt'
-model_dataset_name = 'LargePE-50-vt'
+data_dataset_name = "virushare-20-3gram"
+model_dataset_name = "virushare-20-3gram"
 dataset_subtype = 'test'
 model_name = 'ImpIMP'
-version = 177
-N = 50
-plot_option = 'episode'#'entire'
-k, n, qk = 5, 5, 45
-figsize = (12,10)
+version = -2
+N = 20
+plot_option = 'entire'#'entire'
+k, n, qk = 5, 5, 15
+figsize = (18,15)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
 # ***************************************************************************
@@ -90,7 +90,7 @@ if plot_option == 'entire':
     datas = reduction.fit_transform(datas)
 
     colors = ['darkgreen',
- 'darkseagreen',
+ 'purple',
  'olive',
  'teal',
  'orangered',
@@ -98,24 +98,30 @@ if plot_option == 'entire':
  'steelblue',
  'gold',
  'magenta',
- 'hotpink',
+ 'deepskyblue',
  'blueviolet',
  'red',
  'black',
  'bisque',
  'violet',
- 'deepskyblue',
+ 'hotpink',
  'firebrick',
- 'purple',
+ 'darkseagreen',
  'pink',
  'lime']#getRandomColor(class_count)
     datas = datas.reshape((class_count,N,2))
 
+    if class_count > len(colors):
+        colors = getRandomColor(class_count, more=True)
+
     plt.figure(figsize=figsize)
     for i in range(class_count):
-        plt.scatter(datas[i,:,0],datas[i,:,1],color=colors[i],marker='o')
+        plt.scatter(datas[i,:,0],datas[i,:,1],color=colors[i],marker='o',label=i)
 
+    plt.legend()
     plt.show()
+
+    original_input = np.array(original_input)
 
 # ***************************************************************************
 
@@ -127,7 +133,7 @@ elif plot_option == 'episode':
                                            sampling_seed=sampling_seed)
     support, query, acc = model(support_, query_, *others, if_cache_data=True)
 
-    clusters, cluster_lab_ls = model.Clusters.squeeze().cpu().detach(), \
+    clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
 
     # reduction = PCA(n_components=2)

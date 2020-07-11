@@ -66,9 +66,11 @@ def makeDataFile(json_path,
                  seq_length_save_path,
                  data_save_path,
                  num_per_class,
+                 idx2cls_mapping_save_path=None,
                  max_seq_len=600):
 
     data_list = []
+    folder_name_mapping = {}
 
     printState('Loading config data...')
     word2index = loadJson(w2idx_path)
@@ -86,6 +88,8 @@ def makeDataFile(json_path,
             apis = report['apis']
             data_list.append(apis)          # 添加API序列
 
+        folder_name_mapping[cls_idx] = cls_dir
+
         # label_list += [cls_idx] * num_per_class     # 添加一个类的样本标签
 
     printState('Converting...')
@@ -97,8 +101,17 @@ def makeDataFile(json_path,
 
     data_list = pad_sequence(data_list, batch_first=True, padding_value=0)  # 数据填充0组建batch
 
+    # 由于pad函数是根据输入序列的最大长度进行pad,如果所有序列小于最大长度,则有可能出现长度
+    #　不一致的错误
+    if data_list.size(1) < max_seq_len:
+        padding_size = max_seq_len - data_list.size(1)
+        zero_paddings = t.zeros((data_list.size(0),padding_size))
+        data_list = t.cat((data_list,zero_paddings),dim=1)
+
     printState('Dumping...')
     dumpJson(seq_length_list, seq_length_save_path)     # 存储序列长度到JSON文件
+    if idx2cls_mapping_save_path is not None:
+        dumpJson(folder_name_mapping, idx2cls_mapping_save_path)
     t.save(data_list, data_save_path)                   # 存储填充后的数据文件
 
     printState('Done')

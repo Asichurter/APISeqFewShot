@@ -1,14 +1,14 @@
 {
-  "dataset" :  "virushare-45",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
   "n" : 5,
   "qk" : 15,
 
-  "version" : 187,
-  "modelName" : "ImpIMP",
+  "version" : -2,
+  "modelName" :  "ImpIMP",
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 1000,
 
   "Ns" : {
           "cluster":20,
@@ -25,7 +25,8 @@
           "virushare-20-3gram-rmsub": 20,
           "virushare-20-3gram-tfrmsub": 20,
           "LargePE-50-vt": 50,
-          "virushare-45": 45
+          "virushare-45": 45,
+          "virushare-45-rmsub": 45
   },
 
   "platform-node" : {

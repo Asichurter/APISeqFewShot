@@ -29,13 +29,13 @@ class ProtoNet(nn.Module):
         else:
             self.Embedding = nn.Embedding(word_cnt, embedding_dim=embed_size, padding_idx=0)
 
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
-        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
-        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
         self.MiddleEncoder = None#MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
         # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 

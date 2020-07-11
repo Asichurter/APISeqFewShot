@@ -237,7 +237,9 @@ class BiLstmCellLayer(nn.Module):
         else:
             self.Nonlineary = nn.Identity()
 
-    def forward(self, input_dict):
+        self.SequentialVerboseCache = []
+
+    def forward(self, input_dict, sequential_verbose=False):
         assert not self.Bidirectional or type(input_dict['input'])==tuple, \
             '双向LSTM单元的输入必须是正向和反向两个输入'
 
@@ -264,14 +266,24 @@ class BiLstmCellLayer(nn.Module):
         if num_directions > 1:
             b_h_x, b_c_x = t.zeros((batch_size, hidden_dim)).cuda(), t.zeros((batch_size, hidden_dim)).cuda()
 
+        sequential_hidden_norm = t.empty((batch_size, seq_len)).cuda()
+        sequential_cell_norm = t.empty((batch_size, seq_len)).cuda()
+
         for i in range(seq_len):
             f_h_x, f_c_x = self.ForwardCell(forward_x[:,i,:], (f_h_x, f_c_x))
             forward_hidden_states[:,i,:] = f_h_x
+
+            if sequential_verbose:
+                sequential_hidden_norm[:,i] = t.norm(f_h_x, dim=1).detach()
+                sequential_cell_norm[:,i] = t.norm(f_c_x, dim=1).detach()
 
             if num_directions > 1:
                 b_h_x, b_c_x = self.BackwardCell(backward_x[:,seq_len-1-i,:], (b_h_x, b_c_x))
                 # 反向的序列需要将隐藏层放置在首位使得与正向隐藏态对齐
                 backward_hidden_states[:,seq_len-1-i,:] = b_h_x
+
+        if sequential_verbose:
+            self.SequentialVerboseCache = (sequential_hidden_norm, sequential_cell_norm)
 
         if lens is not None:
             mask = getMaskFromLens(lens, self.MaxSeqLen).unsqueeze(-1).expand_as(forward_hidden_states)

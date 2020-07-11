@@ -18,6 +18,7 @@ from sklearn.svm import SVC
 
 from utils.file import loadJson, dumpJson
 from utils.magic import magicSeed, magic
+from utils.stat import calBeliefeInterval
 
 
 
@@ -25,9 +26,14 @@ from utils.magic import magicSeed, magic
 # 根据序列数据集(ngram,api)，获取序列元素的频率直方图
 # 需要提供所有序列元素的实值映射(data_dict_path)
 ##############################################
+from utils.manager import PathManager
+
+
 def getHist(src_path, dst_path,
             dict_map_path,          # 将序列元素转化为一个实值的映射的路径，通常为wordMap.json
             is_class_dir=True):
+
+    os.system(f'rm -rf {dst_path}*')    # 删除目标文件夹中的所有元素
 
     value_map = loadJson(dict_map_path)
     value_min = min(value_map.values())
@@ -99,6 +105,8 @@ def splitMatrixForTrainTest(matrix,
                             testnum_per_class,      # 测试集中每个类的样本数量
                             seed=None,
                             ravel=True):
+
+    assert test_num_per_class < matrix.shape[1], "每个类的测试样本数量必须少于总数量!"
 
     if seed is None:
         seed = magicSeed()
@@ -194,12 +202,22 @@ def doClassification(train_data, train_label, test_data, test_label,
 
 
 if __name__ == '__main__':
-    # getHist(src_path='/home/asichurter/datasets/JSONs/LargePE-50-vt/all/',
-    #         dst_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/all/',
-    #         dict_map_path='/home/asichurter/datasets/JSONs/LargePE-50-vt/data/wordMap.json',
-    #         is_class_dir=True)
-    # makeClasswiseHistDataset(json_folder_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/all/',
-    #                          dst_path='/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/data.npy')
+    src_dataset_name = 'virushare-20-3gram-tfidf'
+    src_sub_dataset = 'all'
+    dst_dataset_name = 'virushare-20-3gram-tfidf-hist'
+    dst_sub_folder_name = 'all'
+    path_manager = PathManager('')
+    parent_path = path_manager.ParentPath
+
+    #-----------------------------------------------------------------------------
+    getHist(src_path=parent_path+src_dataset_name+'/'+src_sub_dataset+'/',#'/home/asichurter/datasets/JSONs/virushare-45-rmsub/test/',
+            dst_path=parent_path+dst_dataset_name+'/'+dst_sub_folder_name+'/',#'/home/asichurter/datasets/JSONs/virushare-45-rmsub-hist/test/',
+            dict_map_path=parent_path+src_dataset_name+'/data/wordMap.json',
+            is_class_dir=True)
+    makeClasswiseHistDataset(json_folder_path=parent_path+dst_dataset_name+'/'+dst_sub_folder_name+'/',
+                             dst_path=parent_path+dst_dataset_name+'/data-%s.npy'%dst_sub_folder_name)
+    #-----------------------------------------------------------------------------
+
 
     iteration = 1000            # 测试轮数
     n = 5                      # 分类类数量女
@@ -208,12 +226,13 @@ if __name__ == '__main__':
     knn_k = 1                   # kNN的近邻数量
 
     print('Loading data...')
-    mat = np.load('/home/asichurter/datasets/JSONs/LargePE-50-vt-hist/data.npy')
+    mat = np.load(parent_path+dst_dataset_name+'/data-%s.npy'%dst_sub_folder_name)
     mat = reduceMatrixDim(mat, reduction_n_comp)
 
     train_num_per_class = mat.shape[1] - test_num_per_class
 
     total_acc = 0.
+    hist_acc = []
 
     for i in range(iteration):
         print('iter %d,'%i, end=' ')
@@ -230,8 +249,8 @@ if __name__ == '__main__':
                                # method='svm')
                                method='knn', n_neighbors=knn_k)
 
-        total_acc += acc
+        hist_acc.append(acc)
 
         print('acc= %f'%acc)
 
-    print('\nAverage Acc: %f'%(total_acc/iteration))
+    print('\nAverage Acc: %f±%.5f'%(np.mean(hist_acc),calBeliefeInterval(hist_acc)))

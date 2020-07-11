@@ -1,18 +1,62 @@
 {
     "-1": {
         "__version": -1,
-        "_dataset": "LargePE-50-vt",
-        "_model": "ImpIMP",
-        "_time": "Sat Jul  4 22:02:41 2020",
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ProtoNet",
+        "_time": "Sat Jul 11 11:58:55 2020",
         "config": {
             "desc": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
                 "qk改为15",
-                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第1次分割)",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用3层BiLSTM和多头注意力编码，使用1dCNN解码",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "-2": {
+        "__version": -2,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul 11 11:41:07 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "-3": {
+        "__version": -3,
+        "_dataset": "virushare-45-rmsub",
+        "_model": "IMP",
+        "_time": "Fri Jul 10 13:57:02 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
                 "不使用LayerNorm",
                 "使用Sigma"
             ],
@@ -147,6 +191,138 @@
                 "使用1层BiLSTM-cell编码，使用自注意力解码",
                 "不使用LayerNorm",
                 "使用Sigma,初始设置为0.1"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "190": {
+        "__version": 190,
+        "_dataset": "virushare-45",
+        "_model": "ImpIMP",
+        "_time": "Thu Jul  9 00:59:48 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为5",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第2次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM-cell编码，使用自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma,初始设置为0.1"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "191": {
+        "__version": 191,
+        "_dataset": "virushare-45-rmsub",
+        "_model": "ImpIMP",
+        "_time": "Thu Jul  9 16:23:50 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第2次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM-cell编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "193": {
+        "__version": 193,
+        "_dataset": "virushare-45",
+        "_model": "ImpIMP",
+        "_time": "Thu Jul  9 20:36:29 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第2次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "194": {
+        "__version": 194,
+        "_dataset": "virushare-45",
+        "_model": "ProtoNet",
+        "_time": "Thu Jul  9 20:54:47 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第2次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "195": {
+        "__version": 195,
+        "_dataset": "virushare-45-rmsub",
+        "_model": "ProtoNet",
+        "_time": "Fri Jul 10 23:19:15 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "196": {
+        "__version": 196,
+        "_dataset": "virushare-45-rmsub",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul 11 02:07:20 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
             ],
             "k": 5,
             "n": 5,
