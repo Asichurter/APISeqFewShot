@@ -15,7 +15,6 @@ from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClas
                                     collectJsonByClass, mappingApiNormalize, filterApiSequence, \
                                     renameItemFolder
 from models.ProtoNet import IncepProtoNet
-from utils.matrix import batchDot
 # from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
 from extractors.TFIDF import calTFIDF
@@ -30,18 +29,21 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='virushare-20-3gram-tfidf')
+# manager = PathManager(dataset='virushare-20-3gram')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_1.json')
-# revertDatasetSplit(dataset='virushare-20-3gram-tfrmsub',
-#                    dump_path='/home/asichurter/datasets/JSONs/virushare-20-3gram/data/split_4.json')
+#                        dump_path=manager.DatasetBase()+'data/split_3.json')
+# revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
+#                    dump_path=manager.DatasetBase()+'data/split_4.json')
+# deleteDatasetSplit(dataset_base='/home/omnisky/Asichurter/ApiData/virushare-20-3gram-tfrmsub/')
 ###############################################################
+
+
+# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-45-rmsub/")
 
 
 # 分割数据集
 ################################################################
-# base = '/home/omnisky/Asichurter/ApiData/LargePE-80/'
-# man = PathManager(dataset='virushare-45')
+# man = PathManager(dataset='virushare-45-rmsub')
 # deleteDatasetSplit(dataset_base=man.DatasetBase())
 # splitDatas(src=man.DatasetBase()+'all/',
 #            dest=man.DatasetBase()+'train/',
@@ -62,16 +64,16 @@ from config import generateConfigReport
 
 # 制作基于下标的数据集
 ################################################################
-# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/LargePE-50-vt/")
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='virushare-45', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  num_per_class=45,
-#                  max_seq_len=200)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='virushare-20-3gram-tfidf', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 idx2cls_mapping_save_path=manager.FileIdx2Cls(),
+                 num_per_class=20,
+                 max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
@@ -84,7 +86,6 @@ from config import generateConfigReport
 #         dump_apiset_path='/home/asichurter/datasets/report/virushare-50-original_3gram_tfidf_api_set.json',#None
 #         class_dir=False)
 ################################################################
-
 
 
 # 统计满足数量规模的类别

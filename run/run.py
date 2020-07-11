@@ -505,6 +505,9 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
          style_list=('-','-'),
          save_path=train_path_manager.Doc()+'loss.png')
 
+# 保存最后一个状态的模型
+t.save(model.state_dict(), train_path_manager.Model()+'_last')
+
 ########################################################################################
 # model.train()
 # model.zero_grad()

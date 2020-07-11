@@ -26,8 +26,8 @@ class ImpIMP(nn.Module):
 
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
-        # self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
-        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
         # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 
         self.MiddleEncoder = None#MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
