@@ -2,7 +2,7 @@ import json
 import os
 
 def loadJson(path):
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='UTF-8') as f:
         j = json.load(f)
     return j
 

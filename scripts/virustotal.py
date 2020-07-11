@@ -4,6 +4,7 @@ from tqdm import tqdm
 import time
 import requests
 import sys
+import csv
 
 from utils.file import loadJson, dumpJson
 
@@ -75,7 +76,7 @@ def vtScan(folder_path, json_save_path, scan_num=20000,
         # print(report)
         print(report['verbose_msg'])
         if report['response_code'] == 1:
-            dumpJson(report, '%s.json' % (json_save_path + f))
+            dumpJson(report, '%s.json' % (json_save_path + f), indent=None)
         else:
             sys.stderr.write('%s wrong response code %d' % (f, report['response_code']))
 
@@ -86,11 +87,69 @@ def vtScan(folder_path, json_save_path, scan_num=20000,
 
         time.sleep(1)
 
+def vtReportByHash(hash, report_save_path,
+                   timeout=300):
+    report_params = {'apikey': apikey, 'resource': hash}
+
+    try:
+        start_time = time.time()
+        print('fetching report...')
+        report = requests.get(report_url, params=report_params, timeout=timeout)
+        report = report.json()
+        dumpJson(report, report_save_path, indent=None)
+        end_time = time.time()
+        print('time consuming: %.2f'%(end_time-start_time))
+        print('-------------------------------------------')
+        print('')
+        return True
+    except BaseException as e:
+        print('Error when fetching report of %s, %s'%(hash, str(e)))
+        print('waiting...')
+        time.sleep(10)
+        return False
+
+def getVtReportFromCSVHash(csv_path, report_save_path,
+                           error_patience=20):
+    # start_index = len(os.listdir(report_save_path))
+    existed_reports = os.listdir(report_save_path)
+    with open(csv_path) as f:
+        f_csv = csv.reader(f)
+        for i,row in enumerate(f_csv):
+            print(i)
+            sha256_hash = row[1]
+            if sha256_hash+'.json' in existed_reports:
+                continue
+
+            patience = error_patience
+
+            while patience > 0:
+                flag = vtReportByHash(sha256_hash, report_save_path+sha256_hash+'.json')
+                if flag:
+                    break
+                else:
+                    patience -= 1
+
+
+def getApiSeqFromCSV(csv_path, json_save_path):
+    with open(csv_path) as f:
+        f_csv = csv.reader(f)
+        for i, row in tqdm(enumerate(f_csv)):
+            api = row[2:]
+            hash_val = row[1]
+            report = {'apis': api}
+            dumpJson(report, path=json_save_path+hash_val+'.json')
+
 if __name__ == '__main__':
-    collectPEasExistingDataset(json_path='/home/asichurter/datasets/JSONs/LargePE-80/all/',
-                               pe_path='/home/asichurter/datasets/PEs/LargePE-100/data_folders/',
-                               dst_path='/home/asichurter/datasets/JSONs/LargePE-80-all-temp/',
-                               is_class_dir=True)
+    # collectPEasExistingDataset(json_path='/home/asichurter/datasets/JSONs/LargePE-80/all/',
+    #                            pe_path='/home/asichurter/datasets/PEs/LargePE-100/data_folders/',
+    #                            dst_path='/home/asichurter/datasets/JSONs/LargePE-80-all-temp/',
+    #                            is_class_dir=True)
     # vtScan(folder_path='/home/asichurter/datasets/PEs/temp/',
     #        json_save_path='/home/asichurter/datasets/JSONs/temp/')
+    # vtReportByHash(hash='009a83236c600fd7ac034973f064284cec62f86631fe96e900cb664f86061431',
+    #                report_save_path='C:/Users/10904/Desktop/test/1.json')
+    # getVtReportFromCSVHash(csv_path='C:/Users/10904/Desktop/test/malware_API_dataset.csv',
+    #                        report_save_path='D:/API_dataset_vtreport/')
+    getApiSeqFromCSV(csv_path='C:/Users/10904/Desktop/test/malware_API_dataset.csv',
+                     json_save_path='D:/API_dataset/')
 
