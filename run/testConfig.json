@@ -5,10 +5,10 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : -2,
-  "modelName" :  "ImpIMP",
+  "version" : 206,
+  "modelName" :  "NnNet",
 
-  "trainingEpoch" : 1000,
+  "trainingEpoch" : 5000,
 
   "Ns" : {
           "cluster":20,

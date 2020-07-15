@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from warnings import warn
 from torch.optim.adam import Adam
 
-from components.reduction.selfatt import AttnReduction
+from components.reduction.selfatt import BiliAttnReduction
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
 from utils.training import extractTaskStructFromInput, getMaskFromLens, splitMetaBatch

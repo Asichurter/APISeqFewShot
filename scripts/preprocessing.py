@@ -78,30 +78,6 @@ def extractApiFromJson(path):
     reporter.report()
 
 
-######################################################
-# 将Cuckoo分析后并且cleanup过的文件夹和内部文件的名称命名为
-#　file的名称
-######################################################
-def renameCuckooFolders(json_path):
-    reporter = Reporter()
-
-    for folder in tqdm(os.listdir(json_path)):
-        try:
-            report = loadJson(json_path+folder+'/report.json')
-            name = report['target']['file']['name']
-
-            os.rename(json_path+folder+'/report.json', json_path+folder+'/%s.json'%name)
-            os.rename(json_path+folder, json_path+name)
-
-            reporter.logSuccess()
-
-        except Exception as e:
-            reporter.logError(entity=folder, msg=str(e))
-            continue
-
-    reporter.report()
-
-
 #####################################################
 # 本函数用于统计Cuckoo报告中的api的长度和所有api，将长度为0
 # 或者过短的api调用分别作为错误和警告统计，并绘制分布图。警告和
@@ -521,63 +497,6 @@ def collectJsonByClass(pe_path,
                 reporter.logError('%s/%s' % (cls, item), str(e))
 
     reporter.report()
-
-
-#####################################################
-# 将个体文件夹和其中的报告命名为样本的名称
-#####################################################
-def renameItemFolder(json_path):
-
-    for folder in tqdm(os.listdir(json_path)):
-
-        report = loadJson(json_path + folder + '/report.json')
-        name = report['target']['file']['name']
-
-        os.rename(json_path + folder + '/report.json', json_path + folder + '/%s.json'%name)
-        os.rename(json_path+folder+'/', json_path+name+'/')
-
-#####################################################
-# 制作包含原PE文件的占位文件结构,以便在按类分类样本时使用
-#####################################################
-def makePEDummy(pe_path, dst_path):
-
-    for folder in tqdm(os.listdir(pe_path)):
-        if os.path.exists(dst_path+folder+'/'):
-            raise RuntimeError('%s已经存在!'%folder)
-        else:
-            os.mkdir(dst_path+folder+'/')
-
-        for item in os.listdir(pe_path+folder+'/'):
-            with open(dst_path+folder+'/'+item, 'w') as f:
-                pass
-
-#####################################################
-# 根据已有的PE文件,移除不存在对应PE文件的JSON扫描文件
-#####################################################
-def removeNotExistItem(index_path, item_path):
-    indexed_items = os.listdir(index_path)
-
-    for item in tqdm(os.listdir(item_path)):
-        item_name = item.split('.')[0]
-        if item_name not in indexed_items:
-            os.remove(item_path+item)
-
-    item_amount = len(os.listdir(item_path))
-    print('After removing, %d items remain'%item_amount)
-
-
-def moveJsonToGroup(src_path,
-                    pe_map_path,
-                    dst_path):
-
-    item_group_mapper = {
-        item: group for group in os.listdir(pe_map_path) for item in os.listdir(pe_map_path+group+'/')
-    }
-
-    for folder in tqdm(os.listdir(src_path)):
-        group = item_group_mapper[folder]
-        shutil.copy(src_path+folder+'/'+folder+'.json',
-                    dst_path+group+'/'+folder+'.json')
 
 
 if __name__ == '__main__':

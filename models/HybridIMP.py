@@ -18,12 +18,13 @@ class HybridIMP(nn.Module):
         alpha = 0.1 if 'alpha' not in modelParams else modelParams['alpha']
 
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, padding_idx=0)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         hidden_dim = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
-        self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        # self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
 
         self.Decoder = CNNEncoder1D([hidden_dim, hidden_dim])
 

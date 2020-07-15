@@ -1,4 +1,4 @@
-import torch as t
+import logging
 
 from components.modules import *
 from components.sequence.CNN import CNNEncoder1D
@@ -19,6 +19,7 @@ class NnNet(nn.Module):
 
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
+        self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
@@ -59,7 +60,11 @@ class NnNet(nn.Module):
 
         # directly compare with support samples, instead of prototypes
         # shape: [qk, n*k, dim]->[qk, n, k, dim] -> [qk, n]
-        similarity = ((support - query) ** 2).neg().view(qk,n,k,-1).sum((-1,-2))
+        similarity = ((support - query) ** 2).neg().view(qk,n,k,-1).sum(-1)
+        # similarity = ((support - query) ** 2).neg().view(qk,n,k,-1).sum((2,3))
+
+        # take the closest point in each class to make comparison
+        similarity = t.max(similarity, dim=2).values
 
         return F.log_softmax(similarity, dim=1)
 

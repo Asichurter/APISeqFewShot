@@ -8,7 +8,7 @@ from components.set2set.deepset import DeepSet
 from components.set2set.transformer import TransformerSet
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder
-from components.reduction.selfatt import AttnReduction
+from components.reduction.selfatt import BiliAttnReduction
 from components.reduction.max import StepMaxReduce
 from components.sequence.TCN import TemporalConvNet
 from utils.training import extractTaskStructFromInput, repeatProtoToCompShape, repeatQueryToCompShape, protoDisAdapter

@@ -36,30 +36,35 @@ def collectJsonFromExistingDataset(json_path, dst_path,
 # 假设JSON报告与数据文件同名(数据扩展名由ext_name指定),利用
 # virustotal报告中的MD5值来重新命名报告与数据文件
 ######################################################
-def renameItemsByMD5(json_path, item_path, ext_name=''):
+def renameItemsByMD5(json_path,         # 报告文件路径
+                     item_path,         # 数据文件路径
+                     ext_name=''):
     reporter = Reporter()
 
     md5s = []
 
     for json_item in tqdm(os.listdir(json_path)):
-        report = loadJson(json_path+json_item)
-        md5 = report['md5']
+        try:
+            report = loadJson(json_path+json_item)
+            md5 = report['md5']
 
-        if md5 in md5s:
-            reporter.logWarning(entity=json_item, msg='MD5重复')
-            success_flag = False
+            if md5 in md5s:
+                reporter.logWarning(entity=json_item, msg='MD5重复')
+                success_flag = False
 
-        else:
-            md5s.append(md5)
-            success_flag = True
+            else:
+                md5s.append(md5)
+                success_flag = True
 
-        filename = '.'.join(json_item.split('.')[:-1])
+            filename = '.'.join(json_item.split('.')[:-1])
 
-        os.rename(json_path+json_item, json_path+md5+'.json')   # 重命名json报告
-        os.rename(item_path+filename+ext_name, item_path+md5+ext_name)   # 重命名数据文件
+            os.rename(json_path+json_item, json_path+md5+'.json')   # 重命名json报告
+            os.rename(item_path+filename+ext_name, item_path+md5+ext_name)   # 重命名数据文件
 
-        if success_flag:
-            reporter.logSuccess()
+            if success_flag:
+                reporter.logSuccess()
+        except Exception as e:
+            reporter.logError(entity=json_item, msg=str(e))
 
     reporter.report()
 
@@ -80,7 +85,7 @@ def redumpJsonReport(report_path):
 def runAvclass(report_path,
                label_out_path,
                avclass_path):
-    command = f'{avclass_path} -vtdir {report_path} > {label_out_path}'
+    command = f'python {avclass_path} -vtdir {report_path} > {label_out_path}'
     os.system(command)
 
 
@@ -101,7 +106,7 @@ def moveToFolderByClass(label_file_path, src_path, dst_path, ext_name=''):
             md5, label = items
             # SINGLETON单独一个文件夹
             if label.startswith('SINGLETON'):
-                shutil.move(src_path+md5+ext_name, dst_path+'SINGLETON/'+md5+ext_name)
+                shutil.copy(src_path+md5+ext_name, dst_path+'SINGLETON/'+md5+ext_name)
                 continue
             # 若label第一次出现，则在目标处新建一个类文件夹
             if label not in families:
@@ -109,7 +114,7 @@ def moveToFolderByClass(label_file_path, src_path, dst_path, ext_name=''):
                 if not os.path.exists(dst_path+label+'/'):
                     os.mkdir(dst_path+label+'/')
             try:
-                shutil.move(src_path + md5 + ext_name, dst_path + label + '/' + md5 + ext_name)
+                shutil.copy(src_path + md5 + ext_name, dst_path + label + '/' + md5 + ext_name)
             except FileNotFoundError:
                 continue
 
@@ -154,19 +159,19 @@ if __name__ == '__main__':
     # collectJsonFromExistingDataset(json_path='/home/asichurter/datasets/JSONs/LargePE-80/all/',
     #                                dst_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all-json/',
     #                                is_class_dir=True)
-    # renameItemsByMD5(json_path='/home/asichurter/datasets/JSONs/LargePE-80-vtreport/',
-    #                  item_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all-json/',
+    # renameItemsByMD5(json_path='/home/asichurter/datasets/JSONs/HKS-original/vtreport/',
+    #                  item_path='/home/asichurter/datasets/JSONs/HKS-original/api/',
     #                  ext_name='.json')
     # redumpJsonReport(report_path='/home/asichurter/datasets/JSONs/LargePE-80-vtreport/')
-    # runAvclass(report_path='/home/asichurter/datasets/JSONs/LargePE-80-vtreport/',
-    #            label_out_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all-labels.txt',
+    # runAvclass(report_path='/home/asichurter/datasets/JSONs/HKS-original/vtreport/',
+    #            label_out_path='/home/asichurter/datasets/JSONs/HKS-original/all-labels.txt',
     #            avclass_path='/home/asichurter/codes/avclass-master/avclass_labeler.py')
-    # moveToFolderByClass(label_file_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all-labels.txt',
-    #                     src_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all-json/',
-    #                     dst_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
+    # moveToFolderByClass(label_file_path='/home/asichurter/datasets/JSONs/HKS-original/all-labels.txt',
+    #                     src_path='/home/asichurter/datasets/JSONs/HKS-original/api/',
+    #                     dst_path='/home/asichurter/datasets/JSONs/HKS-original/category/',
     #                     ext_name='.json')
-    # statDatasetScale(data_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
-    #                  stairs=[10*i for i in range(2,9)])
+    statDatasetScale(data_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
+                     stairs=[10*i for i in range(2,9)])
     # collectScaleClasses(data_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
     #                     dst_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all/',
     #                     num_per_class=50)

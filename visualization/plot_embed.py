@@ -1,3 +1,9 @@
+import sys
+
+from models.NnNet import NnNet
+
+sys.path.append('../')
+
 import matplotlib.pyplot as plt
 import torch as t
 from torch.utils.data.dataloader import DataLoader
@@ -17,18 +23,20 @@ from utils.training import batchSequenceWithoutPad
 from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
-# ***************************************************************************
-data_dataset_name = "virushare-20-3gram"
-model_dataset_name = "virushare-20-3gram"
+# ***********************************************************
+data_dataset_name = "virushare-20-3gram-tfidf"
+model_dataset_name = "virushare-20-3gram-tfidf"
 dataset_subtype = 'test'
-model_name = 'ImpIMP'
-version = -2
+model_name = 'NnNet'
+version = 206
 N = 20
 plot_option = 'entire'#'entire'
 k, n, qk = 5, 5, 15
-figsize = (18,15)
+figsize = (10,8)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
+axis_off = True
+plot_support_independently = False
 # ***************************************************************************
 
 
@@ -64,10 +72,15 @@ elif model_name == 'HybridIMP':
 elif model_name == 'ProtoNet':
     model = ProtoNet(word_matrix,
                      **modelParams)
+elif model_name == 'NnNet':
+    model = NnNet(word_matrix, **modelParams)
 
 model.load_state_dict(state_dict)
 model = model.cuda()
 model.eval()
+
+print('task_seed:', task_seed)
+print('sampling_seed', sampling_seed)
 
 if plot_option == 'entire':
     dataloader = DataLoader(dataset, batch_size=N, collate_fn=batchSequenceWithoutPad)
@@ -115,6 +128,8 @@ if plot_option == 'entire':
         colors = getRandomColor(class_count, more=True)
 
     plt.figure(figsize=figsize)
+    if axis_off:
+        plt.axis('off')
     for i in range(class_count):
         plt.scatter(datas[i,:,0],datas[i,:,1],color=colors[i],marker='o',label=i)
 
@@ -136,8 +151,8 @@ elif plot_option == 'episode':
     clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
 
-    # reduction = PCA(n_components=2)
-    reduction = TSNE(n_components=2)
+    reduction = PCA(n_components=2)
+    # reduction = TSNE(n_components=2)
     # reduction = MDS(n_components=2)
     # reduction = LocallyLinearEmbedding(n_components=2, n_neighbors=2)
 
@@ -152,20 +167,27 @@ elif plot_option == 'episode':
 
     colors = getRandomColor(n)
 
+    # 不带测试数据
+    if plot_support_independently:
+        plt.figure(figsize=figsize)
+        plt.title(f'cluster_num={len(clusters)}')
+        if axis_off:
+            plt.axis('off')
+        for i in range(n):
+            plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
+            # plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
+
+            class_clusters = clusters[cluster_labels==i]
+            plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
+            plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
+
+        plt.show()
+
+    # 带测试数据
     plt.figure(figsize=figsize)
     plt.title(f'cluster_num={len(clusters)}')
-    for i in range(n):
-        plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
-        # plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
-
-        class_clusters = clusters[cluster_labels==i]
-        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
-        plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
-
-    plt.show()
-
-    plt.figure(figsize=figsize)
-    plt.title(f'cluster_num={len(clusters)}')
+    if axis_off:
+        plt.axis('off')
     for i in range(n):
         plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
         plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
@@ -174,10 +196,10 @@ elif plot_option == 'episode':
         plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
         plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
 
+    print('acc: ', acc)
     plt.show()
 
-    print('acc: ', acc)
-
+    
 
 
 

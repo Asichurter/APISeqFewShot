@@ -6,14 +6,13 @@ import torch.nn.functional as F
 import os
 
 from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
-                                dumpDatasetSplitStruct, revertDatasetSplit, \
-                                deleteDatasetSplit
+    dumpDatasetSplitStruct, revertDatasetSplit, \
+    deleteDatasetSplit, renameItemFolder
 from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
-                                    collectJsonByClass, mappingApiNormalize, filterApiSequence, \
-                                    renameItemFolder
+                                    collectJsonByClass, mappingApiNormalize, filterApiSequence
 from models.ProtoNet import IncepProtoNet
 # from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
@@ -29,11 +28,11 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='virushare-20-3gram')
+manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_3.json')
-# revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
-#                    dump_path=manager.DatasetBase()+'data/split_4.json')
+revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
+                   dump_path=manager.DatasetBase()+'data/split_3.json')
 # deleteDatasetSplit(dataset_base='/home/omnisky/Asichurter/ApiData/virushare-20-3gram-tfrmsub/')
 ###############################################################
 

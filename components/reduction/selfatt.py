@@ -5,10 +5,10 @@ from torch.nn import functional as F
 from utils.training import getMaskFromLens
 
 
-class AttnReduction(nn.Module):
+class BiliAttnReduction(nn.Module):
     def __init__(self, input_dim, hidden_dim=256, max_seq_len=200,
                  **kwargs):
-        super(AttnReduction, self).__init__()
+        super(BiliAttnReduction, self).__init__()
 
         self.MaxSeqLen = max_seq_len
 
@@ -57,3 +57,68 @@ class AttnReduction(nn.Module):
 
         att_weight = t.softmax(att_weight, dim=1).unsqueeze(-1).repeat((1,1,feature_dim))
         return (att_weight * x).sum(dim=1)
+
+
+
+# class
+class SelfAttnReduction(nn.Module):
+    def __init__(self,
+                 input_size,
+                 max_seq_len=200,
+                 **kwargs):
+        super(SelfAttnReduction, self).__init__()
+
+        self.MaxSeqLen = max_seq_len
+        self.Dim = input_size
+
+        self.Dropout = nn.Dropout(p=kwargs['dropout'])
+
+        self.K = nn.Linear(input_size, input_size)
+        self.Q = nn.Linear(input_size, input_size)
+        self.V = nn.Linear(input_size, input_size)
+
+    def forward(self, x, lens=None):
+
+        x_k = t.tanh(self.Dropout(self.K(x)))
+        x_q = t.tanh(self.Dropout(self.Q(x)))
+        x_v = t.tanh(self.Dropout(self.V(x)))
+
+        w = t.bmm(x_k, x_q.permute(0,2,1)) / (self.Dim**0.5)
+        w = t.sum(w, dim=-1)
+
+        if lens is not None:
+            mask = getMaskFromLens(lens,
+                                   max_seq_len=self.MaxSeqLen)
+            w.masked_fill_(mask, value=float('-inf'))
+
+        # 将K与Q矩阵相乘以后得到的"序列-序列"权重在最后一个维度相加,约减为"序列"维度
+        w = w.softmax(dim=1).unsqueeze(-1).expand_as(x_v)
+        attended_v = (x_v * w).sum(dim=-1)
+
+        return attended_v
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

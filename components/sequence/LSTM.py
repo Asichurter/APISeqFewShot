@@ -3,7 +3,7 @@ from torch import nn as nn
 from torch.nn import _VF
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, PackedSequence
 
-from components.reduction.selfatt import AttnReduction
+from components.reduction.selfatt import BiliAttnReduction
 
 
 #########################################
@@ -49,7 +49,7 @@ class BiLstmEncoder(nn.Module):
             self.BN2 = nn.BatchNorm1d(2*hidden_size)
 
         if self.SelfAtt:
-            self.Attention = AttnReduction((1 + bidirectional) * hidden_size, self_att_dim)
+            self.Attention = BiliAttnReduction((1 + bidirectional) * hidden_size, self_att_dim)
             # self.Attention = AttnReduction(2*hidden_size, self_att_dim)
         else:
             self.Attention = None
@@ -140,7 +140,7 @@ class BiLstmEncoder(nn.Module):
         h = BiLstmEncoder.permute_hidden(h, unsorted_indices)
 
         if self.Attention is not None:
-            out = AttnReduction.static_forward(out, params)
+            out = BiliAttnReduction.static_forward(out, params)
             return out
         else:
             # TODO: 由于使用了CNN进行解码，因此还是可以返回整个序列

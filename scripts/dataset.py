@@ -8,11 +8,12 @@ from tqdm import tqdm
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 
+from utils.error import Reporter
 from utils.file import loadJson, dumpJson
 from utils.display import printState
 from utils.manager import PathManager
 
-magic = 7365055
+magic = 7355608
 
 ##########################################################
 # 本文件是为了将数据集中的类进行随机抽样移动，可以用于数据集分割
@@ -205,6 +206,90 @@ def revertDatasetSplit(dataset, dump_path):
 
     print('-- Done --')
 
+######################################################
+# 将Cuckoo分析后并且cleanup过的文件夹和内部文件的名称命名为
+#　file的名称
+######################################################
+def renameCuckooFolders(json_path):
+    reporter = Reporter()
+
+    for folder in tqdm(os.listdir(json_path)):
+        try:
+            report = loadJson(json_path+folder+'/report.json')
+            name = report['target']['file']['name']
+
+            os.rename(json_path+folder+'/report.json', json_path+folder+'/%s.json'%name)
+            os.rename(json_path+folder, json_path+name)
+
+            reporter.logSuccess()
+
+        except Exception as e:
+            reporter.logError(entity=folder, msg=str(e))
+            continue
+
+    reporter.report()
+
+#####################################################
+# 制作包含原PE文件的占位文件结构,以便在按类分类样本时使用
+#####################################################
+def makePEDummy(pe_path, dst_path):
+
+    for folder in tqdm(os.listdir(pe_path)):
+        if os.path.exists(dst_path+folder+'/'):
+            raise RuntimeError('%s已经存在!'%folder)
+        else:
+            os.mkdir(dst_path+folder+'/')
+
+        for item in os.listdir(pe_path+folder+'/'):
+            with open(dst_path+folder+'/'+item, 'w') as f:
+                pass
+
+
+######################################################
+# 将vt的JSON报告移动到其PE文件对应的类文件夹中
+######################################################
+def moveJsonToGroup(src_path,
+                    pe_map_path,
+                    dst_path):
+
+    item_group_mapper = {
+        item: group for group in os.listdir(pe_map_path) for item in os.listdir(pe_map_path+group+'/')
+    }
+
+    for folder in tqdm(os.listdir(src_path)):
+        group = item_group_mapper[folder]
+        shutil.copy(src_path+folder+'/'+folder+'.json',
+                    dst_path+group+'/'+folder+'.json')
+
+
+#####################################################
+# 根据已有的PE文件,移除不存在对应PE文件的JSON扫描文件
+#####################################################
+def removeNotExistItem(index_path, item_path):
+    indexed_items = os.listdir(index_path)
+
+    for item in tqdm(os.listdir(item_path)):
+        item_name = item.split('.')[0]
+        if item_name not in indexed_items:
+            os.remove(item_path+item)
+
+    item_amount = len(os.listdir(item_path))
+    print('After removing, %d items remain'%item_amount)
+
+
+#####################################################
+# 将个体文件夹和其中的报告命名为样本的名称
+#####################################################
+def renameItemFolder(json_path):
+
+    for folder in tqdm(os.listdir(json_path)):
+
+        report = loadJson(json_path + folder + '/report.json')
+        name = report['target']['file']['name']
+
+        os.rename(json_path + folder + '/report.json', json_path + folder + '/%s.json'%name)
+        os.rename(json_path+folder+'/', json_path+name+'/')
+
 
 if __name__ == '__main__':
     pass
@@ -216,3 +301,4 @@ if __name__ == '__main__':
 
     # a = [t.Tensor([[1, 2], [3, 4], [5, 6]]), t.Tensor([[11, 12], [13, 14]]), t.Tensor([[21, 22]])]
     # data_write_csv('data.csv', a)
+

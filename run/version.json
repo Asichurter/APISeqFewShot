@@ -1,9 +1,9 @@
 {
     "-1": {
         "__version": -1,
-        "_dataset": "virushare-20-3gram-tfidf",
+        "_dataset": "virushare-45-rmsub",
         "_model": "ProtoNet",
-        "_time": "Sat Jul 11 11:58:55 2020",
+        "_time": "Sun Jul 12 15:13:02 2020",
         "config": {
             "desc": [
                 "使用任务batch=2",
@@ -23,9 +23,9 @@
     },
     "-2": {
         "__version": -2,
-        "_dataset": "virushare-20-3gram-tfidf",
+        "_dataset": "virushare-45-rmsub",
         "_model": "ImpIMP",
-        "_time": "Sat Jul 11 11:41:07 2020",
+        "_time": "Sun Jul 12 16:04:30 2020",
         "config": {
             "desc": [
                 "使用任务batch=2",
@@ -45,15 +45,58 @@
     },
     "-3": {
         "__version": -3,
-        "_dataset": "virushare-45-rmsub",
-        "_model": "IMP",
-        "_time": "Fri Jul 10 13:57:02 2020",
+        "_dataset": "virushare-20-3gram-tfrmsub",
+        "_model": "ImpIMP",
+        "_time": "Sat Jul 11 17:09:00 2020",
         "config": {
             "desc": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
                 "qk改为15",
-                "序列长度为200使用了tfidf和移除了重复子串的3Gram(virushare-20-3gram第4次分割)",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "-4": {
+        "__version": -4,
+        "_dataset": "virushare-45-rmsub",
+        "_model": "NnNet",
+        "_time": "Wed Jul 15 13:53:46 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "-5": {
+        "__version": -5,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "HybridIMP",
+        "_time": "Sun Jul 12 14:12:00 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用1层BiLSTM编码，使用1dCNN解码",
@@ -323,6 +366,229 @@
                 "使用1层BiLSTM编码，使用1dCNN解码",
                 "不使用LayerNorm",
                 "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "197": {
+        "__version": 197,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Sun Jul 12 17:57:18 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "使用sgd,增大学习率到3e-3",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用QKV自注意力约减解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "198": {
+        "__version": 198,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Sun Jul 12 22:01:18 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用双线性自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "199": {
+        "__version": 199,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Mon Jul 13 13:51:59 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf和移除了重复子串的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用双线性自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma,且初始的sigma减小为0.1"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "201": {
+        "__version": 201,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Mon Jul 13 18:13:48 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用时域最大池化解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "202": {
+        "__version": 202,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Mon Jul 13 19:08:05 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "略微增大了学习率",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用修改后的QKV自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "203": {
+        "__version": 203,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Mon Jul 13 21:33:36 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "略微增大了学习率",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用修改后(tanh激活)的QKV自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "204": {
+        "__version": 204,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Mon Jul 13 22:51:46 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "略微增大了学习率",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用修改后(tanh激活,带dropout)的QKV自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "205": {
+        "__version": 205,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ProtoNet",
+        "_time": "Tue Jul 14 00:06:29 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "略微增大了学习率",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用修改后(tanh激活,带dropout)的QKV自注意力解码",
+                "不使用LayerNorm",
+                "使用Sigma"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "206": {
+        "__version": 206,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "NnNet",
+        "_time": "Wed Jul 15 18:44:55 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm"
+            ],
+            "k": 5,
+            "n": 5,
+            "qk": 15
+        }
+    },
+    "207": {
+        "__version": 207,
+        "_dataset": "virushare-20-3gram-tfidf",
+        "_model": "ImpIMP",
+        "_time": "Wed Jul 15 18:47:05 2020",
+        "config": {
+            "desc": [
+                "使用任务batch=2",
+                "使用300维度的GloVe初始化",
+                "qk改为15",
+                "序列长度为200使用了tfidf的3Gram(第3次分割)",
+                "提前终止的标准改为loss",
+                "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
+                "使用1层BiLSTM编码，使用1dCNN解码",
+                "不使用LayerNorm"
             ],
             "k": 5,
             "n": 5,

@@ -3,7 +3,7 @@ import math
 import torch as t
 from torch import nn as nn
 
-from components.reduction.selfatt import AttnReduction
+from components.reduction.selfatt import BiliAttnReduction
 
 
 #################################################
@@ -34,7 +34,7 @@ class TransformerEncoder(nn.Module):
 
         self.PositionEncoding = PositionalEncoding(embed_size, dropout=dropout)
 
-        self.Attention = AttnReduction(input_dim=hidden_size, hidden_dim=self_att_dim) if self_att_dim is not None else None
+        self.Attention = BiliAttnReduction(input_dim=hidden_size, hidden_dim=self_att_dim) if self_att_dim is not None else None
 
     def forward(self, x, lens):
         x = self.ForwardTrans(x)

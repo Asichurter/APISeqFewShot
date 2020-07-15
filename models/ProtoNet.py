@@ -1,7 +1,7 @@
 import logging
 
 from components.modules import *
-from components.reduction.selfatt import AttnReduction
+from components.reduction.selfatt import BiliAttnReduction, SelfAttnReduction
 from components.sequence.CNN import CNNEncoder1D
 from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from components.reduction.max import StepMaxReduce
@@ -79,8 +79,9 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
+        # self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
         # self.Decoder = AttnReduction(input_dim=hidden_size, hidden_dim=hidden_size)
+        self.Decoder = SelfAttnReduction(input_size=hidden_size, **modelParams)
         # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
         #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()

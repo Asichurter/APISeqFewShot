@@ -19,6 +19,7 @@ from sklearn.svm import SVC
 from utils.file import loadJson, dumpJson
 from utils.magic import magicSeed, magic
 from utils.stat import calBeliefeInterval
+from utils.manager import PathManager
 
 
 
@@ -26,9 +27,6 @@ from utils.stat import calBeliefeInterval
 # 根据序列数据集(ngram,api)，获取序列元素的频率直方图
 # 需要提供所有序列元素的实值映射(data_dict_path)
 ##############################################
-from utils.manager import PathManager
-
-
 def getHist(src_path, dst_path,
             dict_map_path,          # 将序列元素转化为一个实值的映射的路径，通常为wordMap.json
             is_class_dir=True):
@@ -103,26 +101,26 @@ def makeClasswiseHistDataset(json_folder_path, dst_path):
 def splitMatrixForTrainTest(matrix,
                             class_num,              # 类数量
                             testnum_per_class,      # 测试集中每个类的样本数量
-                            seed=None,
-                            ravel=True):
+                            ravel=True,             # 是否展平标签
+                            task_seed=None,
+                            sampling_seed=None):
 
     assert test_num_per_class < matrix.shape[1], "每个类的测试样本数量必须少于总数量!"
 
-    if seed is None:
-        seed = magicSeed()
-    rd.seed(seed)
-
-    label_space_seed = rd.randint(0,magic)
+    task_seed = rd.randint(0,magic) if task_seed is None else task_seed
+    sampling_seed = rd.randint(0,magic) if sampling_seed is None else sampling_seed
 
     total_class_num = matrix.shape[0]
     instance_num = matrix.shape[1]
     dim = matrix.shape[2]
 
     # 选中n-way任务中的类
+    rd.seed(task_seed)
     selected_class_idxes = rd.sample(list(range(total_class_num)), class_num)
     matrix = matrix[selected_class_idxes]
 
     idxes_full_set = set(range(0,instance_num))
+    rd.seed(sampling_seed)
     class_seeds = [rd.randint(0,magic) for i in range(class_num)]
 
     class_wise_test_idxes = []

@@ -26,7 +26,7 @@
     
     1. ProtoNet
     
-    2. MatchingNet
+    2. MatchingNet (×)
     
     3. HybridAttentionNet
     

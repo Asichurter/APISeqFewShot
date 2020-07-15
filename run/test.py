@@ -27,7 +27,7 @@ from models.PerLayerATAML import PerLayerATAML
 from models.TCProtoNet import TCProtoNet
 from models.AFEAT import AFEAT
 from models.FEAT import FEAT
-from models.MatchNet import MatchNet
+from models.NnNet import NnNet
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
 from models.HybridIMP import HybridIMP
@@ -166,9 +166,9 @@ elif model_type == 'FEAT':
 elif model_type == 'AFEAT':
     model = AFEAT(pretrained_matrix=word_matrix,
                  **modelParams)
-elif model_type == 'MatchNet':
-    model = MatchNet(pretrained_matrix=word_matrix,
-                     **modelParams)
+elif model_type == 'NnNet':
+    model = NnNet(pretrained_matrix=word_matrix,
+                  **modelParams)
 elif model_type == 'IMP':
     model = IMP(pretrained_matrix=word_matrix,
                      **modelParams)
