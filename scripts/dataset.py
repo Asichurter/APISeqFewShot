@@ -12,6 +12,7 @@ from utils.error import Reporter
 from utils.file import loadJson, dumpJson
 from utils.display import printState
 from utils.manager import PathManager
+from utils.magic import magicSeed
 
 magic = 7355608
 
@@ -289,6 +290,101 @@ def renameItemFolder(json_path):
 
         os.rename(json_path + folder + '/report.json', json_path + folder + '/%s.json'%name)
         os.rename(json_path+folder+'/', json_path+name+'/')
+
+def getCanonicalName(name):
+    return '.'.join(name.split('.')[:3])
+
+
+def statClassScale(base, normalizer, save_path=None,
+                   scale_stairs=[]):
+    table = {}
+
+    # 遍历，统计类数量
+    for folder in tqdm(os.listdir(base)):
+        for item in tqdm(os.listdir(base+folder+'/')):
+            can_name = normalizer(item)
+            if can_name not in table:
+                table[can_name] = [folder+'/'+item]
+            else:
+                table[can_name].append(folder+'/'+item)
+
+    scale_table = {n:len(table[n]) for n in table}
+
+    print("%d classes in total"%len(table))
+
+    for stair in scale_stairs:
+        counter = 0
+        for k in scale_table:
+            if scale_table[k] > stair:
+                counter += 1
+
+        print("*"*50)
+        print("Num of classes larger than %d:  %d"%(stair, counter))
+
+    dumpJson(table, save_path)
+
+    print('- Done -')
+
+###########################################################
+# 根据已经生成的类别规模JSON报告，从每个类中抽样出一定数量的样本组成
+# 数据集
+###########################################################
+def parseAndSampleDataset(scale_report_path,
+                          base_path,
+                          dst_path,
+                          num_per_class,
+                          checked=True):
+
+    scale_report = loadJson(scale_report_path)
+
+    for family_name in tqdm(scale_report):
+        # 抽样满足数量规模的类
+        if len(scale_report[family_name]) >= num_per_class:
+            random.seed(magicSeed())
+            candidates = random.sample(scale_report[family_name], num_per_class)
+
+            if os.path.exists(dst_path+family_name+'/'):
+                raise RuntimeError("%s 类的文件夹在目标路径中已存在!"%(family_name))
+            else:
+                os.mkdir(dst_path+family_name+'/')
+
+            for item in candidates:
+                folder_name,item_name = item.split("/")
+                full_item_name = item_name+'.'+folder_name
+                shutil.copy(base_path+item, dst_path+family_name+'/'+full_item_name)
+
+    if checked:
+        reporter = Reporter()
+        for folder in os.listdir(dst_path):
+            if len(os.listdir(dst_path+folder+'/')) != num_per_class:
+                reporter.logError(entity=folder, msg="数量不足预期: %d/%d"%
+                                                     (len(os.listdir(dst_path+folder+'/')), num_per_class))
+            else:
+                reporter.logSuccess()
+        reporter.report()
+
+
+
+if __name__ == '__main__':
+    # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
+    #            dest='D:/peimages/JSONs/virushare_20/test/',
+    #            ratio=30,
+    #            mode='x',
+    #            is_dir=True)
+
+    # a = [t.Tensor([[1, 2], [3, 4], [5, 6]]), t.Tensor([[11, 12], [13, 14]]), t.Tensor([[21, 22]])]
+    # data_write_csv('data.csv', a)
+
+    # statClassScale(base='D:/pe/',
+    #                normalizer=getCanonicalName,
+    #                save_path='D:/peimages/LargePE_class_scale_stat.json',
+    #                scale_stairs=[20, 50, 100, 200, 500, 1000])
+    # parseAndSampleDataset(
+    #     scale_report_path='D:/peimages/LargePE_class_scale_stat.json',
+    #     base_path="D:/pe/",
+    #     dst_path='D:/peimages/PEs/LargePE-100/',
+    #     num_per_class=100
+    # )
 
 
 if __name__ == '__main__':
