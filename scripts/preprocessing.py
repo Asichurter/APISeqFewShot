@@ -380,32 +380,40 @@ def removeRepeatedSubSeq(json_path,
 
 def filterApiSequence(json_path,
                       api_list,
-                      keep_or_filter=True):      # 若为True则过滤列表中的API，若为False则保留列表中的API
+                      keep_or_filter=True,
+                      is_class_dir=True):      # 若为True则过滤列表中的API，若为False则保留列表中的API
 
     reporter = Reporter()
 
-    for item in tqdm(os.listdir(json_path)):
-        item_path = json_path + item + '/%s.json'%item
+    for folder in tqdm(os.listdir(json_path)):
+        if is_class_dir:
+            items = os.listdir(json_path+folder+'/')
+        else:
+            items = [folder+'.json']
 
-        try:
-            report = loadJson(item_path)
+        for item in items:
 
-            new_api_seq = []
+            item_path = json_path + folder + '/' + item
 
-            for api_token in report['apis']:
-                # 若过滤，则api不在列表中
-                # 若保留，则api在列表中
-                if (api_token in api_list) ^ keep_or_filter:
-                    new_api_seq.append(api_token)
+            try:
+                report = loadJson(item_path)
 
-            # 使用新api序列覆盖原api序列
-            report['apis'] = new_api_seq
-            dumpJson(report, item_path)
+                new_api_seq = []
 
-            reporter.logSuccess()
+                for api_token in report['apis']:
+                    # 若过滤，则api不在列表中
+                    # 若保留，则api在列表中
+                    if (api_token in api_list) ^ keep_or_filter:
+                        new_api_seq.append(api_token)
 
-        except Exception as e:
-            reporter.logError(item, str(e))
+                # 使用新api序列覆盖原api序列
+                report['apis'] = new_api_seq
+                dumpJson(report, item_path)
+
+                reporter.logSuccess()
+
+            except Exception as e:
+                reporter.logError(item, str(e))
 
     reporter.report()
 
@@ -499,6 +507,35 @@ def collectJsonByClass(pe_path,
     reporter.report()
 
 
+# ####################################################
+# # 从已经按照类划分好的
+# ####################################################
+# def collectOrganizedClassJson(src_path, dst_path,
+#                               num_constrain=20):
+#
+#     reporter = Reporter()
+#
+#     for folder in tqdm(os.listdir(src_path)):
+#         try:
+#             os.mkdir(dst_path+folder)
+#
+#             candidates = os.listdir(src_path+folder+'/')
+#             if len(candidates) < num_constrain:
+#                 continue
+#
+#             items = random.sample(candidates, num_constrain)
+#
+#             for item in items:
+#                 shutil.copy(src_path+folder+'/'+item,
+#                             dst_path+folder+'/'+item)
+#
+#             reporter.logSuccess()
+#
+#         except Exception as e:
+#             reporter.logError(entity=folder+'/'+item,
+#                               msg=str(e))
+
+
 if __name__ == '__main__':
     manager = PathManager(dataset='virushare_20', d_type='all')
 
@@ -546,14 +583,15 @@ if __name__ == '__main__':
     #         ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
     #         class_dir=False)
 
-    # removeApiRedundance('D:/peimages/PEs/virushare_20/jsons/',
-    #                     selected_apis=None)
+    # removeApiRedundance('/home/asichurter/datasets/JSONs/HKS-json/',
+    #                     selected_apis=None,
+    #                     class_dir=True)
 
 
 
-    # mappingApiNormalize('/home/asichurter/datasets/JSONs/virushare-50-original/',
-    #                     dump_mapping_path='/home/asichurter/datasets/reports/virushare-50-api_mapping.json',
-    #                     is_class_dir=False,
+    # mappingApiNormalize('/home/asichurter/datasets/JSONs/HKS-json/',
+    #                     dump_mapping_path='/home/asichurter/datasets/reports/HKS-api_mapping.json',
+    #                     is_class_dir=True,
     #                       mapping={
     #                           "RegCreateKeyExA" : "RegCreateKey",
     #                           "RegCreateKeyExW" : "RegCreateKey",

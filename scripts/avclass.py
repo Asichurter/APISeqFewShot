@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import random as rd
 
+from scripts.dataset import makeDatasetDirStruct
 from utils.error import Reporter
 from utils.file import loadJson, dumpJson
 from utils.magic import magicSeed
@@ -139,12 +140,19 @@ def statDatasetScale(data_path, stairs=[]):
 # 件夹中
 ######################################################
 def collectScaleClasses(data_path, dst_path, num_per_class=50,
+                        least_api_len=10,
                         exception=['SINGLETON']):
     for folder in tqdm(os.listdir(data_path)):
         if folder in exception:
             continue
 
-        item_list = os.listdir(data_path+folder+'/')
+        # 过滤长度不及最低下限的样本
+        item_list = []
+        for item in os.listdir(data_path+folder+'/'):
+            report = loadJson(data_path+folder+'/'+item)
+            if len(report['apis']) >= least_api_len:
+                item_list.append(item)
+
         if len(item_list) >= num_per_class:
             rd.seed(magicSeed())
             candidate_list = rd.sample(item_list, num_per_class)
@@ -170,11 +178,12 @@ if __name__ == '__main__':
     #                     src_path='/home/asichurter/datasets/JSONs/HKS-original/api/',
     #                     dst_path='/home/asichurter/datasets/JSONs/HKS-original/category/',
     #                     ext_name='.json')
-    statDatasetScale(data_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
-                     stairs=[10*i for i in range(2,9)])
-    # collectScaleClasses(data_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/category/',
-    #                     dst_path='/home/asichurter/datasets/JSONs/LargePE-80-vt/all/',
-    #                     num_per_class=50)
+    # statDatasetScale(data_path='/home/asichurter/datasets/JSONs/HKS-json/',
+    #                  stairs=[10*i for i in range(2,9)])
+    makeDatasetDirStruct('/home/asichurter/datasets/JSONs/HKS/')
+    collectScaleClasses(data_path='/home/asichurter/datasets/JSONs/HKS-json/',
+                        dst_path='/home/asichurter/datasets/JSONs/HKS/all/',
+                        num_per_class=20)
     # c = 1
     # for f in os.listdir('/home/asichurter/datasets/JSONs/LargePE-80-vt/category/'):
     #     if len(os.listdir('/home/asichurter/datasets/JSONs/LargePE-80-vt/category/'+f)) >= 50:

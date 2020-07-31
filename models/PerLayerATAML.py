@@ -20,7 +20,7 @@ def rename(name, token='-'):
     return name.replace('.',token)
 
 class BaseLearner(nn.Module):
-    def __init__(self, n, pretrained_matrix, embed_size, seq_len, **kwargs):
+    def __init__(self, n, pretrained_matrix, embed_size, seq_len, **modelParams):
         super(BaseLearner, self).__init__()
         # 需要adapt的参数名称
         self.adapted_keys = [
@@ -37,14 +37,16 @@ class BaseLearner(nn.Module):
                                                       freeze=False,
                                                       padding_idx=0)
         # self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = BiLstmEncoder(input_size=embed_size, **kwargs)#CNNEncoder1D(**kwargs)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)#CNNEncoder1D(**kwargs)
         # self.Encoder = TemporalConvNet(**kwargs)
         # self.Encoder = TransformerEncoder(embed_size=embed_size,
         #                                   **kwargs)
 
         # self.Attention = nn.Linear(kwargs['num_channels'][-1],
         #                            1, bias=False)
-        self.Attention = nn.Linear(kwargs['hidden_size'], 1, bias=False)
+        hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
+
+        self.Attention = nn.Linear(hidden_size, 1, bias=False)
 
         # self.Attention = CNNEncoder1D(dims=[kwargs['hidden_size']*2, 256],
         #                               bn=[False])
@@ -52,7 +54,7 @@ class BaseLearner(nn.Module):
 
         # out_size = kwargs['hidden_size']
         # self.fc = nn.Linear(seq_len, n)
-        self.fc = nn.Linear(kwargs['hidden_size'], n)
+        self.fc = nn.Linear(hidden_size, n)
         # self.fc = nn.Linear(kwargs['num_channels'][-1], n)
                                                     # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
@@ -71,7 +73,7 @@ class BaseLearner(nn.Module):
         if params is None:
             # -------original dot-product attention-------
             att_weight = self.Attention(x).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = lens.unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
             x = (x * att_weight).sum(dim=1) / len_expansion
 
@@ -83,7 +85,7 @@ class BaseLearner(nn.Module):
         else:
             # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
             att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = lens.unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
             x = (x * att_weight).sum(dim=1) / len_expansion
 
@@ -106,7 +108,7 @@ class BaseLearner(nn.Module):
     def clone_state_dict(self):
         cloned_state_dict = {
             key: val.clone()
-            for key, val in self.state_dict().items()
+            for key, val in self.named_parameters()
             if key in self.adapted_keys
         }
         return cloned_state_dict
@@ -119,10 +121,12 @@ class BaseLearner(nn.Module):
     # 参数中不含有running_mean等，但是这些都是state_dict
     # 的一部分
     ##############################################
-    def adapt_parameters(self, with_named=False):
+    def adapt_parameters(self, with_named=False, clone=False):
         parameters = []
         for n,p in self.named_parameters():
             if n in self.adapted_keys:
+                if clone:
+                    p = p.clone()
                 if with_named:
                     parameters.append((n,p))
                 else:
@@ -130,7 +134,7 @@ class BaseLearner(nn.Module):
         return parameters
 
 class PerLayerATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=3e-2, adapt_iter=3, **modelParams):
+    def __init__(self, n, loss_fn, lr=5e-2, adapt_iter=3, **modelParams):
         super(PerLayerATAML, self).__init__()
 
         self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
@@ -175,7 +179,7 @@ class PerLayerATAML(nn.Module):
             # fix the bug, which: use original parameters instead of the adapted
             # ones in every adapt iteration
             # ---------------------------------------------------------------
-            adapted_pars = collectParamsFromStateDict(adapted_state_dict)
+            adapted_pars = collectParamsFromStateDict(adapted_state_dict)#self.Learner.adapt_parameters(with_named=False)
 
             s_predict = self.Learner(support, sup_len, params=adapted_state_dict)
             loss = self.LossFn(s_predict, support_labels)

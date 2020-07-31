@@ -23,10 +23,12 @@ class BaseLearner(nn.Module):
                                                       freeze=False,
                                                       padding_idx=0)
         # self.EmbedNorm = nn.LayerNorm(embed_size)
-        self.Encoder = CNNEncoder1D(**modelParams)#BiLstmEncoder(input_size=embed_size, **kwargs)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
+        hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
+        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
 
         # out_size = kwargs['hidden_size']
-        self.fc = nn.Linear(modelParams['dims'][-1], n)  # 对于双向lstm，输出维度是隐藏层的两倍
+        self.fc = nn.Linear(hidden_size, n)  # 对于双向lstm，输出维度是隐藏层的两倍
                                                     # 对于CNN，输出维度是嵌入维度
 
     def forward(self, x, lens, params=None):

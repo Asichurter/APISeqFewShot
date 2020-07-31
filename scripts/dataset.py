@@ -295,8 +295,8 @@ def getCanonicalName(name):
     return '.'.join(name.split('.')[:3])
 
 
-def statClassScale(base, normalizer, save_path=None,
-                   scale_stairs=[]):
+def statClassScaleOfUnorgranized(base, normalizer, save_path=None,
+                                 scale_stairs=[]):
     table = {}
 
     # 遍历，统计类数量
@@ -324,6 +324,9 @@ def statClassScale(base, normalizer, save_path=None,
     dumpJson(table, save_path)
 
     print('- Done -')
+
+
+# def statClassScaleOfOrganized()
 
 ###########################################################
 # 根据已经生成的类别规模JSON报告，从每个类中抽样出一定数量的样本组成
@@ -366,6 +369,7 @@ def parseAndSampleDataset(scale_report_path,
 
 
 if __name__ == '__main__':
+    pass
     # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
     #            dest='D:/peimages/JSONs/virushare_20/test/',
     #            ratio=30,
@@ -385,16 +389,3 @@ if __name__ == '__main__':
     #     dst_path='D:/peimages/PEs/LargePE-100/',
     #     num_per_class=100
     # )
-
-
-if __name__ == '__main__':
-    pass
-    # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
-    #            dest='D:/peimages/JSONs/virushare_20/test/',
-    #            ratio=30,
-    #            mode='x',
-    #            is_dir=True)
-
-    # a = [t.Tensor([[1, 2], [3, 4], [5, 6]]), t.Tensor([[11, 12], [13, 14]]), t.Tensor([[21, 22]])]
-    # data_write_csv('data.csv', a)
-

@@ -37,6 +37,12 @@ def queryLossProcedure(model,
     if train:
         loss_val.backward()
 
+        # grad = 0
+        # for name,par in model.named_parameters():
+        #     print(name,par.grad)
+        #
+        # print('grad:',grad)
+
         optimizer.step()
 
         if scheduler:

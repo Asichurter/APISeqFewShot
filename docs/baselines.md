@@ -55,6 +55,8 @@
     
     3. GloVe
     
+    4. Light-weighted text embedding from few-shot transfer learning [70]
+    
 
 4. encoder
 

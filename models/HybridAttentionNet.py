@@ -38,11 +38,12 @@ class HAPNet(nn.Module):
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         #
-        self.Encoder = BiLstmEncoder(input_size=embed_size,
-                                     **modelParams)
+        self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
         # self.Encoder = TemporalConvNet(**modelParams)
+
+        self.MiddleEncoder = None
 
         # 嵌入后的向量维度
         feature_dim = (1+modelParams['bidirectional'])*modelParams['hidden_size']#modelParams['num_channels'][-1]#
@@ -76,6 +77,15 @@ class HAPNet(nn.Module):
         # 将support重复query次，query重复n*k次，因为每个support在每个query下嵌入都不同
         self.InstanceAttention = InstanceAttention(feature_dim, feature_dim)
 
+    def _embed(self, x, lens):
+        x = self.EmbedDrop(self.Embedding(x))
+        x = self.Encoder(x, lens)
+        if self.MiddleEncoder is not None:
+            x = self.MiddleEncoder(x, lens)
+        x = self.Decoder(x, lens)
+
+        return x
+
 
     def forward(self, support, query, sup_len, que_len):
 
@@ -90,18 +100,8 @@ class HAPNet(nn.Module):
 
         # ------------------------------------------------------
         # shape: [batch, seq, dim]
-        support = self.Embedding(support)
-        query = self.Embedding(query)
-
-        support = self.EmbedDrop(support)
-        query = self.EmbedDrop(query)
-
-        # shape: [batch, dim]
-        support = self.Encoder(support, sup_len)
-        query = self.Encoder(query, que_len)
-
-        support = self.Decoder(support, sup_len)
-        query = self.Decoder(query, que_len)
+        support, query = self._embed(support, sup_len), \
+                         self._embed(query, que_len)
         # ------------------------------------------------------
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\

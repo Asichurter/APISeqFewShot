@@ -5,8 +5,8 @@
   "n" : 5,
   "qk" : 15,
 
-  "version" : 206,
-  "modelName" :  "NnNet",
+  "version" : 236,
+  "modelName" :  "ImpIMP",
 
   "trainingEpoch" : 5000,
 
@@ -26,7 +26,8 @@
           "virushare-20-3gram-tfrmsub": 20,
           "LargePE-50-vt": 50,
           "virushare-45": 45,
-          "virushare-45-rmsub": 45
+          "virushare-45-rmsub": 45,
+          "HKS": 20
   },
 
   "platform-node" : {

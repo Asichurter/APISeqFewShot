@@ -20,6 +20,8 @@ from extractors.TFIDF import calTFIDF
 
 from config import generateConfigReport
 
+
+
 # 生成报告总结
 ################################################################
 # generateConfigReport(dataset='virushare-20-3gram', include_result=True,
@@ -28,11 +30,11 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-manager = PathManager(dataset='virushare-20-3gram-tfidf')
+# manager = PathManager(dataset='virushare-45')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_3.json')
-revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
-                   dump_path=manager.DatasetBase()+'data/split_3.json')
+#                        dump_path=manager.DatasetBase()+'data/split_1.json')
+# revertDatasetSplit(dataset='virushare-45',
+#                    dump_path=manager.DatasetBase()+'data/split_1.json')
 # deleteDatasetSplit(dataset_base='/home/omnisky/Asichurter/ApiData/virushare-20-3gram-tfrmsub/')
 ###############################################################
 
@@ -42,7 +44,7 @@ revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
 
 # 分割数据集
 ################################################################
-# man = PathManager(dataset='virushare-45-rmsub')
+# man = PathManager(dataset='virushare-45')
 # deleteDatasetSplit(dataset_base=man.DatasetBase())
 # splitDatas(src=man.DatasetBase()+'all/',
 #            dest=man.DatasetBase()+'train/',
@@ -64,14 +66,14 @@ revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
 # 制作基于下标的数据集
 ################################################################
 for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-20-3gram-tfidf', d_type=d_type)
+    manager = PathManager(dataset='virushare-45', d_type=d_type)
 
     makeDataFile(json_path=manager.Folder(),
                  w2idx_path=manager.WordIndexMap(),
                  seq_length_save_path=manager.FileSeqLen(),
                  data_save_path=manager.FileData(),
                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
-                 num_per_class=20,
+                 num_per_class=45,
                  max_seq_len=200)
 ################################################################
 
@@ -79,11 +81,11 @@ for d_type in ['train', 'validate', 'test']:
 
 # 统计序列长度分布
 ################################################################
-# apiStat('/home/omnisky/Asichurter/ApiData/virushare-50-original/',
+# apiStat('/home/asichurter/datasets/JSONs/HKS/all/',
 #         ratio_stairs=[50, 100, 200, 400, 500, 1000, 2000, 5000],
-#         dump_report_path='/home/asichurter/datasets/report/virushare-50-original_3gram_tfidf_api_report.json',#None,#
-#         dump_apiset_path='/home/asichurter/datasets/report/virushare-50-original_3gram_tfidf_api_set.json',#None
-#         class_dir=False)
+#         dump_report_path=None,#'/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path=None,#'/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json',#None
+#         class_dir=True)
 ################################################################
 
 
@@ -109,15 +111,15 @@ for d_type in ['train', 'validate', 'test']:
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_set.json')
+# apiSet = loadJson('/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
+# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/HKS/all/',
 #                     mapping=mapping,
-#                     is_class_dir=False)
+#                     is_class_dir=True)
 # # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_set.json')
+# dumpJson(apiSet, '/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json')
 ################################################################
 
 
@@ -134,49 +136,59 @@ for d_type in ['train', 'validate', 'test']:
 # 统计ngram
 ################################################################
 # print('Removing Redundance...')
-# removeApiRedundance(json_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
-#                     class_dir=False)
+# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/HKS-json/',
+#                     class_dir=True)
 #
-# man = PathManager(dataset='virushare-50-original', d_type='all')
+# man = PathManager(dataset='HKS-json', d_type='all')
 # print('Stating NGram...')
-# ngram_dict = statNGram(parent_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
+# ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/HKS-json/',
 #                        window=3,
-#                        dict_save_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_api_set.json',
+#                        dict_save_path='/home/asichurter/datasets/reports/HKS_3gram_api_frq.json',
 #                        frequency_stairs=[0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95],
-#                        class_dir=False)
-# #
-# # num = int(input('NGram >> '))
-# # #
-# # d = loadJson('/home/asichurter/datasets/reports/virushare-20_h3gram_api_freq.json')
-# #
+#                        class_dir=True)
+#
+# d = loadJson('/home/asichurter/datasets/reports/HKS_3gram_api_frq.json')
+#
 # print('Converting NGram...')
-# convertToNGramSeq(parent_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
+# convertToNGramSeq(parent_path='/home/asichurter/datasets/JSONs/HKS-json/',
 #                   window=3,
 #                   ngram_dict=ngram_dict,
 #                   ngram_max_num=None,
-#                   class_dir=False)
+#                   class_dir=True)
+#
+# apiStat(path='/home/asichurter/datasets/JSONs/HKS-json/',
+#         dump_report_path=None,
+#         dump_apiset_path='/home/asichurter/datasets/reports/HKS_3gram_api_set.json',
+#         class_dir=True)
 ################################################################
 
 
 
 # 计算tdidf并且根据该值过滤API
  #################################################################
-# api_set = loadJson('/home/omnisky/Asichurter/report/virushare-50-original_3gram_api_set.json')['api_set']
+# num_constraint = 2000
+# api_set = loadJson('/home/asichurter/datasets/reports/HKS_3gram_api_set.json')['api_set']
 # dict_map = {k:i for i,k in enumerate(api_set)}
-# dumpJson(dict_map, '/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_dictmap.json')
-# top_k_apis = calTFIDF(dataset_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
-#                       dict_map_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_dictmap.json',
-#                       is_class_dir=False,
-#                       tfidf_dump_path='/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_val.json',
-#                       top_k=2000)
-# api_tfidf = loadJson('/home/omnisky/Asichurter/report/virushare-50-original_3gram_tfidf_api_val.json')
+# dumpJson(dict_map, '/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_dictmap.json')
+# top_k_apis = calTFIDF(dataset_path='/home/asichurter/datasets/JSONs/HKS/all/',
+#                       dict_map_path='/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_dictmap.json',
+#                       is_class_dir=True,
+#                       tfidf_dump_path='/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_val.json',
+#                       top_k=num_constraint)
+# api_tfidf = loadJson('/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_val.json')
 # print('Sorting...')
 # api_tfidf = sorted(api_tfidf.items(), key=lambda item:item[1], reverse=True)
-# api_list = [api[0] for i,api in enumerate(api_tfidf) if i < 2000]
+# api_list = [api[0] for i,api in enumerate(api_tfidf) if i < num_constraint]
 # print('Filtering...')
-# filterApiSequence(json_path='/home/omnisky/Asichurter/ApiData/virushare-50-original/',
+# filterApiSequence(json_path='/home/asichurter/datasets/JSONs/HKS/all/',
 #                   api_list=api_list,
-#                   keep_or_filter=False)
+#                   keep_or_filter=False,
+#                   is_class_dir=True)
+# apiStat('/home/asichurter/datasets/JSONs/HKS/all/',
+#         ratio_stairs=[50, 100, 200, 400, 500, 1000, 2000, 5000],
+#         dump_report_path=None,#'/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_report.json',#None,#
+#         dump_apiset_path='/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json',#None
+#         class_dir=True)
 #################################################################
 
 # 转化数据集

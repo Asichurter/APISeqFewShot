@@ -209,9 +209,11 @@ class AdaptEpisodeTask(EpisodeTask):
             support_labels = support_labels.repeat((len(self.Parallel),1))
             self.SupSeqLenCache = [self.SupSeqLenCache]*len(self.Parallel)
 
-        return supports, queries, \
-               t.LongTensor(self.SupSeqLenCache), t.LongTensor(self.QueSeqLenCache), \
-               support_labels, query_labels
+        return (supports, queries, \
+               t.LongTensor(self.SupSeqLenCache), \
+               t.LongTensor(self.QueSeqLenCache), \
+               support_labels), \
+               query_labels
 
 
 class ImpEpisodeTask(EpisodeTask):

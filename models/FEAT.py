@@ -37,10 +37,12 @@ class FEAT(nn.Module):
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         #
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
+
+        self.MiddleEncoder = None
 
         # self.Encoder = TemporalConvNet(num_inputs=embed_size,
         #                                init_hidden_channel=modelParams['tcn_init_channel'],
@@ -60,6 +62,15 @@ class FEAT(nn.Module):
             raise ValueError('Unrecognized set function type:', modelParams['set_function'])
 
 
+    def _embed(self, x, lens):
+        x = self.EmbedDrop(self.Embedding(x))
+        x = self.Encoder(x, lens)
+        if self.MiddleEncoder is not None:
+            x = self.MiddleEncoder(x, lens)
+        x = self.Decoder(x, lens)
+
+        return x
+
     def forward(self, support, query, sup_len, que_len,
                 metric='euc', return_unadapted=False):
 
@@ -75,19 +86,8 @@ class FEAT(nn.Module):
         support = support.view(n*k, sup_seq_len)
 
         # ------------------------------------------------------
-        # shape: [batch, seq, dim]
-        support = self.Embedding(support)
-        query = self.Embedding(query)
-
-        support = self.EmbedDrop(support)
-        query = self.EmbedDrop(query)
-
-        # shape: [batch, dim]
-        support = self.Encoder(support, sup_len)
-        query = self.Encoder(query, que_len)
-
-        support = self.Decoder(support, sup_len)
-        query = self.Decoder(query, que_len)
+        support, query = self._embed(support, sup_len), \
+                         self._embed(query, que_len)
         # ------------------------------------------------------
 
         # support = self.Encoder(support, sup_len)

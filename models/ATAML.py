@@ -60,7 +60,7 @@ class BaseLearner(nn.Module):
 
         if params is None:
             att_weight = self.Attention(x).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = lens.unsqueeze(1).repeat((1,dim)).cuda()
             # c = ∑ αi·si / T = ∑(θ·si)·si / T
             x = (x * att_weight).sum(dim=1) / len_expansion
             # x = self.Attention(x)
@@ -70,7 +70,7 @@ class BaseLearner(nn.Module):
         else:
             # 在ATAML中，只有注意力权重和分类器权重是需要adapt的对象
             att_weight = F.linear(x, weight=params['Attention.weight']).repeat((1,1,dim))
-            len_expansion = t.Tensor(lens).unsqueeze(1).repeat((1,dim)).cuda()
+            len_expansion = lens.unsqueeze(1).repeat((1,dim)).cuda()
             # # c = ∑ αi·si / T = ∑(θ·si)·si / T
             x = (x * att_weight).sum(dim=1) / len_expansion
 
@@ -91,7 +91,7 @@ class BaseLearner(nn.Module):
     def clone_state_dict(self):
         cloned_state_dict = {
             key: val.clone()
-            for key, val in self.state_dict().items()
+            for key, val in self.named_parameters()
             if key in self.adapted_keys
         }
         return cloned_state_dict

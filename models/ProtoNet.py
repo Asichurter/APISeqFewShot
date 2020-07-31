@@ -34,9 +34,15 @@ class ProtoNet(nn.Module):
 
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
 
+        #------------------------------------------------------------------------
         self.Encoder = BiLstmEncoder(input_size=embed_size, **modelParams)
         # self.Encoder = BiLstmCellEncoder(input_size=embed_size, **modelParams)
+        #------------------------------------------------------------------------
+
+        #------------------------------------------------------------------------
         self.MiddleEncoder = None#MultiHeadAttention(mhatt_input_size=hidden_size, **modelParams)
+        #------------------------------------------------------------------------
+
         # self.Encoder = TransformerEncoder(embed_size=embed_size, **modelParams)
 
         # self.Encoder = CNNEncoder2D(dims=[1, 64, 128, 256, 256],
@@ -79,9 +85,9 @@ class ProtoNet(nn.Module):
         #                                  bidirectional=True,
         #                                  self_att_dim=self_att_dim)
 
-        # self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
+        self.Decoder = CNNEncoder1D([hidden_size,hidden_size])
         # self.Decoder = AttnReduction(input_dim=hidden_size, hidden_dim=hidden_size)
-        self.Decoder = SelfAttnReduction(input_size=hidden_size, **modelParams)
+        # self.Decoder = SelfAttnReduction(input_size=hidden_size, **modelParams)
         # self.Reduce = CNNEncoder1D([modelParams['num_channels'][-1],
         #                             modelParams['num_channels'][-1]])
         # self.Reduce = StepMaxReduce()

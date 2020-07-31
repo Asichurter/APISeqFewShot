@@ -22,18 +22,18 @@ def calTFIDF(dataset_path,
     value_max = max(value_map.values())
     value_size = value_max - value_min + 1
 
-    frq_mat = []#None
+    item_frq_mat = None
+    class_frq_mat = None
     N = None
 
     for i,folder in enumerate(tqdm(os.listdir(dataset_path))):
 
         # if i==1000:
         #     return None
+        class_cache = None
 
         if is_class_dir:
             items = os.listdir(dataset_path + folder + '/')
-            assert N is None or N==len(items), "每个类内样本数量不一致！"
-            N = len(items)
 
         else:
             items = [folder+'.json']
@@ -57,15 +57,30 @@ def calTFIDF(dataset_path,
             #     frq_mat = np.expand_dims(hist, axis=0)
             # else:
             #     frq_mat = np.concatenate((frq_mat,np.expand_dims(hist, axis=0)), axis=0)
-            frq_mat.append(hist.tolist())
+            if item_frq_mat is None:
+                item_frq_mat = np.expand_dims(hist, axis=0)
+            else:
+                item_frq_mat = np.concatenate((item_frq_mat,np.expand_dims(hist,axis=0)), axis=0)
 
-    frq_mat = np.array(frq_mat)
+            if class_cache is None:
+                class_cache = np.expand_dims(hist, axis=0)
+            else:
+                class_cache = np.concatenate((item_frq_mat,np.expand_dims(hist,axis=0)), axis=0)
+
+        class_val = class_cache.sum(axis=0)
+
+        if class_frq_mat is None:
+            class_frq_mat = np.expand_dims(class_val, axis=0)
+        else:
+            class_frq_mat = np.concatenate((class_frq_mat, np.expand_dims(class_val, axis=0)), axis=1)
+
 
     # 如果要计算类级别的tfidf，则把类内样本的元素频率相加作为整个类的频率向量，
     # 然后在类的级别上计算tf和idf
     if level == 'class':
-        frq_mat = frq_mat.reshape(-1,N,len(value_map))
-        frq_mat = np.sum(frq_mat, axis=1)
+        frq_mat = class_frq_mat
+    else:
+        frq_mat = item_frq_mat
 
     transformer = TfidfTransformer()
     transformer.fit(frq_mat)

@@ -1,7 +1,5 @@
 import sys
 
-from models.NnNet import NnNet
-
 sys.path.append('../')
 
 import matplotlib.pyplot as plt
@@ -16,6 +14,7 @@ from utils.color import getRandomColor
 from models.IMP import IMP
 from models.ImpIMP import ImpIMP
 from models.HybridIMP import HybridIMP
+from models.NnNet import NnNet
 
 from components.datasets import SeqFileDataset
 from utils.manager import PathManager, TrainingConfigManager
@@ -24,19 +23,20 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***********************************************************
-data_dataset_name = "virushare-20-3gram-tfidf"
-model_dataset_name = "virushare-20-3gram-tfidf"
+data_dataset_name = "virushare-45"
+model_dataset_name = "virushare-45"
 dataset_subtype = 'test'
-model_name = 'NnNet'
-version = 206
-N = 20
+model_name = 'ProtoNet'
+version = -4
+N = 45
 plot_option = 'entire'#'entire'
-k, n, qk = 5, 5, 15
-figsize = (10,8)
+k, n, qk = 5, 5, 40
+figsize = (12,10)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
 axis_off = True
 plot_support_independently = False
+max_plot_class = 20
 # ***************************************************************************
 
 
@@ -92,12 +92,15 @@ if plot_option == 'entire':
 
     class_count = 0
 
-    for x,_,lens in dataloader:
+    for i,(x,_,lens) in enumerate(dataloader):
         class_count += 1
         original_input.append(x.tolist())
         x = x.cuda()
         x = model._embed(x, lens).cpu().view(N,-1).detach().numpy()
         datas.append(x)
+
+        if i+1 == max_plot_class:
+            break
 
     datas = np.array(datas).reshape((class_count*N,-1))
     datas = reduction.fit_transform(datas)
@@ -164,6 +167,7 @@ elif plot_option == 'episode':
     support = union[:n*k].reshape((n,k,2))
     query = union[n*k:-len(clusters)].reshape((n,qk,2))
     clusters = union[-len(clusters):]
+    query_ = query_.cpu().numpy().reshape((n,qk,-1))
 
     colors = getRandomColor(n)
 
@@ -193,10 +197,11 @@ elif plot_option == 'episode':
         plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
 
         class_clusters = clusters[cluster_labels==i]
-        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
+        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80,label=i)
         plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
 
     print('acc: ', acc)
+    plt.legend()
     plt.show()
 
     
