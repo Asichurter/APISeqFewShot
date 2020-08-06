@@ -340,7 +340,7 @@ class TrainingConfigManager:
                self.Cfg['qk'], \
                N
 
-    def model(self, which='best', subversion=1):                    # for both train and test
+    def model(self, which='best', subversion=0):                    # for both train and test
         if which == 'best':
             temp = '{model}_v{version}.%d'%subversion
         elif which == 'last':

@@ -19,7 +19,7 @@ class NnNet(nn.Module):
 
         # 可训练的嵌入层
         self.Embedding = nn.Embedding.from_pretrained(pretrained_matrix, freeze=False)
-        self.EmbedNorm = nn.LayerNorm(embed_size)
+        # self.EmbedNorm = nn.LayerNorm(embed_size)
         self.EmbedDrop = nn.Dropout(modelParams['dropout'])
 
         hidden_size = (1 + modelParams['bidirectional']) * modelParams['hidden_size']
