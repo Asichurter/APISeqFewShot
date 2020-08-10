@@ -23,15 +23,15 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***********************************************************
-data_dataset_name = "virushare-45"
-model_dataset_name = "virushare-45"
+data_dataset_name = "HKS"
+model_dataset_name = "HKS"
 dataset_subtype = 'test'
-model_name = 'ProtoNet'
-version = -4
-N = 45
+model_name = 'ImpIMP'
+version = 231
+N = 20
 plot_option = 'entire'#'entire'
-k, n, qk = 5, 5, 40
-figsize = (12,10)
+k, n, qk = 5, 5, 15
+figsize = (5,5)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
 axis_off = True
@@ -102,7 +102,10 @@ if plot_option == 'entire':
         if i+1 == max_plot_class:
             break
 
-    datas = np.array(datas).reshape((class_count*N,-1))
+    # datas = np.array(datas).reshape((class_count*N,-1))
+
+    idxes = [0,2,3,5,6]
+    datas = np.array(datas).reshape((class_count,N,-1))[idxes].reshape(len(idxes)*N,-1)
     datas = reduction.fit_transform(datas)
 
     colors = ['darkgreen',
@@ -125,15 +128,16 @@ if plot_option == 'entire':
  'darkseagreen',
  'pink',
  'lime']#getRandomColor(class_count)
-    datas = datas.reshape((class_count,N,2))
+    datas = datas.reshape((len(idxes),N,2))
+    # datas = datas.reshape((class_count,N,2))
 
     if class_count > len(colors):
         colors = getRandomColor(class_count, more=True)
 
-    plt.figure(figsize=figsize)
+    plt.figure(figsize=figsize, dpi=300)
     if axis_off:
         plt.axis('off')
-    for i in range(class_count):
+    for i in range(len(datas)):
         plt.scatter(datas[i,:,0],datas[i,:,1],color=colors[i],marker='o',label=i)
 
     plt.legend()

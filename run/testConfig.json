@@ -1,11 +1,11 @@
 {
-  "dataset" :  "HKS",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 10,
+  "k" : 5,
   "n" : 10,
-  "qk" : 10,
+  "qk" : 15,
 
-  "version" : 231,
+  "version" : 253,
   "modelName" :  "ImpIMP",
 
   "trainingEpoch" : 5000,
@@ -31,8 +31,8 @@
   },
 
   "platform-node" : {
-    "Windows": {
-      "datasetBasePath" : "D:/peimages/JSONs/"
+    "asichurter-windows-desktop": {
+      "datasetBasePath" : "D:/datasets/"
     },
 
     "wpen": {
@@ -46,6 +46,6 @@
   "testSubdataset": "test",
 
   "description": [
-    "10-shot 10-way"
+    "5-shot 10-way"
   ]
 }

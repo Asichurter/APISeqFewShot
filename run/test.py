@@ -1,5 +1,6 @@
 
 import sys
+import os
 
 ################################################
 #----------------------设置系统基本信息------------------
@@ -7,6 +8,7 @@ import sys
 
 # appendProjectPath(depth=1)
 sys.path.append('../')
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # 先添加路径再获取
 
