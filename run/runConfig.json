@@ -1,12 +1,12 @@
 {
   "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 5,
-  "n" : 20,
+  "k" : 10,
+  "n" : 10,
   "qk" : 10,
 
-  "version" : 253,
-  "modelName" :  "ImpIMP",
+  "version" : 256,
+  "modelName" :  "NnNet",
 
   "modelParams": {
     "embed_size": 300,

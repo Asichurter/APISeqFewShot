@@ -1,12 +1,12 @@
 {
   "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 5,
+  "k" : 10,
   "n" : 10,
-  "qk" : 15,
+  "qk" : 10,
 
-  "version" : 253,
-  "modelName" :  "ImpIMP",
+  "version" : 256,
+  "modelName" :  "NnNet",
 
   "trainingEpoch" : 5000,
 
@@ -46,6 +46,6 @@
   "testSubdataset": "test",
 
   "description": [
-    "5-shot 10-way"
+    "5-shot 5-way"
   ]
 }
