@@ -6,6 +6,8 @@ import torch as t
 data_path = 'D:/datasets/HKS/data/multimodal-plot-data.npy'
 figsize = (10,9)
 mode = 'SIMPLE'
+point_marker_size = 100
+proto_marker_size = 800
 
 def SIMPLE(X, Y, init_proto, init_proto_label, iter=3, sigma=1):
     def cal_assigned_logits(data, protos, p_labels):
@@ -63,14 +65,15 @@ def plot_decision_boundary(model, X, Y, proto=None, proto_label=None):
     plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral) #Spectral, RdYlBu
     if proto is not None:
         plt.scatter(proto[:, 0], proto[:, 1], c=proto_label, cmap=plt.cm.Spectral, marker="*",
-                    s=180, edgecolors='k')
-    plt.scatter(X[:, 0], X[:, 1], c=Y.ravel(), cmap=plt.cm.Spectral, edgecolors='k')
+                    s=proto_marker_size, edgecolors='k')
+    plt.scatter(X[:, 0], X[:, 1], c=Y.ravel(), cmap=plt.cm.Spectral, edgecolors='k', s=point_marker_size)
     plt.axis('off')
     # plt.ylabel('x2')
     # plt.xlabel('x1')
 
     plt.show()
 
+# choices = [0:5]
 knn = KNN(n_neighbors=1)
 # x = np.array([[2,2],
 #               [2,1],
@@ -81,7 +84,7 @@ knn = KNN(n_neighbors=1)
 #               [4,4],
 #               [3,6],
 #               [2,-1]])
-x = np.load(data_path)
+x = np.load(data_path)#[choices]
 class_num, item_num = x.shape[0], x.shape[1]
 y = np.arange(0,class_num,1).repeat(item_num, 0)
 
@@ -105,5 +108,5 @@ x = x.reshape((class_num*item_num,-1))
 # y = np.array([0,0,0,1,1,1,2,3,4])
 knn.fit(proto,proto_label)
 
-plot_decision_boundary(knn, x, y, plot_proto, proto_label)
 print('Number of proto:', len(proto))
+plot_decision_boundary(knn, x, y, plot_proto, proto_label)
