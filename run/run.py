@@ -47,15 +47,17 @@ from models.FEAT import FEAT
 from models.AFEAT import AFEAT
 from models.NnNet import NnNet
 from models.IMP import IMP
-from models.ImpIMP import ImpIMP
+from models.SIMPLE import SIMPLE
 from models.HybridIMP import HybridIMP
 
 ################################################
 #----------------------读取参数------------------
 ################################################
 
-ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
-IMP_MODELS = ['IMP', 'ImpIMP', 'HybridIMP']
+from models.mconfig import ADAPTED_MODELS, IMP_MODELS
+
+# ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
+# IMP_MODELS = ['IMP', 'SIMPLE', 'HybridIMP']
 
 data_folder = cfg.dataset()#'virushare_20_image'
 
@@ -262,9 +264,9 @@ elif model_type == 'NnNet':
 elif model_type == 'IMP':
     model = IMP(pretrained_matrix=word_matrix,
                      **modelParams)
-elif model_type == 'ImpIMP':
-    model = ImpIMP(pretrained_matrix=word_matrix,
-                     **modelParams)
+elif model_type == 'SIMPLE':
+    model = SIMPLE(pretrained_matrix=word_matrix,
+                   **modelParams)
 elif model_type == 'HybridIMP':
     model = HybridIMP(pretrained_matrix=word_matrix,
                       **modelParams)

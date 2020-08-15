@@ -10,10 +10,10 @@ from components.sequence.transformer import TransformerEncoder, MultiHeadAttenti
 from utils.training import extractTaskStructFromInput
 
 
-class ImpIMP(nn.Module):
+class SIMPLE(nn.Module):
 
     def __init__(self, pretrained_matrix, embed_size, **modelParams):
-        super(ImpIMP, self).__init__()
+        super(SIMPLE, self).__init__()
 
         self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False
 
