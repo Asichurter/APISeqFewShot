@@ -23,3 +23,20 @@ def randomList(num, min_=0, max_=magic, seed=None, allow_duplicate=True):
         while len(rd_set) < num:
             rd_set.add(rd.randint(min_, max_))
         return list(rd_set)
+
+def sample(col, K, seed=None, return_set=False):
+    if seed is not None:
+        rd.seed(seed)
+    selected = rd.sample(col, K)
+    if return_set:
+        return set(selected)
+    else:
+        return selected
+
+
+def nRandom(n, seed=None):
+    if seed is not None:
+        rd.seed(seed)
+
+    seeds = [rd.randint(0,magic) for i in range(n)]
+    return seeds
