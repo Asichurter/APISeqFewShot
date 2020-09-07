@@ -65,6 +65,9 @@ class PathManager:
         self.DocPath = self.ParentPath + self.DocTemp % (dataset, version)
 
     def Folder(self):
+        '''
+        存储json文件的路径
+        '''
         return self.FolderPath
 
     def WordEmbedMatrix(self):
@@ -74,34 +77,61 @@ class PathManager:
         return self.WordIndexMapPath
 
     def FileData(self):
+        '''
+        存储已经打包的数据的路径，分为train，validate和test三个分包
+        '''
         if self.DataType == 'all':
             raise ValueError('在数据分割为all时，不允许访问FileData')
         else:
             return self.FileDataPath
 
     def FileSeqLen(self):
+        '''
+        存储已经打包的数据的序列长度路径，分为train，validate和test三个分包
+        '''
         if self.DataType == 'all':
             raise ValueError('在数据分割为all时，不允许访问FileSeqLen')
         else:
             return self.FileSeqLenPath
 
     def FileIdx2Cls(self):
+        '''
+        存储已经打包的数据中将下标转化为原类名的映射路径
+        '''
         if self.DataType == 'all':
             raise ValueError('在数据分割为all时，不允许访问FileSeqLen')
         else:
             return self.FileIdx2ClsPath
 
     def Model(self, type='best'):
+        '''
+        包含版本号的model路径
+        '''
         return self.ModelPath
 
     def Doc(self):
+        '''
+        包含版本号的doc路径
+        '''
         return self.DocPath
 
     def DatasetBase(self):
+        '''
+        数据集的根路径
+        '''
         return self.ParentPath + self.Dataset + '/'
 
     def DocBase(self):
+        '''
+        数据集的doc根路径
+        '''
         return self.ParentPath + self.Dataset + '/doc/'
+
+    def DataRoot(self):
+        return self.ParentPath + self.Dataset + '/data/'
+
+    def ChildDataRoot(self):
+        return self.ParentPath + self.Dataset + '/' + self.DataType + '/'
 
 
 #########################################

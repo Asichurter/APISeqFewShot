@@ -8,6 +8,7 @@ import os
 from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
     dumpDatasetSplitStruct, revertDatasetSplit, \
     deleteDatasetSplit, renameItemFolder
+from scripts.embedding import aggregateApiSequences
 from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
@@ -65,16 +66,16 @@ from config import generateConfigReport
 
 # 制作基于下标的数据集
 ################################################################
-for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-45', d_type=d_type)
-
-    makeDataFile(json_path=manager.Folder(),
-                 w2idx_path=manager.WordIndexMap(),
-                 seq_length_save_path=manager.FileSeqLen(),
-                 data_save_path=manager.FileData(),
-                 idx2cls_mapping_save_path=manager.FileIdx2Cls(),
-                 num_per_class=45,
-                 max_seq_len=200)
+# for d_type in ['train', 'validate', 'test']:
+#     manager = PathManager(dataset='virushare-45', d_type=d_type)
+#
+#     makeDataFile(json_path=manager.Folder(),
+#                  w2idx_path=manager.WordIndexMap(),
+#                  seq_length_save_path=manager.FileSeqLen(),
+#                  data_save_path=manager.FileData(),
+#                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
+#                  num_per_class=45,
+#                  max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
@@ -91,35 +92,35 @@ for d_type in ['train', 'validate', 'test']:
 
 # 统计满足数量规模的类别
 ################################################################
-# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare-20-after-increm/all/',
-#                     json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
-#                     report_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_report.json',
-#                     stat_stairs=[20,30,40,45,50],
-#                     count_dump_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_scale_report.json')
+# statSatifiedClasses(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
+#                     json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+#                     report_path='/home/asichurter/datasets/reports/virushare-20-original_api_report.json',
+#                     stat_stairs=[20,30,40,50],
+#                     count_dump_path='/home/asichurter/datasets/reports/virushare-20-original_api_scale.json')
 ################################################################
 
 # 按照已经知道的满足规模的类进行收集
 ################################################################
-# makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-45/')
-# collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare-20-after-increm/all/',
-#                    json_path='/home/asichurter/datasets/JSONs/virushare-50-original/',
-#                    dst_path='/home/asichurter/datasets/JSONs/virushare-45/all/',
-#                    report_path='/home/asichurter/datasets/reports/virushare-50_3gram_tfidf_api_report.json',
-#                    num_per_class=45,
-#                    selected_classes=["ibryte", "zapchast", "darkkomet", "urelas", "refroso", "bundlore", "scrinject", "blacole", "soft32downloader", "bettersurf", "outbrowse", "patchload", "4shared", "fearso", "faceliker", "autoit", "kykymber", "qqpass", "domaiq", "fujacks", "redir", "webprefix", "llac", "fbjack", "gator", "softonic", "nimda", "downloadadmin", "egroupdial", "banload", "zbot", "icloader", "vilsel", "installerex", "sytro", "zeroaccess", "somoto", "linkular", "fsysna", "firseria", "loadmoney", "mydoom", "extenbro", "black", "loring", "xtrat", "shipup", "gepys", "urausy", "lineage", "iframeref", "toggle", "hidelink", "airinstaller", "hicrazyk", "simbot", "lipler", "ircbot", "qhost", "directdownloader", "c99shell"])
+makeDatasetDirStruct(base_path='/home/asichurter/datasets/JSONs/virushare-20-orginal/')
+collectJsonByClass(pe_path='/home/asichurter/datasets/PEs/virushare_20/all/',
+                   json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+                   dst_path='/home/asichurter/datasets/JSONs/virushare-20-orginal/all/',
+                   report_path='/home/asichurter/datasets/reports/virushare-20-original_api_report.json',
+                   num_per_class=20,
+                   selected_classes=["gamevance", "ibryte", "zapchast", "xorer", "installmonetizer", "kovter", "upatre", "pykspa", "lunam", "mepaow", "darkkomet", "browsefox", "urelas", "refroso", "ipamor", "bundlore", "scrinject", "startp", "fakeie", "blacole", "msposer", "soft32downloader", "bettersurf", "dealply", "outbrowse", "psyme", "softpulse", "wajam", "patchload", "dlhelper", "cidox", "4shared", "badur", "fearso", "pirminay", "faceliker", "autoit", "kykymber", "cpllnk", "qqpass", "darbyen", "hijacker", "domaiq", "kido", "fujacks", "redir", "jyfi", "scarsi", "webprefix", "llac", "fosniw", "fbjack", "softcnapp", "getnow", "1clickdownload", "zegost", "gator", "inor", "wonka", "softonic", "nimda", "downloadsponsor", "downloadadmin", "egroupdial", "wabot", "antavmu", "delbar", "zzinfor", "banload", "jeefo", "zbot", "adclicer", "icloader", "reconyc", "vilsel", "installerex", "downloadassistant", "sytro", "sefnit", "staser", "pullupdate", "microfake", "zeroaccess", "somoto", "linkular", "fsysna", "firseria", "loadmoney", "vtflooder", "mydoom", "pophot", "acda", "extenbro", "decdec", "black", "loring", "xtrat", "midia", "nitol", "linkury", "shipup", "gepys", "zvuzona", "urausy", "lineage", "refresh", "yoddos", "iframeref", "mikey", "goredir", "instally", "toggle", "hidelink", "airinstaller", "hicrazyk", "simbot", "conficker", "trymedia", "lipler", "ircbot", "hiloti", "qhost", "buterat", "includer", "iframeinject", "unruy", "directdownloader", "c99shell", "fareit", "windef", "vittalia"])
 ################################################################
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json')
+# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-20-original_api_set.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/HKS/all/',
+# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
 #                     mapping=mapping,
-#                     is_class_dir=True)
-# # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/HKS_3gram_tfidf_api_set.json')
+#                     is_class_dir=False)
+# save back the api mapping
+# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-20-original_api_set.json')
 ################################################################
 
 
@@ -130,14 +131,14 @@ for d_type in ['train', 'validate', 'test']:
 # trainW2Vmodel(seqs,
 #               save_matrix_path=manager.WordEmbedMatrix(),
 #               save_word2index_path=manager.WordIndexMap(),
-#               size=300)
+#               size=256)
 ################################################################
 
 # 统计ngram
 ################################################################
 # print('Removing Redundance...')
-# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/HKS-json/',
-#                     class_dir=True)
+# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+#                     class_dir=False)
 #
 # man = PathManager(dataset='HKS-json', d_type='all')
 # print('Stating NGram...')
@@ -156,10 +157,10 @@ for d_type in ['train', 'validate', 'test']:
 #                   ngram_max_num=None,
 #                   class_dir=True)
 #
-# apiStat(path='/home/asichurter/datasets/JSONs/HKS-json/',
-#         dump_report_path=None,
-#         dump_apiset_path='/home/asichurter/datasets/reports/HKS_3gram_api_set.json',
-#         class_dir=True)
+# apiStat(path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+#         dump_report_path='/home/asichurter/datasets/reports/virushare-20-original_api_report.json',
+#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20-original_api_set.json',
+#         class_dir=False)
 ################################################################
 
 
