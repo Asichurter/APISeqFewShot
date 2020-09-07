@@ -1,20 +1,24 @@
 import os
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+from tqdm import tqdm
+import swalign
 
 from utils.color import getRandomColor
 from utils.manager import PathManager
 from utils.file import dumpJson, loadJson, dumpIterable
 from scripts.embedding import aggregateApiSequences
+from utils.magic import magicSeed, sample, nRandom
+from utils.timer import StepTimer
 
 k = 5
+qk = 5
 n = 5
-qk = 15
 N = 20
-WORK_SPACE = ""
 
 def apiCluster(dict_path, map_dump_path):
     api_mat = np.load(dict_path, allow_pickle=True)
@@ -58,19 +62,114 @@ def convertApiCategory(clst_path, wrod_map_path, json_path, str_dump_path, max_l
 
     dumpIterable(str_mat, title="strings", path=str_dump_path)
 
+def align(s1, s2, out):
+    match = 2
+    mismatch = -1
+    scoring = swalign.NucleotideScoringMatrix(match, mismatch)
 
-def genFamilyProtoByMSA(str_path, proto_dump_path):
+    # This sets up the aligner object. You must set your scoring matrix, but
+    # you can also choose gap penalties, etc...
+    sw = swalign.LocalAlignment(scoring)
+
+    # Using your aligner object, calculate the alignment between
+    # ref (first) and query (second)
+    alignment = sw.align(s1, s2)
+
+    return alignment.dump(out=out)
+
+
+def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
+    acc_sum = 0.
+    matrix = loadJson(str_path)['strings']
+    class_pool = list(range(len(matrix) // N))
+    item_pool = set(range(N))
+    out = sys.stdin if log_path is None else open(log_path, "w")
+    tm = StepTimer(epoch)
+
+    tm.begin()
+    for i in range(epoch):
+        print("Epoch", i)
+        supports = []
+        queries = []
+
+        task_seed = magicSeed()
+        sampling_seed = magicSeed()
+        class_seeds = nRandom(n, sampling_seed)
+
+        label_space = sample(class_pool, n, task_seed)
+
+        for cls,cseed in zip(label_space, class_seeds):
+            support_idxes = sample(item_pool, k, cseed, return_set=True)
+            query_idxes = sample(item_pool.difference(support_idxes), qk, cseed, return_set=True)
+
+            support_idxes = np.array(list(support_idxes)) + N*cls
+            query_idxes = np.array(list(query_idxes)) + N*cls
+
+            supports += [matrix[i] for i in support_idxes]
+            queries += [matrix[i] for i in query_idxes]
+
+        correct_count = 0
+
+        for qi,query in enumerate(queries):
+            scores = []
+            for si,support in enumerate(supports):
+                if verbose:
+                    print(qi*n*k+si, "/", n*qk*k*n)
+                scores.append(align(support, query, out))
+
+            scores = np.array(scores).reshape(n,k).sum(-1)
+            predict = np.argmax(scores)
+            correct_count += (predict==(qi//qk))
+
+        epoch_acc = correct_count / (n*qk)
+        acc_sum += epoch_acc
+
+        print("acc=", epoch_acc)
+        tm.step()
+
+    print("\n*********************************************")
+    print("Avg acc: ", acc_sum/epoch)
+
+    if log_path is not None:
+        out.close()
 
 
 
-def runMSA()
+
+
+
+
+
+# def genFamilyProtoByMSA(str_path, work_space, proto_dump_path):
+#     protos = {}
+#     strs = loadJson(str_path)['strings']
+#
+#     for i in range(0,len(strs)-1,N):
+#         print(i,"->",i+N)
+#         fa_strs = strs[i:i+N]
+#         with open(work_space+"family_"+str(i//N+1)+"_input.txt", "w") as f:
+#             try:
+#                 for j in range(N):
+#                     f.write(f"> {j+1}\n")
+#                     f.write(fa_strs[j]+"\n")
+#             except Exception as e:
+#                 print(f"len={len(fa_strs)} i={i} j={j} msg={str(e)}")
+#                 raise RuntimeError
+
+
 
 
 
 if __name__ == '__main__':
     mng = PathManager("virushare-20-original")
-    apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"CategoryMapping.json")
-    convertApiCategory(clst_path=mng.DataRoot()+"CategoryMapping.json",
-                       wrod_map_path=mng.WordIndexMap(),
-                       json_path=mng.Folder(),
-                       str_dump_path=mng.DataRoot()+"CategorizedStringData.json")
+    # apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"CategoryMapping.json")
+    # convertApiCategory(clst_path=mng.DataRoot()+"CategoryMapping.json",
+    #                    wrod_map_path=mng.WordIndexMap(),
+    #                    json_path=mng.Folder(),
+    #                    str_dump_path=mng.DataRoot()+"CategorizedStringData.json")
+    # genFamilyProtoByMSA(str_path=mng.DataRoot()+"CategorizedStringData.json",
+    #                     work_space="D:/datasets/virushare-20-original/data/family_protos/",
+    #                     proto_dump_path=mng.DataRoot()+"FamilyProtos.txt")
+    scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData.json",
+                          epoch=10,
+                          log_path=mng.DataRoot()+'logs/runlog.txt')
