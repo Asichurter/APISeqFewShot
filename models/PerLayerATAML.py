@@ -134,7 +134,7 @@ class BaseLearner(nn.Module):
         return parameters
 
 class PerLayerATAML(nn.Module):
-    def __init__(self, n, loss_fn, lr=5e-2, adapt_iter=3, **modelParams):
+    def __init__(self, n, loss_fn, lr=1e-2, adapt_iter=3, **modelParams):
         super(PerLayerATAML, self).__init__()
 
         self.DataParallel = modelParams['data_parallel'] if 'data_parallel' in modelParams else False

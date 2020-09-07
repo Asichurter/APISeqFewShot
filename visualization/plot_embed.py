@@ -12,7 +12,7 @@ import numpy as np
 from models.ProtoNet import ProtoNet
 from utils.color import getRandomColor
 from models.IMP import IMP
-from models.ImpIMP import ImpIMP
+from models.SIMPLE import SIMPLE
 from models.HybridIMP import HybridIMP
 from models.NnNet import NnNet
 
@@ -64,7 +64,7 @@ if model_name == 'IMP':
     model = IMP(word_matrix,
                 **modelParams)
 elif model_name == 'ImpIMP':
-    model = ImpIMP(word_matrix,
+    model = SIMPLE(word_matrix,
                    **modelParams)
 elif model_name == 'HybridIMP':
     model = HybridIMP(word_matrix,

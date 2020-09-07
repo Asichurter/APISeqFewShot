@@ -258,6 +258,7 @@ with t.autograd.set_detect_anomaly(False):
         stat.record(acc_val, loss_val_item, total_step=TestingEpoch)
 
 desc = cfg.desc()
+desc.append(f"{k}-shot {n}-way")
 desc.append('使用%s'%USED_SUB_DATASET)
 stat.report(doc_path=test_path_manager.Doc(),
             desc=desc)

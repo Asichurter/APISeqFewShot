@@ -111,7 +111,7 @@ class BaseLearner(nn.Module):
         return parameters
 
 class ATAML(nn.Module):
-    def __init__(self, n, loss_fn, inner_lr=5e-2, method='maml',
+    def __init__(self, n, loss_fn, inner_lr=3e-2, method='maml',
                  adapt_iter=2, **modelParams):
         super(ATAML, self).__init__()
 
