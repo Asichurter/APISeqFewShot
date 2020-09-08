@@ -130,6 +130,7 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
 
     print("\n*********************************************")
     print("Avg acc: ", sum(acc_sum)/epoch)
+    print("Total time:", tm.step(prt=False,end=True))
     print("95%% belief interval:", calBeliefeInterval(acc_sum))
 
     if log_path is not None:
