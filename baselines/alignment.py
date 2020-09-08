@@ -14,13 +14,14 @@ from utils.file import dumpJson, loadJson, dumpIterable
 from scripts.embedding import aggregateApiSequences
 from utils.magic import magicSeed, sample, nRandom
 from utils.timer import StepTimer
+from utils.stat import calBeliefeInterval
 
-k = 5
+k = 10
 qk = 5
 n = 5
 N = 20
 
-def apiCluster(dict_path, map_dump_path):
+def apiCluster(dict_path, map_dump_path, cluster_num=26):
     api_mat = np.load(dict_path, allow_pickle=True)
 
     # pca = TSNE(n_components=2)
@@ -28,7 +29,7 @@ def apiCluster(dict_path, map_dump_path):
     # colors = getRandomColor(26, more=False)
 
     print("Clustering...")
-    km = KMeans(n_clusters=26).fit(api_mat)
+    km = KMeans(n_clusters=cluster_num).fit(api_mat)
     km_wrapper = {i:int(c) for i,c in enumerate(km.labels_)}
     dumpJson(km_wrapper, map_dump_path)
 
@@ -45,8 +46,8 @@ def apiCluster(dict_path, map_dump_path):
 # 利用API聚类结果，API下标映射和转化后的字符串序列，将每个样本转化为A-Z的
 # 字符序列，便于运行MSA。最终生成的是一个json文件，该文件中同类样本相邻
 ###############################################################
-def convertApiCategory(clst_path, wrod_map_path, json_path, str_dump_path, max_len=300):
-    word_map = loadJson(wrod_map_path)
+def convertApiCategory(clst_path, word_map_path, json_path, str_dump_path, max_len=300):
+    word_map = loadJson(word_map_path)
     cluster_map = loadJson(clst_path)
     seqs = aggregateApiSequences(json_path, is_class_dir=True)
 
@@ -79,11 +80,11 @@ def align(s1, s2, out):
 
 
 def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
-    acc_sum = 0.
+    acc_sum = []
     matrix = loadJson(str_path)['strings']
     class_pool = list(range(len(matrix) // N))
     item_pool = set(range(N))
-    out = sys.stdin if log_path is None else open(log_path, "w")
+    out = sys.stdout if log_path is None else open(log_path, "w")
     tm = StepTimer(epoch)
 
     tm.begin()
@@ -122,13 +123,14 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
             correct_count += (predict==(qi//qk))
 
         epoch_acc = correct_count / (n*qk)
-        acc_sum += epoch_acc
+        acc_sum.append(epoch_acc)
 
         print("acc=", epoch_acc)
         tm.step()
 
     print("\n*********************************************")
-    print("Avg acc: ", acc_sum/epoch)
+    print("Avg acc: ", sum(acc_sum)/epoch)
+    print("95%% belief interval:", calBeliefeInterval(acc_sum))
 
     if log_path is not None:
         out.close()
@@ -171,5 +173,5 @@ if __name__ == '__main__':
     #                     work_space="D:/datasets/virushare-20-original/data/family_protos/",
     #                     proto_dump_path=mng.DataRoot()+"FamilyProtos.txt")
     scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData.json",
-                          epoch=10,
+                          epoch=300,
                           log_path=mng.DataRoot()+'logs/runlog.txt')

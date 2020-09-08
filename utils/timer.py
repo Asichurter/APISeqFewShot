@@ -29,5 +29,6 @@ class StepTimer:
                 remaining_min = (remaining_time % 3600) // 60
                 remaining_sec = (remaining_time % 60)
                 print('time remains:  %02d:%02d:%02d'%(remaining_hour, remaining_min, remaining_sec))
+                print("*"*50)
 
         self.LastStep = now_time
