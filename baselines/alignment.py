@@ -18,7 +18,7 @@ from utils.stat import calBeliefeInterval
 
 k = 10
 qk = 5
-n = 5
+n = 10
 N = 20
 
 def apiCluster(dict_path, map_dump_path, cluster_num=26):
@@ -76,11 +76,17 @@ def align(s1, s2, out):
     # ref (first) and query (second)
     alignment = sw.align(s1, s2)
 
-    return alignment.dump(out=out)
+    return alignment.get_match_point()
 
 
-def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
-    acc_sum = []
+def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
+                          acc_dump_path=None):
+    if acc_dump_path is not None:
+        if not os.path.exists(acc_dump_path):
+            dumpIterable([], "acc", acc_dump_path)
+        acc_sum = loadJson(acc_dump_path)['acc']
+    else:
+        acc_sum = []
     matrix = loadJson(str_path)['strings']
     class_pool = list(range(len(matrix) // N))
     item_pool = set(range(N))
@@ -124,6 +130,8 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False):
 
         epoch_acc = correct_count / (n*qk)
         acc_sum.append(epoch_acc)
+        if acc_dump_path is not None:
+            dumpIterable(acc_sum, "acc", acc_dump_path)
 
         print("acc=", epoch_acc)
         tm.step()
@@ -167,12 +175,13 @@ if __name__ == '__main__':
     mng = PathManager("virushare-20-original")
     # apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"CategoryMapping.json")
     # convertApiCategory(clst_path=mng.DataRoot()+"CategoryMapping.json",
-    #                    wrod_map_path=mng.WordIndexMap(),
-    #                    json_path=mng.Folder(),
-    #                    str_dump_path=mng.DataRoot()+"CategorizedStringData.json")
+    #                    word_map_path=mng.WordIndexMap(),
+    #                    json_path=mng.DatasetBase()+'all-rmsub/',
+    #                    str_dump_path=mng.DataRoot()+"CategorizedStringData(rmsub).json")
     # genFamilyProtoByMSA(str_path=mng.DataRoot()+"CategorizedStringData.json",
     #                     work_space="D:/datasets/virushare-20-original/data/family_protos/",
     #                     proto_dump_path=mng.DataRoot()+"FamilyProtos.txt")
-    scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData.json",
+    scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData(rmsub).json",
                           epoch=300,
-                          log_path=mng.DataRoot()+'logs/runlog.txt')
+                          log_path=mng.DataRoot()+'logs/runlog.txt',
+                          acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n))
