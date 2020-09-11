@@ -11,8 +11,8 @@ from utils.timer import StepTimer
 from utils.magic import sample, magicSeed, nRandom
 from utils.stat import calBeliefeInterval
 
-k = 5
-n = 5
+k = 10
+n = 10
 qk = 5
 N = 20
 
@@ -21,8 +21,8 @@ def findOptK(dict_path, k_range=(2,50)):
     mat = np.load(dict_path)
     wss = []
 
-    for k in tqdm(range(k_range[0],k_range[1]+1)):
-        kmeans = KMeans(n_clusters=k).fit(mat)
+    for k_ in tqdm(range(k_range[0],k_range[1]+1)):
+        kmeans = KMeans(n_clusters=k_).fit(mat)
         wss.append(kmeans.inertia_)
 
     kaxis = np.arange(k_range[0],k_range[1]+1)
@@ -206,12 +206,46 @@ def gridSearch(c_values, k_values, per_epoch=200):     # 网格搜索聚类类�
     return re
 
 
+def extractBestParam(re):
+    best_c = None
+    best_k = None
+    best_acc = -1
+
+    for ck, cv in re.items():
+        for kk, kv in cv.items():
+            if kv > best_acc:
+                best_acc = kv
+                best_c = ck
+                best_k = kk
+
+    return best_c, best_k
+
+
 if __name__ == "__main__":
+    epoch = 2000
     seq_len = 50
-    n_cluster = 14
-    #
+    n_cluster = 20
     mng = PathManager("virushare-20-original")
-    # # findOptK(mng.WordEmbedMatrix(), k_range=(2,100))
+
+    # # # findOptK(mng.WordEmbedMatrix(), k_range=(2,100))
+    # apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"MarkovClusterMapping.json", cluster_num=n_cluster)
+    # makeClusteredData(json_path=mng.Folder(),
+    #                   cluster_path=mng.DataRoot()+"MarkovClusterMapping.json",
+    #                   word_map_path=mng.WordIndexMap(),
+    #                   dump_path=mng.DataRoot()+"MarkovClusteredData.npy",
+    #                   max_len=seq_len)
+    # scoreMarkovEpisode(clustered_data_path=mng.DataRoot()+"MarkovClusteredData.npy",
+    #                    epoch=2000,
+    #                    n_cluster=n_cluster,
+    #                    maxlen=seq_len)
+    re = gridSearch(c_values=list(range(10,21)),
+                    k_values=[i*50 for i in range(1,21)],
+                    per_epoch=200)
+    dumpJson(re, "D:/datasets/virushare-20-original/data/GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
+    re = loadJson("D:/datasets/virushare-20-original/data/GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
+    n_cluster, seq_len = extractBestParam(re)
+    n_cluster = int(n_cluster)
+    seq_len = int(seq_len)
     apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"MarkovClusterMapping.json", cluster_num=n_cluster)
     makeClusteredData(json_path=mng.Folder(),
                       cluster_path=mng.DataRoot()+"MarkovClusterMapping.json",
@@ -219,8 +253,7 @@ if __name__ == "__main__":
                       dump_path=mng.DataRoot()+"MarkovClusteredData.npy",
                       max_len=seq_len)
     scoreMarkovEpisode(clustered_data_path=mng.DataRoot()+"MarkovClusteredData.npy",
-                       epoch=1000,
+                       epoch=epoch,
                        n_cluster=n_cluster,
                        maxlen=seq_len)
-    # re = gridSearch(c_values=list(range(10,21)),
-    #                 k_values=[i*50 for i in range(1,21)])
+

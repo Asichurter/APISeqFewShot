@@ -76,7 +76,7 @@ def align(s1, s2, out):
     # ref (first) and query (second)
     alignment = sw.align(s1, s2)
 
-    return alignment.get_match_point()
+    return alignment.identity
 
 
 def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
