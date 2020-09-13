@@ -7,6 +7,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from tqdm import tqdm
 import swalign
+from multiprocessing import Process, Queue
 
 from utils.color import getRandomColor
 from utils.manager import PathManager
@@ -79,15 +80,16 @@ def align(s1, s2, out):
     return alignment.identity
 
 
-def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
-                          acc_dump_path=None):
-    if acc_dump_path is not None:
-        if not os.path.exists(acc_dump_path):
-            dumpIterable([], "acc", acc_dump_path)
-        acc_sum = loadJson(acc_dump_path)['acc']
-    else:
-        acc_sum = []
-    matrix = loadJson(str_path)['strings']
+# def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
+#                           acc_dump_path=None):
+def scoreEpisodeAlignment(matrix, acc_queue, process_id, epoch=1000, log_path=None, verbose=False):
+    # if acc_dump_path is not None:
+    #     if not os.path.exists(acc_dump_path):
+    #         dumpIterable([], "acc", acc_dump_path)
+    #     acc_sum = loadJson(acc_dump_path)['acc']
+    # else:
+    #     acc_sum = []
+    # matrix = loadJson(str_path)['strings']
     class_pool = list(range(len(matrix) // N))
     item_pool = set(range(N))
     out = sys.stdout if log_path is None else open(log_path, "w")
@@ -95,7 +97,7 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
 
     tm.begin()
     for i in range(epoch):
-        print("Epoch", i)
+        print("Process", process_id, ":", "Epoch", i)
         supports = []
         queries = []
 
@@ -121,7 +123,7 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
             scores = []
             for si,support in enumerate(supports):
                 if verbose:
-                    print(qi*n*k+si, "/", n*qk*k*n)
+                    print("Process", process_id, ":", qi*n*k+si, "/", n*qk*k*n)
                 scores.append(align(support, query, out))
 
             scores = np.array(scores).reshape(n,k).sum(-1)
@@ -129,26 +131,64 @@ def scoreEpisodeAlignment(str_path, epoch=1000, log_path=None, verbose=False,
             correct_count += (predict==(qi//qk))
 
         epoch_acc = correct_count / (n*qk)
-        acc_sum.append(epoch_acc)
+        acc_queue.put(epoch_acc)
+        # acc_sum.append(epoch_acc)
+        # if acc_dump_path is not None:
+        #     dumpIterable(acc_sum, "acc", acc_dump_path)
+
+        # print("acc=", epoch_acc)
+        tm.step()
+
+    # print("\n*********************************************")
+    # print("Avg acc: ", sum(acc_sum)/epoch)
+    # print("Total time:", tm.step(prt=False,end=True))
+    # print("95%% belief interval:", calBeliefeInterval(acc_sum))
+    #
+    # if log_path is not None:
+    #     out.close()
+
+
+def multi_process_align(str_path, epoch=1000, log_path=None, verbose=False,
+                        acc_dump_path=None, process_num=3):
+
+    if acc_dump_path is not None:
+        if not os.path.exists(acc_dump_path):
+            dumpIterable([], "acc", acc_dump_path)
+        acc_sum = loadJson(acc_dump_path)['acc']
+    else:
+        acc_sum = []
+
+    matrix = loadJson(str_path)['strings']
+    queue = Queue()
+
+    tm = StepTimer()
+    tm.begin()
+
+    process_pool = []
+    for i in range(process_num):
+        p = Process(target=scoreEpisodeAlignment, args=(matrix,queue,i+1,epoch//process_num))
+        process_pool.append(p)
+        p.start()
+
+    count = 0
+    while count < epoch:
+        cur_acc = queue.get(block=True)
+        count += 1
+        print("#", count, "acc=", cur_acc)
+        acc_sum.append(cur_acc)
         if acc_dump_path is not None:
             dumpIterable(acc_sum, "acc", acc_dump_path)
 
-        print("acc=", epoch_acc)
-        tm.step()
+    for p in process_pool:
+        p.join()
+
+    # while not queue.empty():
+    #     acc_sum.append(queue.get())
 
     print("\n*********************************************")
     print("Avg acc: ", sum(acc_sum)/epoch)
     print("Total time:", tm.step(prt=False,end=True))
     print("95%% belief interval:", calBeliefeInterval(acc_sum))
-
-    if log_path is not None:
-        out.close()
-
-
-
-
-
-
 
 
 # def genFamilyProtoByMSA(str_path, work_space, proto_dump_path):
@@ -181,7 +221,11 @@ if __name__ == '__main__':
     # genFamilyProtoByMSA(str_path=mng.DataRoot()+"CategorizedStringData.json",
     #                     work_space="D:/datasets/virushare-20-original/data/family_protos/",
     #                     proto_dump_path=mng.DataRoot()+"FamilyProtos.txt")
-    scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData(rmsub).json",
-                          epoch=300,
-                          log_path=mng.DataRoot()+'logs/runlog.txt',
-                          acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n))
+    # scoreEpisodeAlignment(str_path=mng.DataRoot()+"CategorizedStringData(rmsub).json",
+    #                       epoch=300,
+    #                       log_path=mng.DataRoot()+'logs/runlog.txt',
+    #                       acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n))
+    multi_process_align(str_path=mng.DataRoot()+"CategorizedStringData(rmsub).json",
+                        epoch=300,
+                        acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n),
+                        process_num=4)
