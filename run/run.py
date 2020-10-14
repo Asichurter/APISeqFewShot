@@ -1,9 +1,9 @@
 import os
 import sys
 import shutil
+import torch as t
 
 sys.path.append('../')
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 from config import saveConfigFile, checkVersion, saveRunVersionConfig
 
@@ -18,6 +18,8 @@ from utils.manager import TrainingConfigManager
 
 cfg = TrainingConfigManager('runConfig.json')
 datasetBasePath = cfg.systemParams()
+os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.deviceId())
+device = t.device(f"cuda:{cfg.deviceId()}")
 
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
@@ -99,6 +101,8 @@ print('*'*50)
 print('Model Name: %s'%model_type)
 print('Used dataset: %s'%data_folder)
 print('Version: %d'%version)
+print(f"{k}-shot {n}-way")
+print(f"device: {cfg.deviceId()}")
 print('*'*50)
 
 ################################################
@@ -307,9 +311,9 @@ scheduler = t.optim.lr_scheduler.StepLR(optimizer,
                                          gamma=LRDecayGamma)
 
 
-if modelParams['data_parallel']:
-    model = t.nn.DataParallel(model,
-                              device_ids=modelParams["data_parallel_devices"])
+# if modelParams['data_parallel'] is not None:
+#     model = t.nn.DataParallel(model,
+#                               device_ids=modelParams["data_parallel_devices"])
 
 ################################################
 #----------------------训练------------------

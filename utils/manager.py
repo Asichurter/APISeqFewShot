@@ -441,6 +441,8 @@ class TrainingConfigManager:
     def subDataset(self):
         return self.Cfg['testSubdataset']
 
+    def deviceId(self):
+        return self.Cfg['deviceId']
 
 
 

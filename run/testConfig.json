@@ -1,12 +1,14 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "HKS",
 
   "k" : 5,
   "n" : 5,
   "qk" : 5,
 
-  "version" : 296,
-  "modelName" :  "NnNet",
+  "version" : 308,
+  "modelName" :  "ProtoNet",
+
+  "deviceId": 0,
 
   "trainingEpoch" : 5000,
 
@@ -36,7 +38,7 @@
     },
 
     "wpen": {
-      "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
+      "datasetBasePath" : "/home/omnisky/NewAsichurter/ApiData/"
     },
     "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"

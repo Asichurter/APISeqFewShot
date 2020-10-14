@@ -3,10 +3,12 @@
 
   "k" : 5,
   "n" : 5,
-  "qk" : 5,
+  "qk" : 15,
 
-  "version" : 302,
-  "modelName" :  "SIMPLE",
+  "version" : 308,
+  "modelName" :  "NnNet",
+
+  "deviceId": 0,
 
   "modelParams": {
     "embed_size": 300,
@@ -96,7 +98,7 @@
     },
 
     "wpen": {
-      "datasetBasePath" : "/home/omnisky/Asichurter/ApiData/"
+      "datasetBasePath" : "/home/omnisky/NewAsichurter/ApiData/"
     },
     "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"

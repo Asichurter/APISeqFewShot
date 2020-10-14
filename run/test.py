@@ -40,6 +40,7 @@ from models.mconfig import ADAPTED_MODELS, IMP_MODELS
 
 cfg = TrainingConfigManager('testConfig.json')
 datasetBasePath = cfg.systemParams()
+os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.deviceId())
 
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
@@ -61,6 +62,8 @@ print('*'*50)
 print('Model Name: %s'%model_type)
 print('Used dataset: %s'%data_folder)
 print('Version: %d'%version)
+print(f"{k}-shot {n}-way")
+print(f"device: {cfg.deviceId()}")
 print('*'*50)
 
 
@@ -110,6 +113,7 @@ stat = TestStatManager()
 
 printState('init model...')
 state_dict = t.load(test_path_manager.Model())
+print("loading done...")
 # state_dict = t.load(test_path_manager.DatasetBase()+'models/IMP_v-2.0')
 # state_dict = t.load()
 
