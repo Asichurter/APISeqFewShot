@@ -1,4 +1,5 @@
 import torch as t
+import numpy as np
 from components.task import ReptileEpisodeTask
 from models.FEAT import FEAT
 from models.IMP import IMP
@@ -21,7 +22,7 @@ def queryLossProcedure(model,
     model.zero_grad()
 
     loss_val = t.zeros((1,)).cuda()
-    acc_val = 0.
+    acc_val = np.zeros(4,) # 0.
 
     for task_i in range(taskBatchSize):
         model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
@@ -30,7 +31,7 @@ def queryLossProcedure(model,
 
         loss_val += loss(predicts, labels)
         predicts = predicts.cpu()
-        acc_val += task.accuracy(predicts)
+        acc_val += task.metrics(predicts, acc_only=False)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
@@ -88,7 +89,7 @@ def fomamlProcedure(model,
                 cuml_grad[i] += g / taskBatchSize       # batch内取梯度均值
 
         predicts = predicts.cpu()
-        acc_val += task.accuracy(predicts)
+        acc_val += task.metrics(predicts)
         loss_val_item += loss_val.detach().item()
 
     # loss_val.backward()
@@ -129,7 +130,7 @@ def reptileProcedure(n, k,
         predicts = model(n, k, *model_input)
 
         loss_val = loss(predicts, labels).detach().item()
-        acc_val = task.accuracy(predicts.cpu())
+        acc_val = task.metrics(predicts.cpu())
 
     return acc_val, loss_val     # 适配外部调用
 
@@ -161,7 +162,7 @@ def penalQLossProcedure(model: TCProtoNet,
 
         loss_val += loss(predicts, labels)
         predicts = predicts.cpu()
-        acc_val += task.accuracy(predicts)
+        acc_val += task.metrics(predicts)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
@@ -216,7 +217,7 @@ def featProcedure(model: FEAT,
         loss_val += loss(predicts, labels)
 
         predicts = predicts.cpu()
-        acc_val += task.accuracy(predicts)
+        acc_val += task.metrics(predicts)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
@@ -248,10 +249,10 @@ def adaFeatProcedure(model: FEAT,
     aft_predicts, bef_predicts = model.forward(*model_input, return_unadapted=True)
 
     bef_loss = loss(bef_predicts, labels).item()
-    bef_acc = task.accuracy(bef_predicts.cpu())
+    bef_acc = task.metrics(bef_predicts.cpu())
 
     aft_loss = loss(aft_predicts, labels).item()
-    aft_acc = task.accuracy(aft_predicts.cpu())
+    aft_acc = task.metrics(aft_predicts.cpu())
 
     return (bef_acc,bef_loss),(aft_acc,aft_loss)
 
@@ -271,7 +272,7 @@ def impProcedure(model: IMP,
     model.zero_grad()
 
     loss_val = t.zeros((1,)).cuda()
-    acc_val = 0.
+    acc_val = np.zeros(4,) #0.
 
     for task_i in range(taskBatchSize):
 
@@ -281,7 +282,7 @@ def impProcedure(model: IMP,
 
         loss_val += epoch_loss.sum()
         predicts = predicts.cpu()
-        acc_val += task.accuracy(predicts, is_labels=True)
+        acc_val += task.metrics(predicts, is_labels=True, acc_only=False)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 

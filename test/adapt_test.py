@@ -22,7 +22,7 @@ from models.FEAT import FEAT
 
 ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 
-cfg = TrainingConfigManager('testConfig.json')
+cfg = TrainingConfigManager('../run/testConfig.json')
 datasetBasePath = cfg.systemParams()
 
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
