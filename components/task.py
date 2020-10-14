@@ -1,8 +1,10 @@
 import torch as t
+import numpy as np
 from torch.nn.utils.rnn import pad_sequence, pack_padded_sequence
 from torch.utils.data import DataLoader
 import random as rd
 import time
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 from components.samplers import EpisodeSamlper, ReptileSamlper
 from utils.magic import magicSeed, randomList
@@ -116,7 +118,7 @@ class EpisodeTask:
     def labels(self):
         return self.LabelsCache
 
-    def accuracy(self, out, is_labels=False):
+    def metrics(self, out, is_labels=False, acc_only=True):
         k, qk, n, N = self.readParams()
 
         labels = self.LabelsCache
@@ -128,9 +130,22 @@ class EpisodeTask:
                 out = t.argmax(out.view(-1, n), dim=1)
                 labels = t.argmax(labels, dim=1)
 
-        acc = (labels==out).sum().item() / labels.size(0)
+        labels = labels.cpu().numpy()
+        out = out.cpu().numpy()
 
-        return acc
+        acc = accuracy_score(labels, out)
+        precision = precision_score(labels, out, average='macro')
+        recall = recall_score(labels, out, average='macro')
+        f1 = f1_score(labels, out, average='macro')
+
+        metrics = np.array([acc, precision, recall, f1])
+
+        if acc_only:
+            return acc
+        else:
+            return metrics
+        # acc = (labels==out).sum().item() / labels.size(0)
+
 
 
 class ProtoEpisodeTask(EpisodeTask):

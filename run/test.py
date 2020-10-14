@@ -8,7 +8,7 @@ import os
 
 # appendProjectPath(depth=1)
 sys.path.append('../')
-# os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # 先添加路径再获取
 
@@ -175,7 +175,7 @@ elif model_type == 'NnNet':
 elif model_type == 'IMP':
     model = IMP(pretrained_matrix=word_matrix,
                      **modelParams)
-elif model_type == 'ImpIMP':
+elif model_type == 'SIMPLE':
     model = SIMPLE(pretrained_matrix=word_matrix,
                    **modelParams)
 elif model_type == 'HybridIMP':
@@ -192,6 +192,7 @@ stat.startTimer()
 ################################################
 #--------------------开始测试------------------
 ################################################
+metrics = np.zeros(4,)
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TestingEpoch):
         # model.eval()
@@ -206,7 +207,7 @@ with t.autograd.set_detect_anomaly(False):
         # loss_val += loss(predicts, labels)
         #
         # predicts = predicts.cpu()
-        # acc_val = test_task.accuracy(predicts)
+        # acc_val = test_task.metrics(predicts)
         # loss_val_item = loss_val.detach().item()
 
         # acc_val, loss_val_item = fomamlProcedure(model,
@@ -255,11 +256,17 @@ with t.autograd.set_detect_anomaly(False):
                                                         train=False)
 
         # 记录任务batch的平均正确率和损失值
-        stat.record(acc_val, loss_val_item, total_step=TestingEpoch)
+        stat.record(acc_val[0], loss_val_item, total_step=TestingEpoch)
+        metrics += acc_val
 
 desc = cfg.desc()
 desc.append(f"{k}-shot {n}-way")
 desc.append('使用%s'%USED_SUB_DATASET)
 stat.report(doc_path=test_path_manager.Doc(),
             desc=desc)
+
+metrics /= TestingEpoch
+print('Precision:', metrics[1]*100)
+print('Recall:', metrics[2]*100)
+print('F1-Score:', metrics[3]*100)
 

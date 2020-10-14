@@ -3,7 +3,7 @@ import sys
 import shutil
 
 sys.path.append('../')
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 from config import saveConfigFile, checkVersion, saveRunVersionConfig
 
@@ -416,19 +416,6 @@ with t.autograd.set_detect_anomaly(False):
             validate_loss = 0.
             
             for test_i in range(ValEpisode):
-            #
-            # for i in range(ValEpisode):
-            #     model_input, labels =val_task.episode()#support, query, sup_len, que_len, labels = val_task.episode()
-            #     # support, query, labels = val_task.episode()
-            #
-            #     # print(model_input[0].size(), model_input[1].size())
-            #     predicts = model(*model_input)
-            #
-            #     loss_val = loss(predicts, labels)
-            #
-            #     predicts = predicts.cpu()
-            #     validate_loss += loss_val.detach().item()
-            #     validate_acc += val_task.accuracy(predicts)
 
                 if model_type == 'TCProtoNet':
                     validate_acc_oneiter, validate_loss_oneiter = penalQLossProcedure(model,
@@ -494,7 +481,7 @@ with t.autograd.set_detect_anomaly(False):
 stat.dumpTrainingResult()
 
 plotLine(stat.getHistAcc(), ('train acc', 'val acc'),
-         title=model_name+' accuracy',
+         title=model_name+' metrics',
          gap=ValCycle,
          color_list=('blue', 'red'),
          style_list=('-','-'),
@@ -509,51 +496,3 @@ plotLine(stat.getHistLoss(), ('train loss', 'val loss'),
 
 # 保存最后一个状态的模型
 t.save(model.state_dict(), train_path_manager.Model()+'_last')
-
-########################################################################################
-# model.train()
-# model.zero_grad()
-#
-# loss_val = t.zeros((1,)).cuda()
-# acc_val = 0.
-#
-# for task_i in range(taskBatchSize):
-#     if TrainingVerbose:
-#         print('forming episode...')
-#     model_input, labels = train_task.episode()#support, query, sup_len, que_len, labels = train_task.episode()
-#     # support, query, labels = train_task.episode()
-#
-#     if TrainingVerbose:
-#         print('forwarding...')
-#
-#     # print(model_input[0].size(), model_input[1].size())
-#
-#     predicts = model(*model_input)
-#
-#     loss_val += loss(predicts, labels)
-#
-#     predicts = predicts.cpu()
-#     acc_val += train_task.accuracy(predicts)
-#
-# if TrainingVerbose:
-#     print('backward...')
-# loss_val.backward()
-#
-# if TrainingVerbose:
-#     print('recording grad...')
-#
-# if TrainingVerbose:
-#     print('optimizing...')
-#
-# optimizer.step()
-# scheduler.step()
-#
-# loss_val_item = loss_val.detach().item()
-########################################################################################
-
-
-# "ATAML在加权以后，将sequence维度相加约减，而不是dim维度约减",
-# "3e-2 inner-loop 学习率",
-# "修复了ATAML的bug，该bug导致多次adapt只有最后一次adapt有效",
-# "每个 inner loop 进行1次adapt",
-# "qk减小到5"
