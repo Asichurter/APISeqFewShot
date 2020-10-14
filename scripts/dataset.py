@@ -367,9 +367,16 @@ def parseAndSampleDataset(scale_report_path,
         reporter.report()
 
 
+def fetchPeFolders(json_path, pe_src_path, pe_dst_path):
+    for folder in tqdm(os.listdir(json_path)):
+        shutil.copytree(pe_src_path+folder, pe_dst_path+folder)
+
+
 
 if __name__ == '__main__':
-    pass
+    fetchPeFolders(json_path='D:/datasets/virushare-20-3gram/all/',
+                   pe_src_path='D:/peimages/PEs/virushare_20/all/',
+                   pe_dst_path='D:/datasets/virushare-20-pe/all/')
     # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
     #            dest='D:/peimages/JSONs/virushare_20/test/',
     #            ratio=30,

@@ -73,7 +73,7 @@ def trainW2Vmodel(seqs, sg=0, size=64, min_count=1, cbow_mean=1,
     printBulletin('Done')
 
 if __name__ == '__main__':
-    manager = PathManager(dataset='virushare-20-original', d_type='all')
+    manager = PathManager(dataset='HKS-api', d_type='all')
 
     # print(manager.FileData())
 
@@ -81,4 +81,4 @@ if __name__ == '__main__':
     trainW2Vmodel(seqs,
                   save_matrix_path=manager.WordEmbedMatrix(),
                   save_word2index_path=manager.WordIndexMap(),
-                  size=64)
+                  size=128)

@@ -507,6 +507,17 @@ def collectJsonByClass(pe_path,
     reporter.report()
 
 
+def collectOriginalHKS(ori_path, existed_dataset_path, dump_path):
+    for cls in tqdm(os.listdir(existed_dataset_path)):
+        os.mkdir(dump_path+cls+'/')
+
+        cls_path = existed_dataset_path+cls+'/'
+        for item in os.listdir(cls_path):
+            shutil.copy(ori_path+item,
+                        dump_path+cls+'/'+item)
+
+
+
 # ####################################################
 # # 从已经按照类划分好的
 # ####################################################
@@ -583,7 +594,7 @@ if __name__ == '__main__':
     #         ratio_stairs=[100, 200, 500, 1000, 2000, 3000],
     #         class_dir=False)
 
-    # removeApiRedundance('/home/asichurter/datasets/JSONs/HKS-json/',
+    # removeApiRedundance('D:/datasets/HKS-api/all-rmsub/',
     #                     selected_apis=None,
     #                     class_dir=True)
 
