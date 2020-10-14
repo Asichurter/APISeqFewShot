@@ -13,7 +13,8 @@ from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
 from scripts.reshaping import makeMatrixData
 from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
-                                    collectJsonByClass, mappingApiNormalize, filterApiSequence
+                                    collectJsonByClass, mappingApiNormalize, filterApiSequence, \
+                                    collectOriginalHKS
 from models.ProtoNet import IncepProtoNet
 # from scripts.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
@@ -21,7 +22,10 @@ from extractors.TFIDF import calTFIDF
 
 from config import generateConfigReport
 
-
+# makeDatasetDirStruct(base_path="D:/datasets/HKS-api/")
+# collectOriginalHKS(ori_path='D:/datasets/HKS-original/api/',
+#                    existed_dataset_path="D:/datasets/HKS/all/",
+#                    dump_path="D:/datasets/HKS-api/all/")
 
 # 生成报告总结
 ################################################################
@@ -112,15 +116,16 @@ from config import generateConfigReport
 
 # 将数据集转化为下标形式来减少内存占用
 ################################################################
-# apiSet = loadJson('/home/asichurter/datasets/reports/virushare-20-original_api_set.json')
+# man = PathManager(dataset='HKS-api', d_type='all')
+# apiSet = loadJson('D:/datasets/reports/HKS-api_api_set_report.json')
 # apis = apiSet['api_set']
 # mapping = {name:str(i) for i,name in enumerate(apis)}
 # apiSet['api_map'] = mapping
-# mappingApiNormalize(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
+# mappingApiNormalize(json_path=man.Folder(),
 #                     mapping=mapping,
-#                     is_class_dir=False)
+#                     is_class_dir=True)
 # save back the api mapping
-# dumpJson(apiSet, '/home/asichurter/datasets/reports/virushare-20-original_api_set.json')
+# dumpJson(apiSet, 'D:/datasets/reports/HKS-api_api_set_report.json')
 ################################################################
 
 
@@ -137,10 +142,11 @@ from config import generateConfigReport
 # 统计ngram
 ################################################################
 # print('Removing Redundance...')
-# removeApiRedundance(json_path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#                     class_dir=False)
+
 #
-# man = PathManager(dataset='HKS-json', d_type='all')
+# man = PathManager(dataset='HKS-api', d_type='all')
+# removeApiRedundance(json_path=man.Folder(),
+#                     class_dir=True)
 # print('Stating NGram...')
 # ngram_dict = statNGram(parent_path='/home/asichurter/datasets/JSONs/HKS-json/',
 #                        window=3,
@@ -157,10 +163,10 @@ from config import generateConfigReport
 #                   ngram_max_num=None,
 #                   class_dir=True)
 #
-# apiStat(path='/home/asichurter/datasets/JSONs/jsons - 副本(复件)/',
-#         dump_report_path='/home/asichurter/datasets/reports/virushare-20-original_api_report.json',
-#         dump_apiset_path='/home/asichurter/datasets/reports/virushare-20-original_api_set.json',
-#         class_dir=False)
+# apiStat(path=man.Folder(),
+#         dump_report_path='D:/datasets/reports/HKS-api_api_report.json',
+#         dump_apiset_path='D:/datasets/reports/HKS-api_api_set_report.json',
+#         class_dir=True)
 ################################################################
 
 

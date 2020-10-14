@@ -200,27 +200,29 @@ def doClassification(train_data, train_label, test_data, test_label,
 
 
 if __name__ == '__main__':
-    src_dataset_name = "virushare-45"
+    src_dataset_name = "HKS"
     sub_dataset = 'all'
-    dst_dataset_name = "virushare-45-hist"
+    dst_dataset_name = "HKS-hist"
     path_manager = PathManager('')
     parent_path = path_manager.ParentPath
 
     assert src_dataset_name != dst_dataset_name
 
     #-----------------------------------------------------------------------------
-    getHist(src_path=parent_path + src_dataset_name +'/' + sub_dataset + '/',  #'/home/asichurter/datasets/JSONs/virushare-45-rmsub/test/',
-            dst_path=parent_path + dst_dataset_name +'/' + sub_dataset + '/',  #'/home/asichurter/datasets/JSONs/virushare-45-rmsub-hist/test/',
-            dict_map_path=parent_path+src_dataset_name+'/data/wordMap.json',
-            is_class_dir=True)
-    makeClasswiseHistDataset(json_folder_path=parent_path + dst_dataset_name +'/' + sub_dataset + '/',
-                             dst_path=parent_path + dst_dataset_name +'/data-%s.npy' % sub_dataset)
+    # getHist(src_path=parent_path + src_dataset_name +'/' + sub_dataset + '/',  #'/home/asichurter/datasets/JSONs/virushare-45-rmsub/test/',
+    #         dst_path=parent_path + dst_dataset_name +'/' + sub_dataset + '/',  #'/home/asichurter/datasets/JSONs/virushare-45-rmsub-hist/test/',
+    #         dict_map_path=parent_path+src_dataset_name+'/data/wordMap.json',
+    #         is_class_dir=True)
+    # makeClasswiseHistDataset(json_folder_path=parent_path + dst_dataset_name +'/' + sub_dataset + '/',
+    #                          dst_path=parent_path + dst_dataset_name +'/data-%s.npy' % sub_dataset)
     #-----------------------------------------------------------------------------
 
 
-    iteration = 1000            # 测试轮数
-    n = 5                       # 分类类数量
-    test_num_per_class = 40     # 每一个类中测试样本的数量
+    iteration = 3000            # 测试轮数
+    n = 10                       # 分类类数量
+    k = 10
+    N = 20
+    test_num_per_class = N - k     # 每一个类中测试样本的数量
     reduction_n_comp = 0.9      # 保留0.9方差
     knn_k = 1                   # kNN的近邻数量
 

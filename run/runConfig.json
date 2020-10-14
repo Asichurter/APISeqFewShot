@@ -1,12 +1,12 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "HKS",
 
-  "k" : 10,
+  "k" : 5,
   "n" : 5,
   "qk" : 5,
 
-  "version" : 290,
-  "modelName" :  "InductionNet",
+  "version" : 302,
+  "modelName" :  "SIMPLE",
 
   "modelParams": {
     "embed_size": 300,
@@ -43,8 +43,8 @@
   "lrDecayGamma" : 0.1,
   "optimizer": "sgd",
   "weightDecay" : 5e-4,
-  "lossFunction": "mse",
-  "defaultLr" : 1e-2,
+  "lossFunction": "nll",
+  "defaultLr" : 1e-3,
   "lrs" : {
     "Embedding.weight_" : 1e-3
   },
@@ -109,8 +109,8 @@
                 "序列长度为300使用了tfidf的3Gram(第1次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
-                "使用1层BiLSTM编码，  使用1dCNN解码",
+                "使用1层BiLSTM编码,使用1dCNN解码",
                 "不使用LayerNorm",
-                "初始学习率设置为1e-2"
+                "初始学习率设置为1e-3"
       ]
 }

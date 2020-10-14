@@ -1,12 +1,12 @@
 {
   "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 10,
+  "k" : 5,
   "n" : 5,
-  "qk" : 10,
+  "qk" : 5,
 
-  "version" : 290,
-  "modelName" :  "InductionNet",
+  "version" : 296,
+  "modelName" :  "NnNet",
 
   "trainingEpoch" : 5000,
 

@@ -212,7 +212,7 @@ def multi_process_align(str_path, epoch=1000, log_path=None, verbose=False,
 
 
 if __name__ == '__main__':
-    mng = PathManager("virushare-20-original")
+    mng = PathManager("HKS-api")
     # apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"CategoryMapping.json")
     # convertApiCategory(clst_path=mng.DataRoot()+"CategoryMapping.json",
     #                    word_map_path=mng.WordIndexMap(),
@@ -226,6 +226,11 @@ if __name__ == '__main__':
     #                       log_path=mng.DataRoot()+'logs/runlog.txt',
     #                       acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n))
     multi_process_align(str_path=mng.DataRoot()+"CategorizedStringData(rmsub).json",
-                        epoch=300,
-                        acc_dump_path=mng.DataRoot()+"logs/Align-Virushare20-%dshot-%dway.json"%(k,n),
+                        epoch=1000,
+                        acc_dump_path=mng.DataRoot()+"logs/Align-HKS-%dshot-%dway.json"%(k,n),
                         process_num=4)
+
+    # accs = loadJson(mng.DataRoot()+"logs/Align-HKS-%dshot-%dway.json"%(k,n))['acc']
+    # print("Avg acc:", sum(accs)/len(accs))
+    # print("Interval:", calBeliefeInterval(accs))
+    # print("Len:", len(accs))

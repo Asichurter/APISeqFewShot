@@ -67,7 +67,7 @@ def makeTranMatrix(seqs, n_cluster, maxlen=1000):
             y = seq[i+1]
             matrix[x][y] += 1
 
-    row_sum = matrix.sum(-1)
+    row_sum = matrix.sum(0)
     mask = row_sum==0
     np.putmask(row_sum,mask,1)      # 将行和为0的位置置为1，防止除0错误
     normalized_matrix = (matrix.T / row_sum).T
@@ -222,30 +222,33 @@ def extractBestParam(re):
 
 
 if __name__ == "__main__":
-    epoch = 2000
+    epoch = 5000
     seq_len = 50
-    n_cluster = 20
-    mng = PathManager("virushare-20-original")
+    n_cluster = 30
+    n_range = (15,30)
+    mng = PathManager("HKS-api")
 
     # # # findOptK(mng.WordEmbedMatrix(), k_range=(2,100))
     # apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"MarkovClusterMapping.json", cluster_num=n_cluster)
     # makeClusteredData(json_path=mng.Folder(),
     #                   cluster_path=mng.DataRoot()+"MarkovClusterMapping.json",
     #                   word_map_path=mng.WordIndexMap(),
-    #                   dump_path=mng.DataRoot()+"MarkovClusteredData.npy",
+    #                   dump_path=mng.DataRozot()+"MarkovClusteredData.npy",
     #                   max_len=seq_len)
     # scoreMarkovEpisode(clustered_data_path=mng.DataRoot()+"MarkovClusteredData.npy",
     #                    epoch=2000,
     #                    n_cluster=n_cluster,
     #                    maxlen=seq_len)
-    re = gridSearch(c_values=list(range(10,21)),
-                    k_values=[i*50 for i in range(1,21)],
-                    per_epoch=200)
-    dumpJson(re, "D:/datasets/virushare-20-original/data/GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
-    re = loadJson("D:/datasets/virushare-20-original/data/GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
-    n_cluster, seq_len = extractBestParam(re)
-    n_cluster = int(n_cluster)
-    seq_len = int(seq_len)
+
+    # re = gridSearch(c_values=list(range(*n_range)),
+    #                 k_values=[i*50 for i in range(1,11)],
+    #                 per_epoch=1000)
+    # dumpJson(re, mng.DataRoot()+"GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
+    # re = loadJson(mng.DataRoot()+"GSs/GridSearchResult-%dshot-%dway-virushare20.json"%(k,n))
+    # n_cluster, seq_len = extractBestParam(re)
+    # n_cluster = int(n_cluster)
+    # seq_len = int(seq_len)
+
     apiCluster(mng.WordEmbedMatrix(), mng.DataRoot()+"MarkovClusterMapping.json", cluster_num=n_cluster)
     makeClusteredData(json_path=mng.Folder(),
                       cluster_path=mng.DataRoot()+"MarkovClusterMapping.json",
