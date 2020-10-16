@@ -248,7 +248,8 @@ with t.autograd.set_detect_anomaly(False):
                                                   test_task,
                                                   None,
                                                   None,
-                                                  train=False)
+                                                  train=False,
+                                                  acc_only=False)
 
         else:
             acc_val, loss_val_item = queryLossProcedure(model,
@@ -257,7 +258,17 @@ with t.autograd.set_detect_anomaly(False):
                                                         loss,
                                                         None,
                                                         None,
-                                                        train=False)
+                                                        train=False,
+                                                        acc_only=False)
+
+        # if (epoch + 1) % 100 == 0:
+        #     print('*' * 50)
+        #     print('Model Name: %s' % model_type)
+        #     print('Used dataset: %s' % data_folder)
+        #     print('Version: %d' % version)
+        #     print(f"{k}-shot {n}-way")
+        #     print(f"device: {cfg.deviceId()}")
+        #     print('*' * 50)
 
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val[0], loss_val_item, total_step=TestingEpoch)

@@ -12,7 +12,8 @@ def queryLossProcedure(model,
                        loss,
                        optimizer,
                        scheduler=None,
-                       train=True):
+                       train=True,
+                       acc_only=True):
 
     if train:
         model.train()
@@ -22,7 +23,7 @@ def queryLossProcedure(model,
     model.zero_grad()
 
     loss_val = t.zeros((1,)).cuda()
-    acc_val = np.zeros(4,) # 0.
+    acc_val = np.zeros(4,) if not acc_only else 0.# 0.
 
     for task_i in range(taskBatchSize):
         model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
@@ -31,7 +32,7 @@ def queryLossProcedure(model,
 
         loss_val += loss(predicts, labels)
         predicts = predicts.cpu()
-        acc_val += task.metrics(predicts, acc_only=False)
+        acc_val += task.metrics(predicts, acc_only=acc_only)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 
@@ -262,7 +263,8 @@ def impProcedure(model: IMP,
                  task,
                  optimizer,
                  scheduler=None,
-                 train=True):
+                 train=True,
+                 acc_only=True):
 
     if train:
         model.train()
@@ -272,7 +274,7 @@ def impProcedure(model: IMP,
     model.zero_grad()
 
     loss_val = t.zeros((1,)).cuda()
-    acc_val = np.zeros(4,) #0.
+    acc_val = np.zeros(4,) if not acc_only else 0.#0.
 
     for task_i in range(taskBatchSize):
 
@@ -282,7 +284,7 @@ def impProcedure(model: IMP,
 
         loss_val += epoch_loss.sum()
         predicts = predicts.cpu()
-        acc_val += task.metrics(predicts, is_labels=True, acc_only=False)
+        acc_val += task.metrics(predicts, is_labels=True, acc_only=acc_only)
 
     loss_val /= taskBatchSize           # batch中梯度计算是batch梯度的均值
 

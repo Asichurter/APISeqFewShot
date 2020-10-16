@@ -322,7 +322,7 @@ scheduler = t.optim.lr_scheduler.StepLR(optimizer,
 
 grad = 0.
 
-printState('start training')
+printState('start trainsing')
 stat.startTimer()
 
 # 检查版本号，以防止不小心覆盖version
@@ -367,7 +367,8 @@ with t.autograd.set_detect_anomaly(False):
                                                   train_task,
                                                   optimizer,
                                                   scheduler,
-                                                  train=True)
+                                                  train=True,
+                                                  acc_only=True)
 
         else:
 
@@ -414,6 +415,14 @@ with t.autograd.set_detect_anomaly(False):
         ################################################
 
         if epoch % ValCycle == 0:
+            print('*' * 50)
+            print('Model Name: %s' % model_type)
+            print('Used dataset: %s' % data_folder)
+            print('Version: %d' % version)
+            print(f"{k}-shot {n}-way")
+            print(f"device: {cfg.deviceId()}")
+            print('*' * 50)
+
             printState('Test in Epoch %d'%epoch)
             # model.eval()
             validate_acc = 0.
@@ -451,7 +460,8 @@ with t.autograd.set_detect_anomaly(False):
                                                           val_task,
                                                           None,
                                                           None,
-                                                          train=False)
+                                                          train=False,
+                                                          acc_only=True)
                     validate_acc += validate_acc_oneiter
                     validate_loss += validate_loss_oneiter
     
