@@ -268,6 +268,7 @@ class TestStatManager:
         self.Iters = 0
         self.Cycle = report_cycle
         self.TimeStamp = None
+        self.TimeList = []
 
     def startTimer(self):
         self.TimeStamp = time()
@@ -290,6 +291,7 @@ class TestStatManager:
         loss_interval = calBeliefeInterval(self.LossHist)
 
         consume_time = now_stamp-self.TimeStamp
+        self.TimeList.append(consume_time)
 
         if total_step is not None:
             remaining_time = consume_time * (total_step - self.Iters) / self.Cycle
@@ -312,6 +314,7 @@ class TestStatManager:
         else:
             print('Acc 95%% interval: %f'%acc_interval)
             print('Loss 95%% interval: %f'%loss_interval)
+            print('Average Slice Time :', sum(self.TimeList) / len(self.TimeList))
         print('-' * 50)
         print('')
 
@@ -446,6 +449,9 @@ class TrainingConfigManager:
 
     def ftEpoch(self):
         return self.Cfg['ftEpoch']
+
+    def isRandom(self):
+        return self.Cfg['isRandom']
 
 
 

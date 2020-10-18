@@ -8,7 +8,6 @@ import os
 
 # appendProjectPath(depth=1)
 sys.path.append('../')
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # 先添加路径再获取
 
@@ -57,6 +56,7 @@ version = cfg.version()
 
 TestingEpoch = cfg.epoch()
 USED_SUB_DATASET = cfg.subDataset()
+MODEL_RANDOM_STATE = cfg.isRandom()
 
 print('*'*50)
 print('Model Name: %s'%model_type)
@@ -64,6 +64,7 @@ print('Used dataset: %s'%data_folder)
 print('Version: %d'%version)
 print(f"{k}-shot {n}-way")
 print(f"device: {cfg.deviceId()}")
+print("Is Random Test:", MODEL_RANDOM_STATE)
 print('*'*50)
 
 
@@ -81,7 +82,8 @@ test_path_manager = PathManager(dataset=data_folder,
 #----------------------读取模型参数------------------
 ################################################
 
-model_cfg = TrainingConfigManager(test_path_manager.Doc()+'config.json')
+param_config_path = 'runConfig.json' if MODEL_RANDOM_STATE else test_path_manager.Doc()+'config.json'
+model_cfg = TrainingConfigManager(param_config_path)
 
 modelParams = model_cfg.modelParams()
 
@@ -112,15 +114,15 @@ stat = TestStatManager()
 ################################################
 
 printState('init model...')
-state_dict = t.load(test_path_manager.Model())
-print("loading done...")
-# state_dict = t.load(test_path_manager.DatasetBase()+'models/IMP_v-2.0')
-# state_dict = t.load()
-
-if model_type in ADAPTED_MODELS:
-    word_matrix = state_dict['Learner.Embedding.weight']
+if not MODEL_RANDOM_STATE:
+    state_dict = t.load(test_path_manager.Model())
+    if model_type in ADAPTED_MODELS:
+        word_matrix = state_dict['Learner.Embedding.weight']
+    else:
+        word_matrix = state_dict['Embedding.weight']
 else:
-    word_matrix = state_dict['Embedding.weight']
+    word_matrix = t.Tensor(np.load(test_path_manager.WordEmbedMatrix(), allow_pickle=True))
+print("loading done...")
 
 loss = t.nn.NLLLoss().cuda() if loss_func=='nll' else t.nn.MSELoss().cuda()
 
@@ -186,7 +188,8 @@ elif model_type == 'HybridIMP':
     model = HybridIMP(pretrained_matrix=word_matrix,
                       **modelParams)
 
-model.load_state_dict(state_dict)
+if not MODEL_RANDOM_STATE:
+    model.load_state_dict(state_dict)
 model = model.cuda()
 
 statParamNumber(model)
@@ -199,28 +202,6 @@ stat.startTimer()
 metrics = np.zeros(4,)
 with t.autograd.set_detect_anomaly(False):
     for epoch in range(TestingEpoch):
-        # model.eval()
-        #
-        # loss_val = t.zeros((1,)).cuda()
-        # acc_val = 0.
-        #
-        # model_input, labels = test_task.episode()
-        #
-        # predicts = model(*model_input)
-        #
-        # loss_val += loss(predicts, labels)
-        #
-        # predicts = predicts.cpu()
-        # acc_val = test_task.metrics(predicts)
-        # loss_val_item = loss_val.detach().item()
-
-        # acc_val, loss_val_item = fomamlProcedure(model,
-        #                                          1,
-        #                                          test_task,
-        #                                          loss,
-        #                                          None,
-        #                                          None,
-        #                                          train=False)
 
         if model_type == 'TCProtoNet':
             acc_val, loss_val_item =penalQLossProcedure(model,
@@ -261,15 +242,6 @@ with t.autograd.set_detect_anomaly(False):
                                                         train=False,
                                                         acc_only=False)
 
-        # if (epoch + 1) % 100 == 0:
-        #     print('*' * 50)
-        #     print('Model Name: %s' % model_type)
-        #     print('Used dataset: %s' % data_folder)
-        #     print('Version: %d' % version)
-        #     print(f"{k}-shot {n}-way")
-        #     print(f"device: {cfg.deviceId()}")
-        #     print('*' * 50)
-
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val[0], loss_val_item, total_step=TestingEpoch)
         metrics += acc_val
@@ -277,7 +249,8 @@ with t.autograd.set_detect_anomaly(False):
 desc = cfg.desc()
 desc.append(f"{k}-shot {n}-way")
 desc.append('使用%s'%USED_SUB_DATASET)
-stat.report(doc_path=test_path_manager.Doc(),
+# TODO: 暂时改为Random SIMPLE的不保存形式
+stat.report(doc_path=None if MODEL_RANDOM_STATE else test_path_manager.Doc(),
             desc=desc)
 
 metrics /= TestingEpoch
