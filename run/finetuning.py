@@ -8,7 +8,6 @@ import os
 
 # appendProjectPath(depth=1)
 sys.path.append('../')
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # 先添加路径再获取
 
@@ -25,6 +24,8 @@ from utils.file import deleteDir, dumpJson
 
 cfg = TrainingConfigManager('ftConfig.json')
 datasetBasePath = cfg.systemParams()
+os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg.deviceId())
+ft_epoch = cfg.ftEpoch()
 
 sys.setrecursionlimit(5000)                         # 增加栈空间防止意外退出
 
@@ -43,8 +44,11 @@ USED_SUB_DATASET = cfg.subDataset()
 
 print('*'*50)
 print("Fine-tuning")
+print("FineTuning Epoch:", ft_epoch)
 print('Used dataset: %s'%data_folder)
 print('Version: %d'%version)
+print(f"{k}-shot {n}-way")
+print(f"device: {cfg.deviceId()}")
 print('*'*50)
 
 
@@ -97,12 +101,18 @@ model = model.cuda()
 
 statParamNumber(model)
 
+if os.path.exists(test_path_manager.Doc()):
+    deleteDir(test_path_manager.Doc())
+os.mkdir(test_path_manager.Doc())
+shutil.copy('../models/FT.py', test_path_manager.Doc()+"FT.py")
+shutil.copy('./ftConfig.json', test_path_manager.Doc()+"config.json")
+print('doc path:', test_path_manager.Doc())
+
 stat.startTimer()
 
 ################################################
 #--------------------开始测试------------------
 ################################################
-ft_epoch = 10
 
 metrics = np.zeros(4,)
 with t.autograd.set_detect_anomaly(False):
@@ -134,12 +144,6 @@ with t.autograd.set_detect_anomaly(False):
         # 记录任务batch的平均正确率和损失值
         stat.record(acc_val[0], loss_val.item(), total_step=TestingEpoch)
         metrics += acc_val
-
-if os.path.exists(test_path_manager.Doc()):
-    deleteDir(test_path_manager.Doc())
-os.mkdir(test_path_manager.Doc()+'/')
-shutil.copy('../models/FT.py', test_path_manager.Doc()+"/FT.py")
-shutil.copy('./ftConfig.json', test_path_manager.Doc()+"/config.json")
 
 desc = cfg.desc()
 desc.append(f"{k}-shot {n}-way")

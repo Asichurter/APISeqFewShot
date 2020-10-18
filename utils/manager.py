@@ -444,5 +444,8 @@ class TrainingConfigManager:
     def deviceId(self):
         return self.Cfg['deviceId']
 
+    def ftEpoch(self):
+        return self.Cfg['ftEpoch']
+
 
 
