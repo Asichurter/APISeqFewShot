@@ -1,14 +1,15 @@
 {
-  "dataset" :  "HKS",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 10,
-  "n" : 10,
-  "qk" : 10,
+  "k" : 5,
+  "n" : 5,
+  "qk" : 5,
 
-  "version" : 317,
-  "modelName" :  "ProtoNet",
+  "version" : 299,
+  "modelName" :  "SIMPLE",
+  "isRandom": true,
 
-  "deviceId": 1,
+  "deviceId": 0,
 
   "trainingEpoch" : 5000,
 
