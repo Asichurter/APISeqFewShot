@@ -2,12 +2,15 @@
   "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
-  "n" : 20,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 301,
+  "version" : 319,
 
-  "trainingEpoch" : 1,
+  "deviceId": 0,
+
+  "ftEpoch": 10,
+  "trainingEpoch" : 2000,
 
   "Ns" : {
           "cluster":20,

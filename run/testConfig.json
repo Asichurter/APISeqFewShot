@@ -1,14 +1,14 @@
 {
   "dataset" :  "HKS",
 
-  "k" : 5,
-  "n" : 5,
-  "qk" : 5,
+  "k" : 10,
+  "n" : 10,
+  "qk" : 10,
 
-  "version" : 308,
+  "version" : 317,
   "modelName" :  "ProtoNet",
 
-  "deviceId": 0,
+  "deviceId": 1,
 
   "trainingEpoch" : 5000,
 
