@@ -1,14 +1,14 @@
 {
-  "dataset" :  "HKS",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
-  "k" : 10,
-  "n" : 10,
+  "k" : 5,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 317,
-  "modelName" :  "ProtoNet",
+  "version" : -2,
+  "modelName" :  "SIMPLE",
 
-  "deviceId": 1,
+  "deviceId": 0,
 
   "modelParams": {
     "embed_size": 300,
@@ -20,7 +20,7 @@
     "self_att_dim" : null,
     "bidirectional": true,
     "mhatt_head_nums": 4,
-    "max_seq_len": 400,
+    "max_seq_len": 200,
 
     "temperature": 1,
     "cluster_num_step": 1,
@@ -108,11 +108,11 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "序列长度为400使用了tfidf的3Gram(第1次分割)",
+                "序列长度为200使用了tfidf的3Gram(第1次分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用1层BiLSTM编码,使用1dCNN解码",
                 "不使用LayerNorm",
-                "初始学习率设置为5e-4"
+                "初始学习率设置为1e-3"
       ]
 }

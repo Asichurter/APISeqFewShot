@@ -58,10 +58,7 @@ from models.HybridIMP import HybridIMP
 
 from models.mconfig import ADAPTED_MODELS, IMP_MODELS
 
-# ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
-# IMP_MODELS = ['IMP', 'SIMPLE', 'HybridIMP']
-
-data_folder = cfg.dataset()#'virushare_20_image'
+data_folder = cfg.dataset()
 
 k,n,qk,N = cfg.taskParams()
 

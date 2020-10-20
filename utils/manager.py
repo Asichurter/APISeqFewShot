@@ -291,7 +291,8 @@ class TestStatManager:
         loss_interval = calBeliefeInterval(self.LossHist)
 
         consume_time = now_stamp-self.TimeStamp
-        self.TimeList.append(consume_time)
+        if not final:
+            self.TimeList.append(consume_time)
 
         if total_step is not None:
             remaining_time = consume_time * (total_step - self.Iters) / self.Cycle

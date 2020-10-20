@@ -249,7 +249,6 @@ with t.autograd.set_detect_anomaly(False):
 desc = cfg.desc()
 desc.append(f"{k}-shot {n}-way")
 desc.append('使用%s'%USED_SUB_DATASET)
-# TODO: 暂时改为Random SIMPLE的不保存形式
 stat.report(doc_path=None if MODEL_RANDOM_STATE else test_path_manager.Doc(),
             desc=desc)
 
