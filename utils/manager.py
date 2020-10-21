@@ -307,6 +307,7 @@ class TestStatManager:
         print('-'*50)
         print('Acc: %f'%cur_acc)
         print('Loss: %f'%cur_loss)
+        print('Current Avg Acc: %f'%np.mean(self.AccHist))
         if not final:
             print('Time: %.2f'%(consume_time))
             if remaining_time is not None:
