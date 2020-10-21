@@ -5,18 +5,18 @@ import torch as t
 import torch.nn.functional as F
 import os
 
-from scripts.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
+from preliminaries.dataset import makeDataFile, makeDatasetDirStruct, splitDatas, \
     dumpDatasetSplitStruct, revertDatasetSplit, \
     deleteDatasetSplit, renameItemFolder
-from scripts.embedding import aggregateApiSequences
+from preliminaries.embedding import aggregateApiSequences
 from utils.file import loadJson, dumpJson
 from utils.manager import PathManager
-from scripts.reshaping import makeMatrixData
-from scripts.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
+from preliminaries.reshaping import makeMatrixData
+from preliminaries.preprocessing import apiStat, removeApiRedundance, statSatifiedClasses, \
                                     collectJsonByClass, mappingApiNormalize, filterApiSequence, \
                                     collectOriginalHKS
 from models.ProtoNet import IncepProtoNet
-# from scripts.embedding import *
+# from preliminaries.embedding import *
 from extractors.ngram import statNGram, convertToNGramSeq
 from extractors.TFIDF import calTFIDF
 
@@ -71,7 +71,7 @@ from config import generateConfigReport
 # 制作基于下标的数据集
 ################################################################
 for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-20-3gram-tfidf', d_type=d_type)
+    manager = PathManager(dataset='HKS', d_type=d_type)
 
     makeDataFile(json_path=manager.Folder(),
                  w2idx_path=manager.WordIndexMap(),
@@ -79,7 +79,7 @@ for d_type in ['train', 'validate', 'test']:
                  data_save_path=manager.FileData(),
                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
                  num_per_class=20,
-                 max_seq_len=450)
+                 max_seq_len=200)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
