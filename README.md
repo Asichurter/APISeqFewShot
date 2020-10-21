@@ -4,6 +4,7 @@ This is the code repository for up-coming paper "*Recognize Unknown Malware Fami
 ## Project Origanization
 Code files are organized by function and locate in different folders.
 
+
 ### run
 This folder mainly contains the lauching script for training and testing experiment and  run-time parameter controlling related files. 
 
@@ -28,6 +29,8 @@ This folder mainly contains the lauching script for training and testing experim
 - **starter.py**
     Actual lauching script for some trivial dataset manipulation programs. Typical manipulations include: data file collection and generating(sequence length setting), dataset splitting, dataset preprocessing and etc. In short, this file calls the functions in other modules to complete the target.
 
+---
+
 ### preliminaries
 This folder mainly contains the modular scripts for dataset preprocessing, dataset formalization, malware scanning and malware labeling. 
     
@@ -45,6 +48,8 @@ This folder mainly contains the modular scripts for dataset preprocessing, datas
 
   - **virustotal.py**
   Most relates to some malware scanning operations using the service provided by VirusTotal website.
+
+---
 
 ### utils
 It contains the utiliy modules to facilate the dataset generating, training/testing experiments, path managing, statistics managing and functional utilities. Each file relates to one particular functional utility.
@@ -96,6 +101,8 @@ It contains the utiliy modules to facilate the dataset generating, training/test
 
   - **zip.py**
   Utility functions to unzip the zipped files.
+
+---
 
 ### components
 Many neural network and meta-learning components including sampler, episode task, dataset entity classes, training procedures, sequence embeddings and etc. 
