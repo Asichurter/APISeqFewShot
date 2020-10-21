@@ -3,7 +3,7 @@ from sklearn.cluster import KMeans
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from scripts.embedding import aggregateApiSequences
+from preliminaries.embedding import aggregateApiSequences
 from utils.file import loadJson, dumpIterable, dumpJson
 from utils.manager import PathManager
 from baselines.alignment import apiCluster

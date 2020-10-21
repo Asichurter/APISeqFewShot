@@ -12,7 +12,7 @@ from multiprocessing import Process, Queue
 from utils.color import getRandomColor
 from utils.manager import PathManager
 from utils.file import dumpJson, loadJson, dumpIterable
-from scripts.embedding import aggregateApiSequences
+from preliminaries.embedding import aggregateApiSequences
 from utils.magic import magicSeed, sample, nRandom
 from utils.timer import StepTimer
 from utils.stat import calBeliefeInterval

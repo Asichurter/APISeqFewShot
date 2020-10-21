@@ -4,7 +4,7 @@ from tqdm import tqdm
 from utils.file import loadJson, dumpJson
 from utils.apis import strlistToStr
 from utils.display import printBulletin, printState
-from scripts.embedding import aggregateApiSequences
+from preliminaries.embedding import aggregateApiSequences
 from utils.error import Reporter
 
 def statNGram(parent_path, window=3,
