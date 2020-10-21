@@ -5,7 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import random as rd
 
-from scripts.dataset import makeDatasetDirStruct
+from preliminaries.dataset import makeDatasetDirStruct
 from utils.error import Reporter
 from utils.file import loadJson, dumpJson
 from utils.magic import magicSeed

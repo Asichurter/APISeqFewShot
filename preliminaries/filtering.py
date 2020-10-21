@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, AffinityPropagation
 
 from utils.color import getRandomColor
-from scripts.embedding import aggregateApiSequences, trainW2Vmodel
-from scripts.preprocessing import mappingApiNormalize, \
+from preliminaries.embedding import aggregateApiSequences, trainW2Vmodel
+from preliminaries.preprocessing import mappingApiNormalize, \
     apiStat, removeApiRedundance, filterApiSequence, statApiFrequency
 from utils.file import loadJson, dumpJson
 from utils.display import printState
