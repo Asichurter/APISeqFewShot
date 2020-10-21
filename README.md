@@ -7,26 +7,26 @@ Code files are organized by function and locate in different folders.
 ### run
 This folder mainly contains the lauching script for training and testing experiment and  run-time parameter controlling related files. 
 
-- **config.py**
-Most relates to the running configuration saving and version controlling.
+- **config.py** 
+    Most relates to the running configuration saving and version controlling.
 
 - **run.py**
-**Actual lauching script for training experiments**. This file contains training config reading, manager initialization, dataset parsing, model running/validating, line plotting and result reporting. It will read the *runConfig.py* file to load the training parameters.
+    Actual lauching script for training experiments. This file contains training config reading, manager initialization, dataset parsing, model running/validating, line plotting and result reporting. It will read the *runConfig.py* file to load the training parameters.
 
 - **test.py**
-**Actual lauching script for testing experiment**s. This file is highly similar to *run.py* but only focus on testing, so some parts are removed.
+    Actual lauching script for testing experiments. This file is highly similar to *run.py* but only focus on testing, so some parts are removed.
 
 - **finetuning.py**
-**Actual lauching script for finetuning experiments.** It reads the *ftConfig.py* to load the fine-tuning parameters and uses SGD optimizer to fine-tune an untrained model(SIMPLE) for several iterations. Then the fine-tuned model is runned for testing to produce the final results. Note that we use a linear layer to generate the classification results after sequence embedding.
+    Actual lauching script for finetuning experiments. It reads the *ftConfig.py* to load the fine-tuning parameters and uses SGD optimizer to fine-tune an untrained model(SIMPLE) for several iterations. Then the fine-tuned model is runned for testing to produce the final results. Note that we use a linear layer to generate the classification results after sequence embedding.
 
 - **runConfig.json**
-**Configuration file for training experiments.** Most important items include: model, shot(k), way(n), dataset, maximum sequence length, optimizer and learning rate. Note that the base paths of datasets are required to state in this file, as "platform-node" item. On different hosts, dataset bases can be altered by modifying this item.
+    Configuration file for training experiments. Most important items include: model, shot(k), way(n), dataset, maximum sequence length, optimizer and learning rate. Note that the base paths of datasets are required to state in this file, as "platform-node" item. On different hosts, dataset bases can be altered by modifying this item.
 
 - **testConfig.json**
-**Configuration file for testing experiments.** This file is highly similart to *runConfig.json*, except for: testing version and model name, testing iteration and testing subdataset(train, validate or test).
+    Configuration file for testing experiments. This file is highly similart to *runConfig.json*, except for: testing version and model name, testing iteration and testing subdataset(train, validate or test).
 
 - **starter.py**
-**Actual lauching script for some trivial dataset manipulation programs.** Typical manipulations include: data file collection and generating(sequence length setting), dataset splitting, dataset preprocessing and etc. In short, this file calls the functions in other modules to complete the target.
+    Actual lauching script for some trivial dataset manipulation programs. Typical manipulations include: data file collection and generating(sequence length setting), dataset splitting, dataset preprocessing and etc. In short, this file calls the functions in other modules to complete the target.
 
 - preliminaries
 This folder mainly contains the modular scripts for dataset preprocessing, dataset formalization, malware scanning and malware labeling. 
