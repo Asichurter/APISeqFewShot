@@ -1,14 +1,14 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "HKS",
 
   "k" : 5,
   "n" : 10,
   "qk" : 5,
 
-  "version" : 335,
+  "version" : 343,
   "modelName" :  "SIMPLE",
 
-  "deviceId": 1,
+  "deviceId": 2,
 
   "modelParams": {
     "embed_size": 300,

@@ -79,7 +79,7 @@ for d_type in ['train', 'validate', 'test']:
                  data_save_path=manager.FileData(),
                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
                  num_per_class=20,
-                 max_seq_len=200)
+                 max_seq_len=500)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
