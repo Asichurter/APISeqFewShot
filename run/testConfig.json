@@ -5,11 +5,11 @@
   "n" : 10,
   "qk" : 5,
 
-  "version" : 341,
+  "version" : 343,
   "modelName" :  "SIMPLE",
   "isRandom": false,
 
-  "deviceId": 3,
+  "deviceId": 2,
 
   "trainingEpoch" : 5000,
 
@@ -49,6 +49,6 @@
   "testSubdataset": "test",
 
   "description": [
-    "seqlen=350"
+    "seqlen=500"
   ]
 }
