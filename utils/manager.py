@@ -121,6 +121,12 @@ class PathManager:
         '''
         return self.ParentPath + self.Dataset + '/'
 
+    def ParentBase(self):
+        '''
+        所有数据集存放位置的根目录
+        '''
+        return self.ParentPath
+
     def DocBase(self):
         '''
         数据集的doc根路径

@@ -8,11 +8,13 @@ from tqdm import tqdm
 import numpy as np
 from torch.nn.utils.rnn import pad_sequence
 
+from os.path import join as pj
+
 from utils.error import Reporter
 from utils.file import loadJson, dumpJson
 from utils.display import printState
 from utils.manager import PathManager
-from utils.magic import magicSeed
+from utils.magic import magicSeed, sample
 
 magic = 7355608
 
@@ -372,11 +374,47 @@ def fetchPeFolders(json_path, pe_src_path, pe_dst_path):
         shutil.copytree(pe_src_path+folder, pe_dst_path+folder)
 
 
+def makeGeneralTestDataset(base_dataset_path,
+                           new_dataset_path,
+                           train_num_per_class):        # 必须为N的一半，为了保证三个子数据集类内样本数量一致
+
+    makeDatasetDirStruct(new_dataset_path)
+
+    for tp in ['train', 'test']:
+        for folder in os.listdir(pj(base_dataset_path,tp)):
+            os.mkdir(pj(new_dataset_path, 'train', folder))
+            os.mkdir(pj(new_dataset_path, 'test', folder))
+
+            items = set(os.listdir(pj(base_dataset_path,tp,folder)))
+            selected = sample(items, train_num_per_class, return_set=True)
+            remained = items.difference(selected)
+
+            for item in selected:
+                shutil.copy(pj(base_dataset_path,tp,folder,item),
+                            pj(new_dataset_path, 'train', folder, item))
+
+            for item in remained:
+                shutil.copy(pj(base_dataset_path,tp,folder,item),
+                            pj(new_dataset_path, 'test', folder, item))
+
+    for folder in os.listdir(pj(base_dataset_path,'validate')):
+        os.mkdir(pj(new_dataset_path, 'validate', folder))
+
+        items = sample(os.listdir(pj(base_dataset_path,'validate',folder)),
+                       train_num_per_class)
+
+        for item in items:
+            shutil.copy(pj(base_dataset_path,'validate',folder,item),
+                        pj(new_dataset_path, 'validate', folder, item))
 
 if __name__ == '__main__':
-    fetchPeFolders(json_path='D:/datasets/virushare-20-3gram/all/',
-                   pe_src_path='D:/peimages/PEs/virushare_20/all/',
-                   pe_dst_path='D:/datasets/virushare-20-pe/all/')
+    pm = PathManager(dataset='virushare-20-3gram-tfidf')
+    makeGeneralTestDataset(base_dataset_path=pm.DatasetBase(),
+                           new_dataset_path=pm.ParentBase()+'virushare-20-3gram-tfidf-general/',
+                           train_num_per_class=10)
+    # fetchPeFolders(json_path='D:/datasets/virushare-20-3gram/all/',
+    #                pe_src_path='D:/peimages/PEs/virushare_20/all/',
+    #                pe_dst_path='D:/datasets/virushare-20-pe/all/')
     # splitDatas(src='D:/peimages/JSONs/virushare_20/train/',
     #            dest='D:/peimages/JSONs/virushare_20/test/',
     #            ratio=30,

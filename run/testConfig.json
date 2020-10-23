@@ -1,15 +1,15 @@
 {
-  "dataset" :  "HKS",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
-  "n" : 10,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 343,
+  "version" : 291,
   "modelName" :  "SIMPLE",
   "isRandom": false,
 
-  "deviceId": 2,
+  "deviceId": 0,
 
   "trainingEpoch" : 5000,
 
@@ -46,9 +46,9 @@
     }
   },
 
-  "testSubdataset": "test",
+  "testSubdataset": "train",
 
   "description": [
-    "seqlen=500"
+    "generalized scenario test"
   ]
 }
