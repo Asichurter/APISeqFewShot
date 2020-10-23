@@ -376,7 +376,8 @@ def fetchPeFolders(json_path, pe_src_path, pe_dst_path):
 
 def makeGeneralTestDataset(base_dataset_path,
                            new_dataset_path,
-                           train_num_per_class):        # 必须为N的一半，为了保证三个子数据集类内样本数量一致
+                           train_num_per_class,
+                           include_test=True):  # 是否将原数据集中的测试集包括在新数据集中的测试集中
 
     makeDatasetDirStruct(new_dataset_path)
 
@@ -386,7 +387,7 @@ def makeGeneralTestDataset(base_dataset_path,
 
         items = set(os.listdir(pj(base_dataset_path,'train',folder)))
         selected = sample(items, train_num_per_class, return_set=True)
-        remained = items.difference(selected)
+        remained = sample(items.difference(selected), train_num_per_class)
 
         for item in selected:
             shutil.copy(pj(base_dataset_path,'train',folder,item),
@@ -397,6 +398,8 @@ def makeGeneralTestDataset(base_dataset_path,
                         pj(new_dataset_path, 'test', folder, item))
 
     for tp in ['test', 'validate']:
+        if not include_test and tp == 'test':
+            continue
         for folder in os.listdir(pj(base_dataset_path,tp)):
             os.mkdir(pj(new_dataset_path, tp, folder))
 
@@ -413,10 +416,27 @@ def makeGeneralTestDataset(base_dataset_path,
                 new_dataset_path+'/data/wordMap.json')
 
 if __name__ == '__main__':
-    pm = PathManager(dataset='virushare-20-3gram-tfidf')
+    original_dataset_name = 'virushare-45'
+    new_dataset_name = 'virushare-45-general'
+    N = 20
+    seq_len = 200
+
+    pm = PathManager(dataset=original_dataset_name)
     makeGeneralTestDataset(base_dataset_path=pm.DatasetBase(),
-                           new_dataset_path=pm.ParentBase()+'virushare-20-3gram-tfidf-general/',
-                           train_num_per_class=10)
+                           new_dataset_path=pm.ParentBase()+new_dataset_name+'/',
+                           train_num_per_class=N,
+                           include_test=False)
+    for d_type in ['train', 'validate', 'test']:
+        manager = PathManager(dataset=new_dataset_name, d_type=d_type)
+
+        makeDataFile(json_path=manager.Folder(),
+                     w2idx_path=manager.WordIndexMap(),
+                     seq_length_save_path=manager.FileSeqLen(),
+                     data_save_path=manager.FileData(),
+                     idx2cls_mapping_save_path=manager.FileIdx2Cls(),
+                     num_per_class=N,
+                     max_seq_len=seq_len)
+
     # fetchPeFolders(json_path='D:/datasets/virushare-20-3gram/all/',
     #                pe_src_path='D:/peimages/PEs/virushare_20/all/',
     #                pe_dst_path='D:/datasets/virushare-20-pe/all/')
