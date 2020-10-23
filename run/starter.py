@@ -35,10 +35,10 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='HKS')
+# manager = PathManager(dataset='virushare-45')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_1.json')
-# revertDatasetSplit(dataset='HKS',
+# revertDatasetSplit(dataset='virushare-45',
 #                    dump_path=manager.DatasetBase()+'data/split_1.json')
 # deleteDatasetSplit(dataset_base='/home/omnisky/Asichurter/ApiData/virushare-20-3gram-tfrmsub/')
 ###############################################################
@@ -70,16 +70,16 @@ from config import generateConfigReport
 
 # 制作基于下标的数据集
 ################################################################
-for d_type in ['train', 'validate', 'test']:
-    manager = PathManager(dataset='virushare-20-3gram-tfidf-general', d_type=d_type)
-
-    makeDataFile(json_path=manager.Folder(),
-                 w2idx_path=manager.WordIndexMap(),
-                 seq_length_save_path=manager.FileSeqLen(),
-                 data_save_path=manager.FileData(),
-                 idx2cls_mapping_save_path=manager.FileIdx2Cls(),
-                 num_per_class=10,
-                 max_seq_len=200)
+# for d_type in ['train', 'validate', 'test']:
+#     manager = PathManager(dataset='HKS-general', d_type=d_type)
+#
+#     makeDataFile(json_path=manager.Folder(),
+#                  w2idx_path=manager.WordIndexMap(),
+#                  seq_length_save_path=manager.FileSeqLen(),
+#                  data_save_path=manager.FileData(),
+#                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
+#                  num_per_class=10,
+#                  max_seq_len=300)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')

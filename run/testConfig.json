@@ -1,18 +1,18 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf-general",
+  "dataset" :  "virushare-45-general",
 
   "k" : 5,
   "n" : 10,
   "qk" : 5,
 
-  "version" : 346,
-  "modelName" :  "SIMPLE",
+  "version" : 352,
+  "modelName" :  "IMP",
   "loadBest": false,
   "isRandom": false,
 
-  "deviceId": 0,
+  "deviceId": 1,
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 1000,
 
   "Ns" : {
           "cluster":20,
@@ -32,7 +32,9 @@
           "virushare-45": 45,
           "virushare-45-rmsub": 45,
           "HKS": 20,
-          "virushare-20-3gram-tfidf-general": 10
+          "virushare-20-3gram-tfidf-general": 10,
+          "HKS-general": 10,
+          "virushare-45-general": 20
   },
 
   "platform-node" : {
@@ -48,7 +50,7 @@
     }
   },
 
-  "testSubdataset": "train",
+  "testSubdataset": "test",
 
   "description": [
     "load last"

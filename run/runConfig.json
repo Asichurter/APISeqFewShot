@@ -1,11 +1,11 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf-general",
+  "dataset" :  "virushare-45-general",
 
   "k" : 5,
   "n" : 10,
   "qk" : 5,
 
-  "version" : 347,
+  "version" : 352,
   "modelName" :  "IMP",
 
   "deviceId": 3,
@@ -79,7 +79,9 @@
           "virushare-45": 45,
           "virushare-45-rmsub": 45,
           "HKS": 20,
-          "virushare-20-3gram-tfidf-general": 10
+          "virushare-20-3gram-tfidf-general": 10,
+          "HKS-general": 10,
+          "virushare-45-general": 20
   },
 
   "plot" : {
