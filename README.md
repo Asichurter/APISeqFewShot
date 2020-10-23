@@ -1,5 +1,5 @@
 # APISeqFewShot
-This is the code repository for up-coming paper "*Recognize Unknown Malware Families Using Limited Samples through Few-Shot Multi-Prototype Modeling*". All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda)**.
+This is the code repository for up-coming paper "*Recognize Unknown Malware Families Using Limited Samples through Few-Shot Multi-Prototype Modeling*". All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**.
 
 ## Project Origanization
 Code files are organized by function and locate in different folders.
@@ -115,3 +115,6 @@ It contains the episode-training task sampler class *EpisodeSampler*. Given the 
 
 - **task.py**
 Some model-dependent task entity classes which integrates label space sampling, class-wise sampling(by generating class seeds for samplers), dataloader instantiation(use the batch making utility function in *utils/training.py*) and label normalization. It leaves a function *episode()* to be implemented for different models, which randomly samples a task from the dataset and returns the episode data as support/query set form. 
+
+- **procedure.py**
+Detailed training procedures for different kind of models, such as fast-adaption based(MAML family), meta-loss-optimization based(mostly metric-based), infinite mixture prototypes based(IMP and our SIMPLE) and etc. These methods have varied ways to forward the model or compute the loss value, so they may have different implementaions.
