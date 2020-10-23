@@ -481,7 +481,8 @@ with t.autograd.set_detect_anomaly(False):
                                   avg_validate_loss,
                                   model,
                                   epoch,
-                                  TrainingEpoch)
+                                  TrainingEpoch,
+                                  save_last_model=True)
 
             train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
             if UseVisdom:

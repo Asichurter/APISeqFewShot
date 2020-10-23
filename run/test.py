@@ -18,7 +18,7 @@ from utils.display import printState
 from utils.stat import statParamNumber
 from components.procedure import *
 
-from models.ProtoNet import ProtoNet, ImageProtoNet, IncepProtoNet, CNNLstmProtoNet
+from models.ProtoNet import ProtoNet
 from models.InductionNet import InductionNet
 from models.MetaSGD import MetaSGD
 from models.ATAML import ATAML
@@ -115,7 +115,7 @@ stat = TestStatManager()
 
 printState('init model...')
 if not MODEL_RANDOM_STATE:
-    state_dict = t.load(test_path_manager.Model())
+    state_dict = t.load(test_path_manager.Model(type=cfg.loadBest()))
     if model_type in ADAPTED_MODELS:
         word_matrix = state_dict['Learner.Embedding.weight']
     else:

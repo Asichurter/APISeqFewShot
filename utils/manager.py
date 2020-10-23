@@ -107,7 +107,10 @@ class PathManager:
         '''
         包含版本号的model路径
         '''
-        return self.ModelPath
+        if type == 'best':
+            return self.ModelPath
+        else:
+            return self.ModelPath+"_last"
 
     def Doc(self):
         '''
@@ -180,7 +183,8 @@ class TrainStatManager:
         self.TrainIterCount += 1
 
     def recordValidating(self, acc, loss, model,
-                 current_step=None, total_step=None):
+                        current_step=None, total_step=None,
+                        save_last_model=False):
         self.ValHist['accuracy'].append(acc)
         self.ValHist['loss'].append(loss)
 
@@ -199,6 +203,8 @@ class TrainStatManager:
         elif self.Criteria is None:
             t.save(model.state_dict(), self.ModelSavePath)
 
+        if save_last_model:
+            t.save(model.state_dict(), self.ModelSavePath+'_last')
 
         self.PreTimeStamp = self.CurTimeStamp
         self.CurTimeStamp = time()
@@ -460,6 +466,9 @@ class TrainingConfigManager:
 
     def isRandom(self):
         return self.Cfg['isRandom']
+
+    def loadBest(self):
+        return self.Cfg['loadBest']
 
 
 
