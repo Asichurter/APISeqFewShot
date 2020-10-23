@@ -380,32 +380,37 @@ def makeGeneralTestDataset(base_dataset_path,
 
     makeDatasetDirStruct(new_dataset_path)
 
-    for tp in ['train', 'test']:
+    for folder in os.listdir(pj(base_dataset_path,'train')):
+        os.mkdir(pj(new_dataset_path, 'train', folder))
+        os.mkdir(pj(new_dataset_path, 'test', folder))
+
+        items = set(os.listdir(pj(base_dataset_path,'train',folder)))
+        selected = sample(items, train_num_per_class, return_set=True)
+        remained = items.difference(selected)
+
+        for item in selected:
+            shutil.copy(pj(base_dataset_path,'train',folder,item),
+                        pj(new_dataset_path, 'train', folder, item))
+
+        for item in remained:
+            shutil.copy(pj(base_dataset_path,'train',folder,item),
+                        pj(new_dataset_path, 'test', folder, item))
+
+    for tp in ['test', 'validate']:
         for folder in os.listdir(pj(base_dataset_path,tp)):
-            os.mkdir(pj(new_dataset_path, 'train', folder))
-            os.mkdir(pj(new_dataset_path, 'test', folder))
+            os.mkdir(pj(new_dataset_path, tp, folder))
 
-            items = set(os.listdir(pj(base_dataset_path,tp,folder)))
-            selected = sample(items, train_num_per_class, return_set=True)
-            remained = items.difference(selected)
+            items = sample(os.listdir(pj(base_dataset_path,tp,folder)),
+                           train_num_per_class)
 
-            for item in selected:
-                shutil.copy(pj(base_dataset_path,tp,folder,item),
-                            pj(new_dataset_path, 'train', folder, item))
+            for item in items:
+                shutil.copy(pj(base_dataset_path, tp, folder, item),
+                            pj(new_dataset_path, tp, folder, item))
 
-            for item in remained:
-                shutil.copy(pj(base_dataset_path,tp,folder,item),
-                            pj(new_dataset_path, 'test', folder, item))
-
-    for folder in os.listdir(pj(base_dataset_path,'validate')):
-        os.mkdir(pj(new_dataset_path, 'validate', folder))
-
-        items = sample(os.listdir(pj(base_dataset_path,'validate',folder)),
-                       train_num_per_class)
-
-        for item in items:
-            shutil.copy(pj(base_dataset_path,'validate',folder,item),
-                        pj(new_dataset_path, 'validate', folder, item))
+    shutil.copy(base_dataset_path+'data/matrix.npy',
+                new_dataset_path+'/data/matrix.npy')
+    shutil.copy(base_dataset_path+'data/wordMap.json',
+                new_dataset_path+'/data/wordMap.json')
 
 if __name__ == '__main__':
     pm = PathManager(dataset='virushare-20-3gram-tfidf')
