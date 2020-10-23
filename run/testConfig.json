@@ -1,12 +1,13 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "virushare-20-3gram-tfidf-general",
 
   "k" : 5,
-  "n" : 5,
+  "n" : 10,
   "qk" : 5,
 
-  "version" : 291,
+  "version" : 346,
   "modelName" :  "SIMPLE",
+  "loadBest": false,
   "isRandom": false,
 
   "deviceId": 0,
@@ -30,7 +31,8 @@
           "LargePE-50-vt": 50,
           "virushare-45": 45,
           "virushare-45-rmsub": 45,
-          "HKS": 20
+          "HKS": 20,
+          "virushare-20-3gram-tfidf-general": 10
   },
 
   "platform-node" : {
@@ -49,6 +51,6 @@
   "testSubdataset": "train",
 
   "description": [
-    "generalized scenario test"
+    "load last"
   ]
 }

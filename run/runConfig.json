@@ -2,13 +2,13 @@
   "dataset" :  "virushare-20-3gram-tfidf-general",
 
   "k" : 5,
-  "n" : 20,
+  "n" : 10,
   "qk" : 5,
 
-  "version" : 346,
-  "modelName" :  "SIMPLE",
+  "version" : 347,
+  "modelName" :  "IMP",
 
-  "deviceId": 0,
+  "deviceId": 3,
 
   "modelParams": {
     "embed_size": 300,
