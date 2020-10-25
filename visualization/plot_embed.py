@@ -23,20 +23,22 @@ from components.task import ImpEpisodeTask
 from utils.magic import magicSeed
 
 # ***********************************************************
-data_dataset_name = "HKS"
-model_dataset_name = "HKS"
-dataset_subtype = 'test'
-model_name = 'ImpIMP'
-version = 231
-N = 20
+data_dataset_name = "virushare-45"
+model_dataset_name = "virushare-45"
+dataset_subtype = 'train'
+model_name = 'SIMPLE'
+version = 356
+N = 45
 plot_option = 'entire'#'entire'
 k, n, qk = 5, 5, 15
-figsize = (5,5)
+figsize = (12,10)
 task_seed = magicSeed()
 sampling_seed = magicSeed()
 axis_off = True
 plot_support_independently = False
 max_plot_class = 20
+selected_idxes = None#[0,2,3,5,6]
+reducer = 'tsne'
 # ***************************************************************************
 
 
@@ -63,7 +65,7 @@ word_matrix = state_dict['Embedding.weight']
 if model_name == 'IMP':
     model = IMP(word_matrix,
                 **modelParams)
-elif model_name == 'ImpIMP':
+elif model_name == 'SIMPLE':
     model = SIMPLE(word_matrix,
                    **modelParams)
 elif model_name == 'HybridIMP':
@@ -87,8 +89,13 @@ if plot_option == 'entire':
 
     datas = []
     original_input = []
-    # reduction = PCA(n_components=2)
-    reduction = TSNE(n_components=2)
+
+    if reducer == 'pca':
+        reduction = PCA(n_components=2)
+    elif reducer == 'tsne':
+        reduction = TSNE(n_components=2)
+    else:
+        raise ValueError
 
     class_count = 0
 
@@ -103,9 +110,10 @@ if plot_option == 'entire':
             break
 
     # datas = np.array(datas).reshape((class_count*N,-1))
+    if selected_idxes is None:
+        selected_idxes = list(range(class_count))
 
-    idxes = [0,2,3,5,6]
-    datas = np.array(datas).reshape((class_count,N,-1))[idxes].reshape(len(idxes)*N,-1)
+    datas = np.array(datas).reshape((class_count,N,-1))[selected_idxes].reshape(len(selected_idxes)*N,-1)
     datas = reduction.fit_transform(datas)
 
     colors = ['darkgreen',
@@ -128,7 +136,9 @@ if plot_option == 'entire':
  'darkseagreen',
  'pink',
  'lime']#getRandomColor(class_count)
-    datas = datas.reshape((len(idxes),N,2))
+
+
+    datas = datas.reshape((len(selected_idxes),N,2))
     # datas = datas.reshape((class_count,N,2))
 
     if class_count > len(colors):
@@ -158,10 +168,12 @@ elif plot_option == 'episode':
     clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
                                model.ClusterLabels.squeeze().cpu().detach().numpy()
 
-    reduction = PCA(n_components=2)
-    # reduction = TSNE(n_components=2)
-    # reduction = MDS(n_components=2)
-    # reduction = LocallyLinearEmbedding(n_components=2, n_neighbors=2)
+    if reducer == 'pca':
+        reduction = PCA(n_components=2)
+    elif reducer == 'tsne':
+        reduction = TSNE(n_components=2)
+    else:
+        raise ValueError
 
     support = support.cpu().detach().view(k*n, -1)
     query = query.cpu().detach().view(qk*n,-1)
