@@ -1,16 +1,16 @@
 {
-  "dataset" :  "virushare-45-general",
+  "dataset" :  "virushare-20-3gram-tfidf-general",
 
   "k" : 5,
-  "n" : 10,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 352,
-  "modelName" :  "IMP",
-  "loadBest": false,
+  "version" : 353,
+  "modelName" :  "SIMPLE",
+  "loadBest": true,
   "isRandom": false,
 
-  "deviceId": 1,
+  "deviceId": 3,
 
   "trainingEpoch" : 1000,
 
@@ -50,9 +50,8 @@
     }
   },
 
-  "testSubdataset": "test",
+  "testSubdataset": "train",
 
   "description": [
-    "load last"
   ]
 }

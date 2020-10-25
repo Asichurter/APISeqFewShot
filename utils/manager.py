@@ -468,7 +468,10 @@ class TrainingConfigManager:
         return self.Cfg['isRandom']
 
     def loadBest(self):
-        return self.Cfg['loadBest']
+        if self.Cfg['loadBest']:
+            return 'best'
+        else:
+            return 'last'
 
 
 
