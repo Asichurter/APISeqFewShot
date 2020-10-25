@@ -19,25 +19,29 @@ from models.NnNet import NnNet
 from components.datasets import SeqFileDataset
 from utils.manager import PathManager, TrainingConfigManager
 from utils.training import batchSequenceWithoutPad
-from components.task import ImpEpisodeTask
+from components.task import ImpEpisodeTask, ProtoEpisodeTask
 from utils.magic import magicSeed
 
 # ***********************************************************
-data_dataset_name = "virushare-45"
-model_dataset_name = "virushare-45"
-dataset_subtype = 'train'
-model_name = 'SIMPLE'
-version = 356
-N = 45
+data_dataset_name = "HKS"
+model_dataset_name = "HKS"
+dataset_subtype = 'test'
+
+model_name = 'ProtoNet'
+
+version = 308
+N = 20
 plot_option = 'entire'#'entire'
-k, n, qk = 5, 5, 15
-figsize = (12,10)
-task_seed = magicSeed()
-sampling_seed = magicSeed()
+k, n, qk = 10, 5, 10
+figsize = (6,6)
+
+task_seed = magicSeed()#4160148##4488524#4524396
+sampling_seed = 5791326#magicSeed()#4160164##4488540#4524414   # SIMPLE seed: 5331044
+
 axis_off = True
 plot_support_independently = False
 max_plot_class = 20
-selected_idxes = None#[0,2,3,5,6]
+selected_idxes = [6,8,10,16,18]
 reducer = 'tsne'
 # ***************************************************************************
 
@@ -93,7 +97,7 @@ if plot_option == 'entire':
     if reducer == 'pca':
         reduction = PCA(n_components=2)
     elif reducer == 'tsne':
-        reduction = TSNE(n_components=2)
+        reduction = TSNE(n_components=2, random_state=int(sampling_seed))
     else:
         raise ValueError
 
@@ -118,11 +122,11 @@ if plot_option == 'entire':
 
     colors = ['darkgreen',
  'purple',
- 'olive',
- 'teal',
- 'orangered',
- 'yellowgreen',
+ 'orange',
  'steelblue',
+ 'red',
+ 'teal',
+ 'yellowgreen',
  'gold',
  'magenta',
  'deepskyblue',
@@ -150,23 +154,31 @@ if plot_option == 'entire':
     for i in range(len(datas)):
         plt.scatter(datas[i,:,0],datas[i,:,1],color=colors[i],marker='o',label=i)
 
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    # plt.show()
 
     original_input = np.array(original_input)
 
 # ***************************************************************************
 
 elif plot_option == 'episode':
-    task = ImpEpisodeTask(k,qk,n,N,
-                          dataset,expand=False)
+    if model_name in ['IMP', 'SIMPLE']:
+        task = ImpEpisodeTask(k,qk,n,N,
+                              dataset,expand=False)
+        support_, query_, *others = task.episode(task_seed=task_seed,
+                                                 sampling_seed=sampling_seed)
+        support, query, acc = model(support_, query_, *others, if_cache_data=True)
+        clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
+                                   model.ClusterLabels.squeeze().cpu().detach().numpy()
+    else:
+        task = ProtoEpisodeTask(k, qk, n, N, dataset, expand=False)
+        (support_, query_, *lens), labels = task.episode(task_seed=task_seed, sampling_seed=sampling_seed)
+        support, query, clusters, sims = model(support_, query_, *lens, return_embeddings=True)
+        clusters = clusters.cpu().detach()
+        cluster_labels = np.arange(0, n)
+        pred_labels = t.argmax(sims, dim=1)
+        acc = (pred_labels==labels).sum().item() / len(labels)
 
-    support_, query_, *others = task.episode(task_seed=task_seed,
-                                           sampling_seed=sampling_seed)
-    support, query, acc = model(support_, query_, *others, if_cache_data=True)
-
-    clusters, cluster_labels = model.Clusters.squeeze().cpu().detach(), \
-                               model.ClusterLabels.squeeze().cpu().detach().numpy()
 
     if reducer == 'pca':
         reduction = PCA(n_components=2)
@@ -185,12 +197,31 @@ elif plot_option == 'episode':
     clusters = union[-len(clusters):]
     query_ = query_.cpu().numpy().reshape((n,qk,-1))
 
-    colors = getRandomColor(n)
+    colors = ['darkgreen',
+ 'purple',
+ 'orange',
+ 'steelblue',
+ 'red',
+ 'teal',
+ 'yellowgreen',
+ 'gold',
+ 'magenta',
+ 'deepskyblue',
+ 'blueviolet',
+ 'red',
+ 'black',
+ 'bisque',
+ 'violet',
+ 'hotpink',
+ 'firebrick',
+ 'darkseagreen',
+ 'pink',
+ 'lime']#getRandomColor(n)
 
     # 不带测试数据
     if plot_support_independently:
         plt.figure(figsize=figsize)
-        plt.title(f'cluster_num={len(clusters)}')
+        plt.title(f'cluster={len(clusters)}({acc})')
         if axis_off:
             plt.axis('off')
         for i in range(n):
@@ -205,15 +236,15 @@ elif plot_option == 'episode':
 
     # 带测试数据
     plt.figure(figsize=figsize)
-    plt.title(f'cluster_num={len(clusters)}')
+    plt.title(f'cluster={len(clusters)}({acc})')
     if axis_off:
         plt.axis('off')
     for i in range(n):
-        plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o')
+        plt.scatter(support[i,:,0],support[i,:,1],color=colors[i],marker='o',label=i)
         plt.scatter(query[i,:,0],query[i,:,1],color=colors[i],marker='*')
 
         class_clusters = clusters[cluster_labels==i]
-        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80,label=i)
+        plt.scatter(class_clusters[:,0],class_clusters[:,1],color=colors[i],marker='x',edgecolors='k',s=80)
         plt.scatter(class_clusters[:,0],class_clusters[:,1],marker='o',c='',edgecolors='k',s=80)
 
     print('acc: ', acc)
