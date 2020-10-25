@@ -25,6 +25,8 @@ class ConvProtoNet(nn.Module):
         self.Encoder = BiLstmEncoder(input_size=embed_size,
                                      **modelParams)
 
+        self.MiddleEncoder = None
+
         # self.Encoder = TemporalConvNet(num_inputs=embed_size,
         #                                init_hidden_channel=modelParams['tcn_init_channel'],
         #                                num_channels=modelParams['tcn_channels'])
@@ -53,6 +55,14 @@ class ConvProtoNet(nn.Module):
               for i in range(len(attention_channels) - 1)]
         )
 
+    def _embed(self, x, lens=None):
+        x = self.EmbedDrop(self.Embedding(x))
+        x = self.Encoder(x, lens)
+        if self.MiddleEncoder is not None:
+            x = self.MiddleEncoder(x, lens)
+        x = self.Decoder(x, lens)
+        return x
+
     def forward(self, support, query, sup_len, que_len, metric='euc'):
 
         if self.DataParallel:
@@ -63,21 +73,23 @@ class ConvProtoNet(nn.Module):
 
         # 提取了任务结构后，将所有样本展平为一个批次
         support = support.view(n*k, sup_seq_len)
+        support = self._embed(support, sup_len)
+        query = self._embed(query, que_len)
 
         # ------------------------------------------------------
         # shape: [batch, seq, dim]
-        support = self.EmbedDrop(self.Embedding(support))
-        query = self.EmbedDrop(self.Embedding(query))
-
-        # support = self.EmbedDrop(self.EmbedNorm(support))
-        # query = self.EmbedDrop(self.EmbedNorm(query))
-
-        # shape: [batch, dim]
-        support = self.Encoder(support, sup_len)
-        query = self.Encoder(query, que_len)
-
-        support = self.Decoder(support, sup_len)
-        query = self.Decoder(query, que_len)
+        # support = self.EmbedDrop(self.Embedding(support))
+        # query = self.EmbedDrop(self.Embedding(query))
+        #
+        # # support = self.EmbedDrop(self.EmbedNorm(support))
+        # # query = self.EmbedDrop(self.EmbedNorm(query))
+        #
+        # # shape: [batch, dim]
+        # support = self.Encoder(support, sup_len)
+        # query = self.Encoder(query, que_len)
+        #
+        # support = self.Decoder(support, sup_len)
+        # query = self.Decoder(query, que_len)
         # ------------------------------------------------------
 
         assert support.size(1)==query.size(1), '支持集维度 %d 和查询集维度 %d 必须相同!'%\

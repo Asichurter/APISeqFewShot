@@ -107,7 +107,7 @@ class ProtoNet(nn.Module):
 
         return x
 
-    def forward(self, support, query, sup_len, que_len, metric='euc'):
+    def forward(self, support, query, sup_len, que_len, metric='euc', return_embeddings=False):
 
         if self.DataParallel:
             support = support.squeeze(0)
@@ -129,17 +129,19 @@ class ProtoNet(nn.Module):
 
         # 原型向量
         # shape: [n, dim]
-        support = support.view(n, k, dim).mean(dim=1)
+        orig_protos = support.view(n, k, dim).mean(dim=1)
 
         # 整型成为可比较的形状: [qk, n, dim]
-        support = repeatProtoToCompShape(support, qk, n)
-        query = repeatQueryToCompShape(query, qk, n)
+        protos = repeatProtoToCompShape(orig_protos, qk, n)
+        rep_query = repeatQueryToCompShape(query, qk, n)
 
-        similarity = protoDisAdapter(support, query, qk, n, dim,
+        similarity = protoDisAdapter(protos, rep_query, qk, n, dim,
                                      dis_type='euc',
                                      temperature=self.DistTemp)
 
         # return t.softmax(similarity, dim=1)
+        if return_embeddings:
+            return support, query.view(qk,-1), orig_protos, F.log_softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
 
 
