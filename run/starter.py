@@ -35,12 +35,12 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='virushare-45')
+manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_1.json')
+#                        dump_path=manager.DatasetBase()+'data/split_last.json')
 # revertDatasetSplit(dataset='virushare-45',
 #                    dump_path=manager.DatasetBase()+'data/split_1.json')
-# deleteDatasetSplit(dataset_base='/home/omnisky/Asichurter/ApiData/virushare-20-3gram-tfrmsub/')
+deleteDatasetSplit(dataset_base=manager.DatasetBase())
 ###############################################################
 
 
@@ -49,23 +49,23 @@ from config import generateConfigReport
 
 # 分割数据集
 ################################################################
-# man = PathManager(dataset='virushare-45')
+man = PathManager(dataset='virushare-20-3gram-tfidf')
 # deleteDatasetSplit(dataset_base=man.DatasetBase())
-# splitDatas(src=man.DatasetBase()+'all/',
-#            dest=man.DatasetBase()+'train/',
-#            ratio=-1,
-#            mode='c',
-#            is_dir=True)
-# splitDatas(src=man.DatasetBase()+'train/',
-#            dest=man.DatasetBase()+'validate/',
-#            ratio=10,
-#            mode='x',
-#            is_dir=True)
-# splitDatas(src=man.DatasetBase()+'train/',
-#            dest=man.DatasetBase()+'test/',
-#            ratio=10,
-#            mode='x',
-#            is_dir=True)
+splitDatas(src=man.DatasetBase()+'all/',
+           dest=man.DatasetBase()+'train/',
+           ratio=-1,
+           mode='c',
+           is_dir=True)
+splitDatas(src=man.DatasetBase()+'train/',
+           dest=man.DatasetBase()+'validate/',
+           ratio=20,
+           mode='x',
+           is_dir=True)
+splitDatas(src=man.DatasetBase()+'train/',
+           dest=man.DatasetBase()+'test/',
+           ratio=20,
+           mode='x',
+           is_dir=True)
 ################################################################
 
 # 制作基于下标的数据集

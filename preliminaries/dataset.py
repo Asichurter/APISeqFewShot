@@ -416,9 +416,9 @@ def makeGeneralTestDataset(base_dataset_path,
                 new_dataset_path+'/data/wordMap.json')
 
 if __name__ == '__main__':
-    original_dataset_name = 'virushare-45'
-    new_dataset_name = 'virushare-45-general'
-    N = 20
+    original_dataset_name = 'virushare-20-3gram-tfidf'
+    new_dataset_name = 'virushare-20-3gram-tfidf-general'
+    N = 10
     seq_len = 200
 
     pm = PathManager(dataset=original_dataset_name)
