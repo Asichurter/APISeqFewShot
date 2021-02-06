@@ -1,6 +1,119 @@
 # APISeqFewShot
-This is the code repository for up-coming paper "*Recognize Unknown Malware Families Using Limited Samples through Few-Shot Multi-Prototype Modeling*". All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**.
+This is the code repository for up-coming paper "*A Novel Few-Shot Malware Classification Approach for Unknown Family Recognition with Multi-Prototype Modeling*" submit to ***Computer & Security***. All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**.
 
+
+## Declaration
+This code repository has always been used for experiments of our research, thus it is designed for engineering purpose, where some code logic is hard to explained clearly in short words. **We DO NOT PROMISE it work properly on other people's machines.** We publicate this repository to faciliate the few-shot malware classification research and if you use our code in your work, please refer to our paper. If there are any problems, please raise them in 'issues'.
+
+
+## How to Run this Code
+
+### Note
+**This repository DOES NOT contain any data files for size limitation.** To replicate our work, visit [VirusShare website](https://virusshare.com) or [APIMDS dataset release website](http://ocslab.hksecurity.net/apimds-dataset) to download the datasets and follow the preprocessing steps in our paper to make suitable datasets to run this code.
+
+### Preprocessing Instructions
+Almost all the preprocessing-related code are located in *preliminaries* package. **We assume all the sequence data files are in 'JSON' form, where the api sequence is a list with key 'apis'**. We DO NOT RECOMMAND use our code to do preprocessing work because we divide the process into many subprocesses and dump log for each subprocess, instead of making them a end-to-end pipeline. This brings in fusion when using our code when preprocessing, thus we recommand to write your own code to do preprocessing, includig several main steps:
+
+1. Run malware binary samples in Cuckoo sandbox to get api sequence in JSON form
+   
+2. Drop sequence files where sequence has length less than 10, according to our paper
+
+3. Remove redundancy in api sequence (successive invocation of the same api twice or more), which can also be done by calling *preliminaries/preprocessing.py/removeApiRedundance* (set 'class_dir' to 'False' assumes that each JSON file are located in an independent directory, with the same name of JSON file). This function will overwrite the original JSON file, so please remember to backup.
+
+4. Extract N-gram (*N=3* in our paper) of api sequence and replace the api sequence item with api N-gram item
+   
+5. Calculate TF-IDF value of each N-gram item (you may refer to our code *extractors/TFIDF.py*). Leave only top-k (*k=2000* in our paper) TF-IDF value N-gram item in sequence and **repeat Step.2**
+
+6. Use some scan tools (like VirusTotal) to make analysis report for each malware sample, then extract a sole label for each malware sample by some tools (like AVClass). Collect samples with the same family tag
+
+7. Sample a fixed number (20 in our paper) of sequence files from each family to a directory, whose name is the same as the family
+
+8. Run our code *preliminaries/dataset.py/makeDatasetDirStruct* to make dataset directory structure, and move all the family folders to 'all' directory
+
+9. Train GloVe embedding on all the family folders and output a mapping file and a embedding matrix, you may refer to our code *uitls/GloVe.py* (it requires for Python2 env and glove-python package). Move the index mapping file (rename to wordMap.json) and word embedding matrix (rename to matrix.npy, NumPy.ndarray type) to 'data' folder.
+
+10. Split the families in 'all' dataset to 'train', 'validate' and 'test', according to our paper (move family folders)
+
+11. Run our code *run/make_data_files.py* to generate torch data files to be loaded (change the parameters before running)
+
+After these steps, the whole dataset directory structure look like this:
+
+```
+(Your dataset name)
+    |-- all
+        |-- (all family folders...)
+    |-- train
+        |-- (train family folders...)
+    |-- validate
+        |-- (validate family folders...)
+    |-- test
+        |-- (test family folders...)
+    |-- doc    
+    |-- models
+    |-- data
+        |-- train
+            |-- data.npy
+            |-- idxMapping.json
+            |-- seqLength.json
+        |-- validate
+            |-- data.npy
+            |-- idxMapping.json
+            |-- seqLength.json
+        |-- test
+            |-- data.npy
+            |-- idxMapping.json
+            |-- seqLength.json
+        |-- wordMap.json
+        |-- matrix.npy
+```
+
+### Hyper-Parameter Setting
+To ensure reproducibility, hyper-parameters are configured by JSON form config file, located in *run/runConfig.json*. Everytime you start to train a model, a doc directory will be made in 'doc' with the name of 'version' parameter. **So remember to change the 'version' when you intend to train a new model to prevent from unexpected overwriting**. Other important parameters are introduced in the following sections. Trained torch model parameter state dictionaries are saved under 'models'. 
+
+**Before running, add an item to 'Ns' key-value object in runConfig.json, where key equals your dataset name and value equals how many items are there in each family. Also, please add an object to 'platform-node' item, where key equals the host name, value equals the base path your datasets are located in.** (host name can be obtained by calling *platform.node()*)
+
+
+### Train
+Just make your datasets and run *run/run.py*, it will load the data files and run config to configure the running settings. If you want to visualize the training process, set 'useVisdom' in runConfig.json to 'true', and turn on the visdom server by 
+``` shell
+python -m visdom.server
+```
+Then visit [localhost:8097](http://localhost:8097/).
+
+Training statistics will display in console like: 
+```
+----------------Test in Epoch 99--------------------
+***********************************
+train acc:  0.642
+train loss:  5.168325721025467
+----------------------------------
+val acc: 0.5968000000000001
+val loss: 2.0870852395892143
+----------------------------------
+best val loss: 2.0870852395892143
+best epoch: 99
+time consuming:  19.70339059829712
+time remains:  01:38:11
+***********************************
+```
+
+### Test
+It is very similar to training models but you need to change testConfig.json to configure test settings. Note that if you want to run testing on 'train' or 'validate' subset, set 'testSubdataset' to 'train' or 'validate', but it is 'test' in default.
+
+Testing statistics will display in console like: 
+```
+200 Epoch
+--------------------------------------------------
+Acc: 0.926400
+Loss: 0.231254
+Current Avg Acc: 0.922600
+Time: 3.38
+time remains:  00:00:27
+--------------------------------------------------
+```
+
+ 
+ 
 ## Project Origanization
 Code files are organized by function and locate in different folders.
 
