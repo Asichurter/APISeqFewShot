@@ -1,14 +1,14 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "LargePE-Per35",
 
   "k" : 5,
-  "n" : 10,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 359,
-  "modelName" :  "ConvProtoNet",
+  "version" : -1,
+  "modelName" :  "ProtoNet",
 
-  "deviceId": 3,
+  "deviceId": 1,
 
   "modelParams": {
     "embed_size": 300,
@@ -20,7 +20,7 @@
     "self_att_dim" : null,
     "bidirectional": true,
     "mhatt_head_nums": 4,
-    "max_seq_len": 200,
+    "max_seq_len": 300,
 
     "temperature": 1,
     "cluster_num_step": 1,
@@ -81,7 +81,8 @@
           "HKS": 20,
           "virushare-20-3gram-tfidf-general": 10,
           "HKS-general": 10,
-          "virushare-45-general": 20
+          "virushare-45-general": 20,
+          "LargePE-Per35": 35
   },
 
   "plot" : {

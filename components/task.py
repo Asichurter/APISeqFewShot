@@ -9,6 +9,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from components.samplers import EpisodeSamlper, ReptileSamlper
 from utils.magic import magicSeed, randomList
 from utils.training import getBatchSequenceFunc, batchSequenceWithoutPad
+from utils.profiling import FuncProfiler
 
 #########################################
 # 基于Episode训练的任务类，包含采样标签空间，
@@ -112,7 +113,7 @@ class EpisodeTask:
             que_labels = (que_labels == sup_labels).view(-1, n)
             return que_labels.float()
 
-    def episode(self):
+    def episode(self, **kwargs):
         raise NotImplementedError
 
     def labels(self):
@@ -153,7 +154,7 @@ class ProtoEpisodeTask(EpisodeTask):
                  cuda=True, expand=False, parallel=None):
         super(ProtoEpisodeTask, self).__init__(k, qk, n, N, dataset, cuda, expand, parallel)
 
-    def episode(self, task_seed=None, sampling_seed=None):
+    def episode(self, task_seed=None, sampling_seed=None, **kwargs):
         k, qk, n, N = self.readParams()
 
         label_space = self.getLabelSpace(task_seed)

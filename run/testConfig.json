@@ -1,16 +1,16 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf-general",
+  "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
   "n" : 5,
   "qk" : 5,
 
-  "version" : 353,
+  "version" : 300,
   "modelName" :  "SIMPLE",
   "loadBest": true,
   "isRandom": false,
 
-  "deviceId": 3,
+  "deviceId": 1,
 
   "trainingEpoch" : 1000,
 

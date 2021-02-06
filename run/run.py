@@ -411,7 +411,7 @@ with t.autograd.set_detect_anomaly(False):
         # ----------------------验证------------------
         ################################################
 
-        if epoch % ValCycle == 0:
+        if (epoch+1) % ValCycle == 0:
             print('*' * 50)
             print('Model Name: %s' % model_type)
             print('Used dataset: %s' % data_folder)

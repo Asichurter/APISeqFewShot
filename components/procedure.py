@@ -25,10 +25,15 @@ def queryLossProcedure(model,
     loss_val = t.zeros((1,)).cuda()
     acc_val = np.zeros(4,) if not acc_only else 0.# 0.
 
-    for task_i in range(taskBatchSize):
-        model_input, labels = task.episode()  # support, query, sup_len, que_len, labels = train_task.episode()
+    if train:
+        task_type = "Train"
+    else:
+        task_type = "Validate"
 
-        predicts = model(*model_input)
+    for task_i in range(taskBatchSize):
+        model_input, labels = task.episode(task_type=task_type)  # support, query, sup_len, que_len, labels = train_task.episode()
+
+        predicts = model(*model_input, task_type=task_type)
 
         loss_val += loss(predicts, labels)
         predicts = predicts.cpu()
