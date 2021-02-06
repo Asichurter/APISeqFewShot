@@ -5,6 +5,8 @@ This is the code repository for up-coming paper "*A Novel Few-Shot Malware Class
 ## Declaration
 This code repository has always been used for experiments of our research, thus it is designed for engineering purpose, where some code logic is hard to explained clearly in short words. **We DO NOT PROMISE it work properly on other people's machines.** We publicate this repository to faciliate the few-shot malware classification research and if you use our code in your work, please refer to our paper. If there are any problems, please raise them in 'issues'.
 
+Implementation of our SIMPLE model referred to IMP implementation: [IMP](https://github.com/k-r-allen/imp)
+
 
 ## How to Run this Code
 
