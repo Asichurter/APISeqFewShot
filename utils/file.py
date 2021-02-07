@@ -1,5 +1,7 @@
 import json
 import os
+import platform
+import shutil
 
 def loadJson(path):
     with open(path, 'r', encoding='UTF-8') as f:
@@ -19,4 +21,7 @@ def dumpIterable(iterable, title, path):
     dumpJson(iter_dict, path)
 
 def deleteDir(path):
-    os.system('rm -rf %s'%path)
+    if platform.system() == 'Linux':
+        os.system('rm -rf %s'% path)
+    else:
+        shutil.rmtree(path)

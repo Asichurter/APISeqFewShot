@@ -5,14 +5,15 @@
   "n" : 5,
   "qk" : 5,
 
-  "version" : 300,
+  "version" : 365,
   "modelName" :  "SIMPLE",
+
   "loadBest": true,
   "isRandom": false,
 
   "deviceId": 1,
 
-  "trainingEpoch" : 1000,
+  "trainingEpoch" : 5000,
 
   "Ns" : {
           "cluster":20,
@@ -47,10 +48,13 @@
     },
     "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+    },
+    "R7000P-asichurter": {
+      "datasetBasePath" : "F:/datasets/"
     }
   },
 
-  "testSubdataset": "train",
+  "testSubdataset": "test",
 
   "description": [
   ]

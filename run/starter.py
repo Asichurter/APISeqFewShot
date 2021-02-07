@@ -35,11 +35,11 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-# manager = PathManager(dataset='LargePE-Per35')
+# manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
 #                        dump_path=manager.DatasetBase()+'data/split_MalFusion_v1.json')
-# revertDatasetSplit(dataset='virushare-45',
-#                    dump_path=manager.DatasetBase()+'data/split_1.json')
+# revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
+#                    dump_path=manager.DatasetBase()+'data/split_last.json')
 # deleteDatasetSplit(dataset_base=manager.DatasetBase())
 ###############################################################
 
@@ -79,7 +79,7 @@ for d_type in ['train', 'validate', 'test']:
                  data_save_path=manager.FileData(),
                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
                  num_per_class=20,
-                 max_seq_len=300)
+                 max_seq_len=700)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')
