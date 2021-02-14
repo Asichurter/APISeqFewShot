@@ -184,7 +184,8 @@ class TrainStatManager:
 
     def recordValidating(self, acc, loss, model,
                         current_step=None, total_step=None,
-                        save_last_model=False):
+                        save_last_model=False,
+                         print_out=True):
         self.ValHist['accuracy'].append(acc)
         self.ValHist['loss'].append(loss)
 
@@ -210,9 +211,10 @@ class TrainStatManager:
         self.CurTimeStamp = time()
 
         record = self.getRecentRecord()
-        self.printOut(*record,
-                      current_step=current_step,
-                      total_step=total_step)
+        if print_out:
+            self.printOut(*record,
+                          current_step=current_step,
+                          total_step=total_step)
 
     def printOut(self, average_train_acc, average_train_loss, recent_val_acc, recent_val_loss,
                  current_step=None, total_step=None):
@@ -285,16 +287,16 @@ class TestStatManager:
     def startTimer(self):
         self.TimeStamp = time()
 
-    def record(self, acc, loss, total_step=None):
+    def record(self, acc, loss, total_step=None, verbose=True):
 
         self.AccHist.append(acc)
         self.LossHist.append(loss)
         self.Iters += 1
 
         if self.Iters % self.Cycle == 0:
-            self.printStat(total_step=total_step)
+            self.printStat(total_step=total_step, verbose=verbose)
 
-    def printStat(self, final=False, total_step=None):
+    def printStat(self, final=False, total_step=None, verbose=True):
         now_stamp = time()
         length = len(self.AccHist) if final else self.Cycle
         cur_acc = np.mean(self.AccHist[-length:])
@@ -305,6 +307,9 @@ class TestStatManager:
         consume_time = now_stamp-self.TimeStamp
         if not final:
             self.TimeList.append(consume_time)
+
+        if not verbose:
+            return
 
         if total_step is not None:
             remaining_time = consume_time * (total_step - self.Iters) / self.Cycle
@@ -333,6 +338,13 @@ class TestStatManager:
         print('')
 
         if final:
+            try:
+                time_stat = loadJson('../scripts/batch_test_exp/run_stat.json')
+                time_stat[-1]['slice_time'] = sum(self.TimeList) / len(self.TimeList) * 10
+                dumpJson(time_stat, '../scripts/batch_test_exp/run_stat.json')
+                print('New stat: ', time_stat[-1])
+            except Exception as e:
+                print('[TestStatManager] Fail to dump slice time: {}'.format(e))
             return cur_acc, cur_loss, acc_interval, loss_interval
 
     def report(self, doc_path=None, desc=None)   :

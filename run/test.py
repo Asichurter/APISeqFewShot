@@ -34,6 +34,15 @@ from models.SIMPLE import SIMPLE
 from models.HybridIMP import HybridIMP
 from models.mconfig import ADAPTED_MODELS, IMP_MODELS
 
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--verbose', help='Verbose or not', type=int, default=1)
+
+verbose = parser.parse_args().verbose
+
+verbose = verbose > 0
+
 # ADAPTED_MODELS = ['MetaSGD', 'ATAML', 'PerLayerATAML']
 # IMP_MODELS = ['IMP', 'SIMPLE', 'HybridIMP']
 
@@ -58,21 +67,22 @@ TestingEpoch = cfg.epoch()
 USED_SUB_DATASET = cfg.subDataset()
 MODEL_RANDOM_STATE = cfg.isRandom()
 
-print('*'*50)
-print('Model Name: %s'%model_type)
-print('Used dataset: %s'%data_folder)
-print('Version: %d'%version)
-print(f"{k}-shot {n}-way")
-print(f"device: {cfg.deviceId()}")
-print("Is Random Test:", MODEL_RANDOM_STATE)
-print('*'*50)
+if verbose:
+    print('*'*50)
+    print('Model Name: %s'%model_type)
+    print('Used dataset: %s'%data_folder)
+    print('Version: %d'%version)
+    print(f"{k}-shot {n}-way")
+    print(f"device: {cfg.deviceId()}")
+    print("Is Random Test:", MODEL_RANDOM_STATE)
+    print('*'*50)
 
 
 ################################################
 #----------------------定义数据------------------
 ################################################
-
-printState('init managers...')
+if verbose:
+    printState('init managers...')
 test_path_manager = PathManager(dataset=data_folder,
                                d_type=USED_SUB_DATASET,
                                model_name=model_name,
@@ -112,8 +122,8 @@ stat = TestStatManager()
 ################################################
 #----------------------模型定义和初始化------------------
 ################################################
-
-printState('init model...')
+if verbose:
+    printState('init model...')
 if not MODEL_RANDOM_STATE:
     state_dict = t.load(test_path_manager.Model(type=cfg.loadBest()))
     if model_type in ADAPTED_MODELS:
@@ -122,7 +132,6 @@ if not MODEL_RANDOM_STATE:
         word_matrix = state_dict['Embedding.weight']
 else:
     word_matrix = t.Tensor(np.load(test_path_manager.WordEmbedMatrix(), allow_pickle=True))
-print("loading done...")
 
 loss = t.nn.NLLLoss().cuda() if loss_func=='nll' else t.nn.MSELoss().cuda()
 
@@ -192,7 +201,8 @@ if not MODEL_RANDOM_STATE:
     model.load_state_dict(state_dict)
 model = model.cuda()
 
-statParamNumber(model)
+if verbose:
+    statParamNumber(model)
 
 stat.startTimer()
 
@@ -243,7 +253,7 @@ with t.autograd.set_detect_anomaly(False):
                                                         acc_only=False)
 
         # 记录任务batch的平均正确率和损失值
-        stat.record(acc_val[0], loss_val_item, total_step=TestingEpoch)
+        stat.record(acc_val[0], loss_val_item, total_step=TestingEpoch, verbose=verbose)
         metrics += acc_val
 
 desc = cfg.desc()
@@ -253,7 +263,4 @@ stat.report(doc_path=None if MODEL_RANDOM_STATE else test_path_manager.Doc(),
             desc=desc)
 
 metrics /= TestingEpoch
-print('Precision:', metrics[1]*100)
-print('Recall:', metrics[2]*100)
-print('F1-Score:', metrics[3]*100)
 

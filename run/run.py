@@ -1,6 +1,6 @@
 import os
 import sys
-import shutil
+import argparse
 import torch as t
 
 sys.path.append('../')
@@ -52,6 +52,13 @@ from models.IMP import IMP
 from models.SIMPLE import SIMPLE
 from models.HybridIMP import HybridIMP
 
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', '--verbose', help='Verbose or not', type=int, default=1)
+
+verbose = parser.parse_args().verbose
+
+verbose = verbose > 0
+
 ################################################
 #----------------------读取参数------------------
 ################################################
@@ -94,13 +101,14 @@ legends = cfg.plotParams()
 
 TrainingEpoch = cfg.epoch()
 
-print('*'*50)
-print('Model Name: %s'%model_type)
-print('Used dataset: %s'%data_folder)
-print('Version: %d'%version)
-print(f"{k}-shot {n}-way")
-print(f"device: {cfg.deviceId()}")
-print('*'*50)
+if verbose:
+    print('*'*50)
+    print('Model Name: %s'%model_type)
+    print('Used dataset: %s'%data_folder)
+    print('Version: %d'%version)
+    print(f"{k}-shot {n}-way")
+    print(f"device: {cfg.deviceId()}")
+    print('*'*50)
 
 ################################################
 #----------------------定义数据------------------
@@ -112,7 +120,8 @@ loss = t.nn.NLLLoss().cuda() \
     if loss_func=='nll' else \
     t.nn.MSELoss().cuda()
 
-printState('init managers...')
+if verbose:
+    printState('init managers...')
 train_path_manager = PathManager(dataset=data_folder,
                                  d_type='train',
                                  model_name=model_name,
@@ -205,7 +214,8 @@ else:
 #----------------------模型定义和初始化------------------
 ################################################
 
-printState('init model...')
+if verbose:
+    printState('init model...')
 
 # model = CNNLstmProtoNet()
 # model = IncepProtoNet(channels=[1, 32, 1],
@@ -275,10 +285,10 @@ elif model_type == 'HybridIMP':
 
 model = model.cuda()
 
-statParamNumber(model)
-
 # 模型初始化
-printState('init parameters...')
+if verbose:
+    statParamNumber(model)
+    printState('init parameters...')
 # model.apply(LstmInit)
 
 parameters = []
@@ -319,7 +329,8 @@ scheduler = t.optim.lr_scheduler.StepLR(optimizer,
 
 grad = 0.
 
-printState('start trainsing')
+if verbose:
+    printState('start trainsing')
 stat.startTimer()
 
 # 检查版本号，以防止不小心覆盖version
@@ -412,15 +423,15 @@ with t.autograd.set_detect_anomaly(False):
         ################################################
 
         if (epoch+1) % ValCycle == 0:
-            print('*' * 50)
-            print('Model Name: %s' % model_type)
-            print('Used dataset: %s' % data_folder)
-            print('Version: %d' % version)
-            print(f"{k}-shot {n}-way")
-            print(f"device: {cfg.deviceId()}")
-            print('*' * 50)
-
-            printState('Test in Epoch %d'%epoch)
+            if verbose:
+                printState('Test in Epoch %d'%epoch)
+                print('*' * 50)
+                print('Model Name: %s' % model_type)
+                print('Used dataset: %s' % data_folder)
+                print('Version: %d' % version)
+                print(f"{k}-shot {n}-way")
+                print(f"device: {cfg.deviceId()}")
+                print('*' * 50)
             # model.eval()
             validate_acc = 0.
             validate_loss = 0.
@@ -482,7 +493,8 @@ with t.autograd.set_detect_anomaly(False):
                                   model,
                                   epoch,
                                   TrainingEpoch,
-                                  save_last_model=True)
+                                  save_last_model=True,
+                                  print_out=verbose)
 
             train_acc, train_loss, val_acc, val_loss = stat.getRecentRecord()
             if UseVisdom:

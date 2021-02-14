@@ -71,16 +71,19 @@ def makeDataFile(json_path,
                  data_save_path,
                  num_per_class,
                  idx2cls_mapping_save_path=None,
-                 max_seq_len=600):
+                 max_seq_len=600,
+                 verbose=True):
 
     data_list = []
     folder_name_mapping = {}
 
-    printState('Loading config data...')
+    if verbose:
+        printState('Loading config data...')
     word2index = loadJson(w2idx_path)
 
-    printState('Read main data...')
-    for cls_idx, cls_dir in tqdm(enumerate(os.listdir(json_path))):
+    if verbose:
+        printState('Read main data...')
+    for cls_idx, cls_dir in enumerate(os.listdir(json_path)):
         class_path = json_path + cls_dir + '/'
 
         assert num_per_class == len(os.listdir(class_path)), \
@@ -96,7 +99,8 @@ def makeDataFile(json_path,
 
         # label_list += [cls_idx] * num_per_class     # 添加一个类的样本标签
 
-    printState('Converting...')
+    if verbose:
+        printState('Converting...')
     data_list = convertApiSeq2DataSeq(data_list,
                                       word2index,
                                       max_seq_len)      # 转化为嵌入后的数值序列列表
@@ -112,13 +116,15 @@ def makeDataFile(json_path,
         zero_paddings = t.zeros((data_list.size(0),padding_size))
         data_list = t.cat((data_list,zero_paddings),dim=1)
 
-    printState('Dumping...')
+    if verbose:
+        printState('Dumping...')
     dumpJson(seq_length_list, seq_length_save_path)     # 存储序列长度到JSON文件
     if idx2cls_mapping_save_path is not None:
         dumpJson(folder_name_mapping, idx2cls_mapping_save_path)
     t.save(data_list, data_save_path)                   # 存储填充后的数据文件
 
-    printState('Done')
+    if verbose:
+        printState('Done')
 
 ##########################################################
 # 本函数是makeDataFile函数的调用函数，主要用于截断序列，同时根据下标
