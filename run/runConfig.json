@@ -1,11 +1,11 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "HKS",
 
   "k" : 5,
-  "n" : 5,
+  "n" : 10,
   "qk" : 5,
 
-  "version" : 365,
+  "version" : -1,
   "modelName" :  "SIMPLE",
 
   "deviceId": 1,
@@ -20,7 +20,7 @@
     "self_att_dim" : null,
     "bidirectional": true,
     "mhatt_head_nums": 4,
-    "max_seq_len": 700,
+    "max_seq_len": 500,
 
     "temperature": 1,
     "cluster_num_step": 1,
@@ -115,7 +115,7 @@
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "序列长度为550使用了tfidf的3Gram(最终分割)",
+                "序列长度为1000使用了tfidf的3Gram(最终分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用1层BiLSTM编码,使用1dCNN解码",

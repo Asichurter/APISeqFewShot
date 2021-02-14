@@ -1,11 +1,11 @@
 {
-  "dataset" :  "virushare-20-3gram-tfidf",
+  "dataset" :  "HKS",
 
   "k" : 5,
-  "n" : 5,
+  "n" : 10,
   "qk" : 5,
 
-  "version" : 365,
+  "version" : -1,
   "modelName" :  "SIMPLE",
 
   "loadBest": true,
@@ -13,7 +13,7 @@
 
   "deviceId": 1,
 
-  "trainingEpoch" : 5000,
+  "trainingEpoch" : 2000,
 
   "Ns" : {
           "cluster":20,
