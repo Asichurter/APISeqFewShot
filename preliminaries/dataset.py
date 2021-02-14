@@ -134,7 +134,7 @@ def convertApiSeq2DataSeq(api_seqs, word2idx, max_size):
             seq = seq[:max_size]
 
         for i,api in enumerate(seq):
-            appended_seq.append(word2idx[api])     # 将API token转化为下标
+            appended_seq.append(word2idx[str(api)])     # 将API token转化为下标
         data_seq.append(t.Tensor(appended_seq))
 
     return data_seq

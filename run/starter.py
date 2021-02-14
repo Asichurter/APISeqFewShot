@@ -35,51 +35,51 @@ from config import generateConfigReport
 
 # 生成/还原 数据集分割文件
 ###############################################################
-manager = PathManager(dataset='virushare-20-3gram-tfidf')
+# manager = PathManager(dataset='virushare-20-3gram-tfidf')
 # dumpDatasetSplitStruct(base_path=manager.DatasetBase(),
-#                        dump_path=manager.DatasetBase()+'data/split_last.json')
-# revertDatasetSplit(dataset='virushare-45',
-#                    dump_path=manager.DatasetBase()+'data/split_1.json')
-deleteDatasetSplit(dataset_base=manager.DatasetBase())
+#                        dump_path=manager.DatasetBase()+'data/split_MalFusion_v1.json')
+# revertDatasetSplit(dataset='virushare-20-3gram-tfidf',
+#                    dump_path=manager.DatasetBase()+'data/split_last.json')
+# deleteDatasetSplit(dataset_base=manager.DatasetBase())
 ###############################################################
 
 
-# makeDatasetDirStruct(base_path="/home/asichurter/datasets/JSONs/virushare-45-rmsub/")
+# makeDatasetDirStruct(base_path="/home/omnisky/NewAsichurter/ApiData/LargePE-Per35/")
 
 
 # 分割数据集
 ################################################################
-man = PathManager(dataset='virushare-20-3gram-tfidf')
-# deleteDatasetSplit(dataset_base=man.DatasetBase())
-splitDatas(src=man.DatasetBase()+'all/',
-           dest=man.DatasetBase()+'train/',
-           ratio=-1,
-           mode='c',
-           is_dir=True)
-splitDatas(src=man.DatasetBase()+'train/',
-           dest=man.DatasetBase()+'validate/',
-           ratio=20,
-           mode='x',
-           is_dir=True)
-splitDatas(src=man.DatasetBase()+'train/',
-           dest=man.DatasetBase()+'test/',
-           ratio=20,
-           mode='x',
-           is_dir=True)
+# man = PathManager(dataset='LargePE-Per35')
+# # deleteDatasetSplit(dataset_base=man.DatasetBase())
+# splitDatas(src=man.DatasetBase()+'all/',
+#            dest=man.DatasetBase()+'train/',
+#            ratio=-1,
+#            mode='c',
+#            is_dir=True)
+# splitDatas(src=man.DatasetBase()+'train/',
+#            dest=man.DatasetBase()+'validate/',
+#            ratio=30,
+#            mode='x',
+#            is_dir=True)
+# splitDatas(src=man.DatasetBase()+'train/',
+#            dest=man.DatasetBase()+'test/',
+#            ratio=30,
+#            mode='x',
+#            is_dir=True)
 ################################################################
 
 # 制作基于下标的数据集
 ################################################################
-# for d_type in ['train', 'validate', 'test']:
-#     manager = PathManager(dataset='HKS-general', d_type=d_type)
-#
-#     makeDataFile(json_path=manager.Folder(),
-#                  w2idx_path=manager.WordIndexMap(),
-#                  seq_length_save_path=manager.FileSeqLen(),
-#                  data_save_path=manager.FileData(),
-#                  idx2cls_mapping_save_path=manager.FileIdx2Cls(),
-#                  num_per_class=10,
-#                  max_seq_len=300)
+for d_type in ['train', 'validate', 'test']:
+    manager = PathManager(dataset='virushare-20-3gram-tfidf', d_type=d_type)
+
+    makeDataFile(json_path=manager.Folder(),
+                 w2idx_path=manager.WordIndexMap(),
+                 seq_length_save_path=manager.FileSeqLen(),
+                 data_save_path=manager.FileData(),
+                 idx2cls_mapping_save_path=manager.FileIdx2Cls(),
+                 num_per_class=20,
+                 max_seq_len=700)
 ################################################################
 
 # renameItemFolder('/home/asichurter/datasets/JSONs/LargePE-100-original/')

@@ -7,6 +7,7 @@ from components.sequence.LSTM import BiLstmEncoder, BiLstmCellEncoder
 from components.reduction.max import StepMaxReduce
 from components.sequence.TCN import TemporalConvNet
 from components.sequence.transformer import TransformerEncoder, MultiHeadAttention
+from utils.profiling import FuncProfiler
 from utils.training import extractTaskStructFromInput, \
                             repeatProtoToCompShape, \
                             repeatQueryToCompShape, \
@@ -107,7 +108,7 @@ class ProtoNet(nn.Module):
 
         return x
 
-    def forward(self, support, query, sup_len, que_len, metric='euc', return_embeddings=False):
+    def forward(self, support, query, sup_len, que_len, metric='euc', return_embeddings=False, **kwargs):
 
         if self.DataParallel:
             support = support.squeeze(0)
@@ -143,6 +144,14 @@ class ProtoNet(nn.Module):
         if return_embeddings:
             return support, query.view(qk,-1), orig_protos, F.log_softmax(similarity, dim=1)
         return F.log_softmax(similarity, dim=1)
+
+    # logits = F.log_softmax(similarity, dim=1)
+    # query_labels = []
+    # for i in range(5):
+    #     query_labels += [i]*5
+    # query_labels = t.LongTensor(query_labels).cuda()
+    # loss_func = t.nn.NLLLoss().cuda()
+    # print(loss_func(logits, query_labels))
 
 
 

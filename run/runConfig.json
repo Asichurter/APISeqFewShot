@@ -2,13 +2,13 @@
   "dataset" :  "virushare-20-3gram-tfidf",
 
   "k" : 5,
-  "n" : 10,
+  "n" : 5,
   "qk" : 5,
 
-  "version" : 359,
-  "modelName" :  "ConvProtoNet",
+  "version" : 365,
+  "modelName" :  "SIMPLE",
 
-  "deviceId": 3,
+  "deviceId": 1,
 
   "modelParams": {
     "embed_size": 300,
@@ -20,7 +20,7 @@
     "self_att_dim" : null,
     "bidirectional": true,
     "mhatt_head_nums": 4,
-    "max_seq_len": 200,
+    "max_seq_len": 700,
 
     "temperature": 1,
     "cluster_num_step": 1,
@@ -81,7 +81,8 @@
           "HKS": 20,
           "virushare-20-3gram-tfidf-general": 10,
           "HKS-general": 10,
-          "virushare-45-general": 20
+          "virushare-45-general": 20,
+          "LargePE-Per35": 35
   },
 
   "plot" : {
@@ -105,13 +106,16 @@
     },
     "asichurter-ubuntu-desktop": {
       "datasetBasePath" : "/home/asichurter/datasets/JSONs/"
+    },
+    "R7000P-asichurter": {
+      "datasetBasePath" : "F:/datasets/"
     }
   },
 
       "description": [
                 "使用任务batch=2",
                 "使用300维度的GloVe初始化",
-                "序列长度为200使用了tfidf的3Gram(最终分割)",
+                "序列长度为550使用了tfidf的3Gram(最终分割)",
                 "提前终止的标准改为loss",
                 "修改了数据集的存储方式，使得数据集中所有向量都是以最大序列长度存储",
                 "使用1层BiLSTM编码,使用1dCNN解码",
