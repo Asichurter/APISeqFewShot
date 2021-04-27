@@ -1,6 +1,20 @@
 # APISeqFewShot
 This is the code repository for up-coming paper "*A Novel Few-Shot Malware Classification Approach for Unknown Family Recognition with Multi-Prototype Modeling*" submit to ***Computer & Security***. All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**.
 
+Cite our published paper on **_Computer & Security_**:
+```Bibtex
+   @article{WANG2021102273,
+      title = {A Novel Few-Shot Malware Classification Approach for Unknown Family Recognition with Multi-Prototype Modeling},
+      journal = {Computers & Security},
+      pages = {102273},
+      year = {2021},
+      issn = {0167-4048},
+      doi = {https://doi.org/10.1016/j.cose.2021.102273},
+      url = {https://www.sciencedirect.com/science/article/pii/S0167404821000973},
+      author = {Peng Wang and Zhijie Tang and Junfeng Wang}
+   }
+```
+
 
 ## Declaration
 This code repository has always been used for experiments of our research, thus it is designed for engineering purpose, where some code logic is hard to explained clearly in short words. **We DO NOT PROMISE it work properly on other people's machines.** We publicate this repository to faciliate the few-shot malware classification research and if you use our code in your work, please refer to our paper. If there are any problems, please raise them in 'issues'.
