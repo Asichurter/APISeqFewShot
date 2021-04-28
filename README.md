@@ -27,6 +27,13 @@ Implementation of our SIMPLE model referred to IMP implementation: [IMP](https:/
 ### Note
 **This repository DOES NOT contain any data files for size limitation.** To replicate our work, visit [VirusShare website](https://virusshare.com) or [APIMDS dataset release website](http://ocslab.hksecurity.net/apimds-dataset) to download the datasets and follow the preprocessing steps in our paper to make suitable datasets to run this code.
 
+### Our Running Environment
+- **OS**: Manjaro Linux KDE 20.2
+- **CPU**: Intel Core i9-10900X 3.7GHz, 20 cores
+- **GPU**: 4-channel RTX 2080 Ti, 11 GB 
+- **Memory**: 128 GB
+- **Cuda**: 10.2
+
 ### Preprocessing Instructions
 Almost all the preprocessing-related code are located in *preliminaries* package. **We assume all the sequence data files are in 'JSON' form, where the api sequence is a list with key 'apis'**. We DO NOT RECOMMAND use our code to do preprocessing work because we divide the process into many subprocesses and dump log for each subprocess, instead of making them a end-to-end pipeline. This brings in confusion when using our code when preprocessing, thus we recommand to write your own code to do preprocessing, including several main steps:
 
