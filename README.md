@@ -1,5 +1,7 @@
 # APISeqFewShot
-This is the code repository for up-coming paper "*A Novel Few-Shot Malware Classification Approach for Unknown Family Recognition with Multi-Prototype Modeling*" submit to ***Computer & Security***. All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**.
+This is the code repository for up-coming paper "*A Novel Few-Shot Malware Classification Approach for Unknown Family Recognition with Multi-Prototype Modeling*" submit to ***Computer & Security***. All the model implementation details and baselines are included and all the models are implemented with **Python 3.7+** and **PyTorch 1.4(cuda in default)**. 
+
+_(Turn to [MalFusionFSL](https://github.com/Asichurter/MalFusionFSL) for a more elegant and structured implementation, which implements few-shot malware classification of static, dynamic and fusion of both. Configurating 'data_source' and 'fusion | type' as 'sequence' in 'config/train.json' can singly run dynamic analysis classification that is equal to running this code repository. Contact asichurter@gmail.com for any questions.)._
 
 Cite our published paper on **_Computer & Security_**:
 ```Bibtex
